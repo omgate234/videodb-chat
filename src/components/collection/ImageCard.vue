@@ -91,7 +91,9 @@ const props = defineProps({
 });
 
 onMounted(async () => {
-  if (props.getImageUrl) {
+  if (typeof props.item.url === "string") {
+    url.value = props.item.url;
+  } else if (props.getImageUrl) {
     const imageUrl = await props.getImageUrl(
       props.item.collection_id,
       props.item.id,
