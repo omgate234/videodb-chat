@@ -2,45 +2,54 @@
   <div>
     <!-- Videos Grid -->
     <div class="vdb-c-grid vdb-c-grid-cols-12 vdb-c-gap-20">
+      <template v-if="paginatedAssets.length > 0">
+        <div
+          v-for="(item, index) in paginatedAssets"
+          :key="`post-${item.id}`"
+          class="vdb-c-col-span-12 sm:vdb-c-col-span-6"
+          :class="[
+            columns >= 4
+              ? 'md:vdb-c-col-span-4 lg:vdb-c-col-span-3'
+              : columns >= 3
+                ? 'md:vdb-c-col-span-4 lg:vdb-c-col-span-4'
+                : columns >= 2
+                  ? 'md:vdb-c-col-span-6 lg:vdb-c-col-span-6'
+                  : '',
+          ]"
+        >
+          <video-card
+            v-if="item.type !== 'audio' && item.type !== 'image'"
+            :item="item"
+            :border-b="true"
+            :index="index"
+            border-class="sm:vdb-c-hidden"
+            @video-click="$emit('video-click', $event)"
+            @delete-video="$emit('delete-video', $event)"
+          />
+
+          <AudioCard
+            v-else-if="item.type === 'audio'"
+            :item="item"
+            :index="index"
+            :get-audio-url="getAudioUrl"
+            @delete-audio="$emit('delete-audio', $event)"
+          />
+
+          <ImageCard
+            v-else-if="item.type === 'image'"
+            :item="item"
+            :index="index"
+            :get-image-url="getImageUrl"
+            @delete-image="$emit('delete-image', $event)"
+          />
+        </div>
+      </template>
+
       <div
-        v-for="(item, index) in paginatedAssets"
-        :key="`post-${item.id}`"
-        class="vdb-c-col-span-12 sm:vdb-c-col-span-6"
-        :class="[
-          columns >= 4
-            ? 'md:vdb-c-col-span-4 lg:vdb-c-col-span-3'
-            : columns >= 3
-              ? 'md:vdb-c-col-span-4 lg:vdb-c-col-span-4'
-              : columns >= 2
-                ? 'md:vdb-c-col-span-6 lg:vdb-c-col-span-6'
-                : '',
-        ]"
+        v-else
+        class="vdb-c-col-span-12 vdb-c-text-center vdb-c-text-kilvish-700"
       >
-        <video-card
-          v-if="item.type !== 'audio' && item.type !== 'image'"
-          :item="item"
-          :border-b="true"
-          :index="index"
-          border-class="sm:vdb-c-hidden"
-          @video-click="$emit('video-click', $event)"
-          @delete-video="$emit('delete-video', $event)"
-        />
-
-        <AudioCard
-          v-else-if="item.type === 'audio'"
-          :item="item"
-          :index="index"
-          :get-audio-url="getAudioUrl"
-          @delete-audio="$emit('delete-audio', $event)"
-        />
-
-        <ImageCard
-          v-else-if="item.type === 'image'"
-          :item="item"
-          :index="index"
-          :get-image-url="getImageUrl"
-          @delete-image="$emit('delete-image', $event)"
-        />
+        No videos to show
       </div>
     </div>
 

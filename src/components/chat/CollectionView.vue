@@ -58,6 +58,12 @@
             </span>
           </div>
         </li>
+        <li
+          v-if="filteredAssets.length === 0"
+          class="vdb-c-bg-white vdb-c-py-4 vdb-c-text-center vdb-c-text-sm vdb-c-text-kilvish-700"
+        >
+          No media matches your query
+        </li>
       </ul>
     </div>
     <div ref="mediaTypeContainer" class="vdb-c-relative">
@@ -91,7 +97,7 @@
   <div class="vdb-c-mx-auto vdb-c-w-11/12 vdb-c-pb-4 vdb-c-pt-28">
     <div v-if="collectionVideos !== null">
       <VideoList
-        v-if="videos.length > 0"
+        v-if="videos.length > 0 || audios.length > 0 || images.length > 0"
         :asset-results="filteredAssets"
         :get-image-url="getImageUrl"
         :get-audio-url="getAudioUrl"
