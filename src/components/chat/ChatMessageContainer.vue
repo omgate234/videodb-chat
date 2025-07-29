@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="vdb-c-relative vdb-c-h-auto vdb-c-w-full"
-  >
+  <div class="vdb-c-relative vdb-c-h-auto vdb-c-w-full">
     <div
       v-for="(message, i) in messages"
       :key="message.msg_id"
@@ -15,6 +13,7 @@
         :current-index="i"
         :message-loading="messageLoading"
         :search-term="searchTerm"
+        :handle-send-chat-message="handleSendChatMessage"
       />
     </div>
   </div>
@@ -40,6 +39,10 @@ const props = defineProps({
   searchTerm: {
     type: String,
     default: "",
+  },
+  handleSendChatMessage: {
+    type: Function,
+    required: true,
   },
 });
 

@@ -572,6 +572,24 @@ export function useVideoDBAgent(config) {
     }
   };
 
+  const sendChatMessage = async (sessionId, messageId, text) => {
+    const response = await fetch(
+      `${httpUrl}/session/${sessionId}/message/${messageId}/rtstream_chat`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      },
+    );
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    }
+    return null;
+  };
+
   socket.on("connect", () => {
     if (debug) console.log("debug :videodb-chat socket emmited connect");
     session.isConnected = true;
@@ -638,5 +656,6 @@ export function useVideoDBAgent(config) {
     uploadMedia,
     generateImageUrl,
     generateAudioUrl,
+    sendChatMessage,
   };
 }

@@ -48,6 +48,7 @@
               :search-term="searchTerm"
               :conv-id="message.conv_id"
               :msg-id="message.msg_id"
+              @send-chat-message="chatMessageHandler"
             />
           </div>
         </div>
@@ -97,6 +98,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  handleSendChatMessage: {
+    type: Function,
+    required: true,
+  },
 });
 
 const { messageHandlers } = useVideoDBChat();
@@ -114,6 +119,10 @@ const finalStatus = computed(() => {
   );
   return assistantContent?.status || props.message.status;
 });
+
+function chatMessageHandler(text) {
+  props.handleSendChatMessage(props.message.msg_id, text);
+}
 </script>
 
 <style>

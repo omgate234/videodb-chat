@@ -336,6 +336,7 @@ import ChatVideo from "../message-handlers/ChatVideo.vue";
 import ChatVideos from "../message-handlers/ChatVideos.vue";
 import ImageHandler from "../message-handlers/ImageHandler.vue";
 import TextResponse from "../message-handlers/TextResponse.vue";
+import RTStreamHandler from "../message-handlers/RTStreamHandler.vue";
 
 import CheckIcon from "../icons/Check.vue";
 import CollectionIcon from "../icons/Collection.vue";
@@ -466,7 +467,17 @@ const {
   deleteVideo,
   deleteAudio,
   deleteImage,
+  sendChatMessage,
 } = useChatHook(props.chatHookConfig);
+
+const handleSendChatMessage = async (text) => {
+  const response = await sendChatMessage(
+    sessionId.value,
+    messageId.value,
+    text,
+  );
+  return response;
+};
 
 const {
   chatInput,
@@ -517,12 +528,13 @@ registerMessageHandler("videos", ChatVideos);
 registerMessageHandler("text", TextResponse);
 registerMessageHandler("search_results", ChatSearchResults);
 registerMessageHandler("image", ImageHandler);
+registerMessageHandler("rtstream", RTStreamHandler);
 
 const isStaticPage = ref(false);
 const chatWindowRef = ref(null);
 const headerRef = ref(null);
 const headerHeight = ref(0);
-const headerObserver = ref(null); // ResizeObserver
+const headerObserver = ref(null);
 const showDeleteVideoDialog = ref(false);
 const videoToDelete = ref(null);
 const showDeleteAudioDialog = ref(false);
