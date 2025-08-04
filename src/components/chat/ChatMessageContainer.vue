@@ -14,6 +14,7 @@
         :message-loading="messageLoading"
         :search-term="searchTerm"
         :handle-send-chat-message="handleSendChatMessage"
+        :session-id="sessionId"
       />
     </div>
   </div>
@@ -42,6 +43,10 @@ const props = defineProps({
   },
   handleSendChatMessage: {
     type: Function,
+    required: true,
+  },
+  sessionId: {
+    type: String,
     required: true,
   },
 });

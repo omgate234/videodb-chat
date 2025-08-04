@@ -48,7 +48,8 @@
               :search-term="searchTerm"
               :conv-id="message.conv_id"
               :msg-id="message.msg_id"
-              @send-chat-message="chatMessageHandler"
+              :session-id="sessionId"
+              @send-chat-message="handleSendChatMessage"
             />
           </div>
         </div>
@@ -102,6 +103,10 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  sessionId: {
+    type: String,
+    required: true,
+  },
 });
 
 const { messageHandlers } = useVideoDBChat();
@@ -122,6 +127,16 @@ const finalStatus = computed(() => {
 
 function chatMessageHandler(text) {
   props.handleSendChatMessage(props.message.msg_id, text);
+}
+
+function handleSendChatMessage(data) {
+  // Handle both string and object formats
+  if (typeof data === "string") {
+    console.log("data", data);
+    props.handleSendChatMessage(props.message.msg_id, data);
+  } else if (data && typeof data === "object" && data.text) {
+    props.handleSendChatMessage(props.message.msg_id, data.text);
+  }
 }
 </script>
 

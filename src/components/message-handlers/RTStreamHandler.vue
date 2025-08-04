@@ -37,7 +37,7 @@
       </div>
       <div v-else-if="activeTab === 'Chat'" class="rtstream-column">
         <h3>Chat</h3>
-        <div class="rtstream-list chat-list">
+        <div class="rtstream-list chat-list vdb-c-text-black">
           <div
             v-for="(msg, idx) in content.chat"
             :key="'c-' + idx"
@@ -52,12 +52,12 @@
         <form class="chat-input-row" @submit.prevent="handleSend">
           <input
             v-model="chatInput"
-            class="chat-input"
+            class="chat-input vdb-c-text-black"
             type="text"
             placeholder="Type your message..."
           />
           <button
-            class="chat-submit"
+            class="chat-submit vdb-c-text-black"
             type="submit"
             :disabled="!chatInput.trim()"
           >
@@ -101,12 +101,7 @@ const chatInput = ref("");
 function handleSend() {
   const text = chatInput.value.trim();
   if (!text) return;
-  emit("send-chat-message", {
-    text,
-    convId: props.convId,
-    msgId: props.msgId,
-    sessionId: props.sessionId,
-  });
+  emit("send-chat-message", text);
   chatInput.value = "";
 }
 </script>

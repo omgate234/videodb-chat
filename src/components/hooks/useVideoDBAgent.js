@@ -574,7 +574,7 @@ export function useVideoDBAgent(config) {
 
   const sendChatMessage = async (sessionId, messageId, text) => {
     const response = await fetch(
-      `${httpUrl}/session/${sessionId}/message/${messageId}/rtstream_chat`,
+      `${httpUrl}/session/message/${messageId}/rtstream_chat`,
       {
         method: "POST",
         headers: {

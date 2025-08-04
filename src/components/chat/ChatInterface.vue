@@ -168,6 +168,8 @@
                 :search-term="chatInput"
                 :is-static-page="isStaticPage"
                 :is-last-conv="i === Object.keys(conversations).length - 1"
+                :session-id="sessionId"
+                :handle-send-chat-message="handleSendChatMessage"
                 class="vdb-c-px-30 vdb-c-transition-all vdb-c-duration-300 vdb-c-ease-in-out md:vdb-c-px-60"
                 :class="{
                   'last-conv-height':
@@ -470,12 +472,8 @@ const {
   sendChatMessage,
 } = useChatHook(props.chatHookConfig);
 
-const handleSendChatMessage = async (text) => {
-  const response = await sendChatMessage(
-    sessionId.value,
-    messageId.value,
-    text,
-  );
+const handleSendChatMessage = async (messageId, text) => {
+  const response = await sendChatMessage(sessionId.value, messageId, text);
   return response;
 };
 
