@@ -161,7 +161,10 @@
             />
             <button
               type="submit"
-              :disabled="!chatInput.trim()"
+              :disabled="
+                !chatInput.trim() ||
+                localChat[localChat.length - 1].role === 'user'
+              "
               class="vdb-c-grid vdb-c-h-32 vdb-c-w-32 vdb-c-place-items-center vdb-c-rounded-full vdb-c-bg-[#333333] vdb-c-text-white hover:vdb-c-opacity-90 disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50"
               aria-label="Send message"
               title="Send"
