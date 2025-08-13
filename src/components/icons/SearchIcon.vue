@@ -6,6 +6,7 @@
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     :class="className"
+    :style="{ color }"
   >
     <path
       fill-rule="evenodd"
@@ -26,14 +27,10 @@
 export default {
   name: "SearchIcon",
   props: {
-    className: {
-      type: String,
-      default: "",
-    },
-    fill: {
-      type: String,
-      default: "#FFF5EC",
-    },
+    className: { type: String, default: "" },
+    color: { type: String, default: "#000000" },
+    // Deprecated, kept for backward compatibility
+    fill: { type: String, default: "#FFF5EC" },
   },
 };
 </script>
