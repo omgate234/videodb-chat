@@ -8,7 +8,7 @@
       <!-- Dynamic thumbnail rendering -->
       <img
         v-for="(thumbnail, index) in relevantThumbnails"
-        :key="thumbnail.timestamp"
+        :key="`${thumbnail.timestamp}-${index}`"
         :src="thumbnail.thumbnail_url"
         :alt="`Frame at ${thumbnail.timestamp}s`"
         class="vdb-c-absolute vdb-c-h-full vdb-c-object-cover"
@@ -21,7 +21,9 @@
 
       <!-- Non-selected area (left side) -->
       <div
+        id="left-side"
         class="vdb-c-absolute vdb-c-top-0 vdb-c-h-full"
+        :class="startLeft"
         :style="{
           left: '0',
           width: `${startLeft}px`,
@@ -32,7 +34,9 @@
 
       <!-- Non-selected area (right side) -->
       <div
+        id="right-side"
         class="vdb-c-absolute vdb-c-top-0 vdb-c-h-full"
+        :class="endLeft"
         :style="{
           left: `${endLeft}px`,
           right: '0',
@@ -44,12 +48,14 @@
       <!-- Start handle -->
       <div
         class="vdb-c-absolute vdb-c-top-0 vdb-c-flex vdb-c-h-full vdb-c-w-24 vdb-c-cursor-ew-resize vdb-c-items-center vdb-c-justify-center vdb-c-transition-colors"
+        id="start-handle"
+        :class="startLeft"
         :style="{
           left: `${startLeft}px`,
           width: '24px',
           borderRadius: '20px 0 0 20px',
           backgroundColor: '#EC5B16',
-          zIndex: 200,
+          zIndex: 0,
         }"
         @mousedown="(e) => handleMouseDown(e, true)"
       >
@@ -59,12 +65,14 @@
       <!-- End handle -->
       <div
         class="vdb-c-absolute vdb-c-top-0 vdb-c-flex vdb-c-h-full vdb-c-w-24 vdb-c-cursor-ew-resize vdb-c-items-center vdb-c-justify-center vdb-c-transition-colors"
+        id="end-handle"
+        :class="endLeft"
         :style="{
           left: `${endLeft}px`,
           width: '24px',
           borderRadius: '0 20px 20px 0',
           backgroundColor: '#EC5B16',
-          zIndex: 200,
+          zIndex: 0,
         }"
         @mousedown="(e) => handleMouseDown(e, false)"
       >
@@ -73,27 +81,31 @@
 
       <!-- Top horizontal bar -->
       <div
+        id="top-bar"
         class="vdb-c-absolute"
+        :class="startLeft"
         :style="{
           left: `${startLeft + 24}px`,
           right: `${560 - endLeft}px`,
           top: '0',
           height: '10px',
           backgroundColor: '#EC5B16',
-          zIndex: 200,
+          zIndex: 0,
         }"
       ></div>
 
       <!-- Bottom horizontal bar -->
       <div
+        id="bottom-bar"
         class="vdb-c-absolute"
+        :class="startLeft"
         :style="{
           left: `${startLeft + 24}px`,
           right: `${560 - endLeft}px`,
           bottom: '0',
           height: '10px',
           backgroundColor: '#EC5B16',
-          zIndex: 200,
+          zIndex: 0,
         }"
       ></div>
 
@@ -192,6 +204,7 @@ export default {
     onMinTimeChange: { type: Function, default: null },
     onMaxTimeChange: { type: Function, default: null },
     maxExtension: { type: Number, default: 60 },
+    streamUrl: { type: String, default: "" },
   },
   data() {
     return {
@@ -201,10 +214,23 @@ export default {
       showEndTooltip: false,
       handleWidth: 24, // w-6 = 24px
       containerWidth: 560, // w-[560px]
+      hasLoggedInitialState: false,
     };
   },
   created() {
-    console.log("VideoTrimmer: thumbnails (created)", this.thumbnails);
+    console.log("VideoTrimmer: RECEIVED props on create", {
+      streamUrl: this.streamUrl,
+      start: this.start,
+      end: this.end,
+      minTime: this.minTime,
+      maxTime: this.maxTime,
+      thumbnails: this.thumbnails,
+    });
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.tryLogInitialState();
+    });
   },
   computed: {
     availableWidth() {
@@ -212,16 +238,20 @@ export default {
     },
     // Convert time values to percentage positions (0-100)
     startPercent() {
+      if (this.maxTime === this.minTime) return 0;
       return this.timeToPercent(this.start);
     },
     endPercent() {
+      if (this.maxTime === this.minTime) return 0;
       return this.timeToPercent(this.end);
     },
     // Convert time values to pixel positions
     startLeft() {
+      if (!isFinite(this.startPercent)) return 0;
       return (this.startPercent / 100) * this.availableWidth;
     },
     endLeft() {
+      if (!isFinite(this.endPercent)) return this.handleWidth;
       return Math.min(
         (this.endPercent / 100) * this.availableWidth + this.handleWidth,
         this.containerWidth - this.handleWidth,
@@ -229,27 +259,28 @@ export default {
     },
     // Calculate thumbnail positioning for dynamic display
     sortedThumbnails() {
-      console.log(
-        "sortedThumbnails",
-        [...this.thumbnails].sort((a, b) => a.timestamp - b.timestamp),
+      const sorted = [...this.thumbnails].sort(
+        (a, b) => a.timestamp - b.timestamp,
       );
-      return [...this.thumbnails].sort((a, b) => a.timestamp - b.timestamp);
+      console.log("VideoTrimmer: sortedThumbnails", {
+        streamUrl: this.streamUrl,
+        sorted,
+      });
+      return sorted;
     },
     // Filter thumbnails that are within the current range (minTime to maxTime)
     relevantThumbnails() {
-      console.log(
-        "relevantThumbnails",
-        this.sortedThumbnails.filter(
-          (thumbnail) =>
-            thumbnail.timestamp >= this.minTime &&
-            thumbnail.timestamp <= this.maxTime,
-        ),
-      );
-      return this.sortedThumbnails.filter(
-        (thumbnail) =>
+      const relevant = this.sortedThumbnails.filter((thumbnail) => {
+        return (
           thumbnail.timestamp >= this.minTime &&
-          thumbnail.timestamp <= this.maxTime,
-      );
+          thumbnail.timestamp <= this.maxTime
+        );
+      });
+      console.log("VideoTrimmer: relevantThumbnails", {
+        streamUrl: this.streamUrl,
+        relevant,
+      });
+      return relevant;
     },
     // Calculate dynamic thumbnail width based on number of thumbnails
     thumbnailWidth() {
@@ -258,16 +289,49 @@ export default {
         : this.containerWidth / 3;
     },
   },
-  watch: {
-    thumbnails: {
-      deep: true,
-      immediate: false,
-      handler(newVal) {
-        console.log("VideoTrimmer: thumbnails (watch)", newVal);
-      },
-    },
-  },
   methods: {
+    buildStateSnapshot() {
+      const container = this.$refs.containerRef;
+      const rect = container ? container.getBoundingClientRect() : null;
+      return {
+        streamUrl: this.streamUrl,
+        props: {
+          start: this.start,
+          end: this.end,
+          minTime: this.minTime,
+          maxTime: this.maxTime,
+          maxExtension: this.maxExtension,
+          hasOnStartChange: Boolean(this.onStartChange),
+          hasOnEndChange: Boolean(this.onEndChange),
+          hasOnMinTimeChange: Boolean(this.onMinTimeChange),
+          hasOnMaxTimeChange: Boolean(this.onMaxTimeChange),
+        },
+        dimensions: {
+          configuredContainerWidth: this.containerWidth,
+          measuredContainerWidth: rect ? rect.width : null,
+          handleWidth: this.handleWidth,
+          availableWidth: this.availableWidth,
+        },
+        times: {
+          start: this.start,
+          end: this.end,
+          minTime: this.minTime,
+          maxTime: this.maxTime,
+          startPercent: this.startPercent,
+          endPercent: this.endPercent,
+        },
+        handles: {
+          startLeft: this.startLeft,
+          endLeft: this.endLeft,
+        },
+        thumbnails: {
+          total: this.thumbnails.length,
+          sortedThumbnails: this.sortedThumbnails,
+          relevantThumbnails: this.relevantThumbnails,
+          thumbnailWidth: this.thumbnailWidth,
+        },
+      };
+    },
     formatTime(seconds) {
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
@@ -277,10 +341,13 @@ export default {
         .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     },
     timeToPercent(time) {
+      if (this.maxTime === this.minTime) return 0;
       return ((time - this.minTime) / (this.maxTime - this.minTime)) * 100;
     },
     percentToTime(percent) {
-      return this.minTime + (percent / 100) * (this.maxTime - this.minTime);
+      return (
+        this.minTime + (percent / 100) * (this.maxTime - this.minTime || 1)
+      );
     },
     handleMouseDown(e, isStart) {
       e.preventDefault();
@@ -387,8 +454,38 @@ export default {
         document.removeEventListener("mouseup", this.handleMouseUp);
       }
     },
+    logInitialState() {
+      const snapshot = this.buildStateSnapshot();
+      console.log("VideoTrimmer: initial state", snapshot);
+      this.hasLoggedInitialState = true;
+    },
+    logVariables() {
+      const snapshot = this.buildStateSnapshot();
+      console.log("VideoTrimmer: variables", snapshot);
+    },
+    tryLogInitialState() {
+      if (this.hasLoggedInitialState) return;
+      const containerReady = Boolean(this.$refs.containerRef);
+      if (containerReady) {
+        // If thumbnails are already present, log now; otherwise log anyway so we capture initial state
+        this.logInitialState();
+      }
+    },
   },
   watch: {
+    thumbnails: {
+      deep: true,
+      immediate: false,
+      handler(newVal) {
+        console.log("VideoTrimmer: thumbnails (watch)", {
+          streamUrl: this.streamUrl,
+          thumbnails: newVal,
+        });
+        if (!this.hasLoggedInitialState && newVal && newVal.length > 0) {
+          this.tryLogInitialState();
+        }
+      },
+    },
     isDraggingStart() {
       this.updateDocumentListeners();
     },

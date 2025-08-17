@@ -4,7 +4,7 @@
     <div class="vdb-c-grid vdb-c-grid-cols-12 vdb-c-gap-20">
       <div
         v-for="(item, index) in paginatedAssets"
-        :key="`post-${item.id}`"
+        :key="`post-${item.id}-${item.stream_url || index}`"
         class="vdb-c-col-span-12 sm:vdb-c-col-span-6"
         :class="[
           columns >= 4
