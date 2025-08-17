@@ -12,7 +12,7 @@
         v-if="content.status === 'success' && content.video?.stream_url"
         :class="
           hasEditor
-            ? 'vdb-c-w-full vdb-c-rounded-20 vdb-c-bg-kilvish-200 vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#E5E7EB]'
+            ? 'vdb-c-w-fit vdb-c-rounded-20 vdb-c-bg-kilvish-200 vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#E5E7EB]'
             : 'vdb-c-w-full vdb-c-py-6'
         "
       >
@@ -72,18 +72,11 @@
                 </div>
               </template>
             </VideoDBPlayer>
-            <!-- Display stream URL -->
-            <div
-              class="vdb-c-mt-6 vdb-c-break-all vdb-c-text-xs vdb-c-text-red-900"
-            >
-              {{ content.video.stream_url }}
-            </div>
           </div>
 
           <!-- RIGHT: editor slider -->
           <div class="vdb-c-relative vdb-c-w-fit" v-if="hasEditor">
             <VideoTrimmer
-              ref="trimmerRef"
               :start="localStart"
               :end="localEnd"
               :minTime="minTime"
@@ -95,12 +88,6 @@
               :onMaxTimeChange="handleMaxTimeChange"
               :stream-url="content.video.stream_url"
             />
-            <button
-              class="vdb-c-absolute vdb-c-right-[-6px] vdb-c-top-[-6px] vdb-c-rounded vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-6 vdb-c-py-2 vdb-c-text-[10px] vdb-c-leading-none hover:vdb-c-bg-pam"
-              @click="trimmerRef?.value?.logVariables?.()"
-            >
-              Log
-            </button>
           </div>
           <div
             v-if="hasEditor"
@@ -114,8 +101,6 @@
                     ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
                     : '',
                 ]"
-                :disabled="content.status === 'progress'"
-                @click="handleFindSimilar"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -186,7 +171,14 @@
             </div>
             <div class="vdb-c-group vdb-c-relative">
               <button
-                class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam"
+                :disabled="content.status === 'progress'"
+                @click="handleFindSimilar"
+                :class="[
+                  'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam',
+                  content.status === 'progress'
+                    ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                    : '',
+                ]"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -292,35 +284,7 @@ const props = defineProps({
   isLastConv: { type: Boolean, default: false },
 });
 
-// Log thumbnails on mount and whenever they change
-watch(
-  () => props.content?.video?.thumbnail_data,
-  (thumbnails) => {
-    const streamUrl = props.content?.video?.stream_url ?? "";
-    const startTime = props.content?.video?.start ?? 0;
-    const endTime = props.content?.video?.end ?? 0;
-    const sorted = Array.isArray(thumbnails)
-      ? [...thumbnails].sort((a, b) => a.timestamp - b.timestamp)
-      : [];
-    const relevant = sorted.filter(
-      (t) => t.timestamp >= startTime && t.timestamp <= endTime,
-    );
-    console.log("ChatVideo: streamUrl", streamUrl);
-    console.log("ChatVideo: sortedThumbnails", sorted);
-    console.log("ChatVideo: relevantThumbnails", relevant);
-    // Ensure valid domain for trimmer
-  },
-  { immediate: true },
-);
-
-// Log full content received by ChatVideo
-watch(
-  () => props.content,
-  (val) => {
-    console.log("ChatVideo: RECEIVED content", val);
-  },
-  { immediate: true },
-);
+// Removed logging watchers
 
 const isFullScreen = ref(false);
 const handleFullScreenChange = async () => {
@@ -368,20 +332,7 @@ const handleMaxTimeChange = (newMaxTime) => {
   maxTime.value = newMaxTime;
 };
 
-// Log the exact data being sent to VideoTrimmer (placed after refs are defined)
-watch(
-  () => ({
-    start: localStart.value,
-    end: localEnd.value,
-    minTime: minTime.value,
-    maxTime: maxTime.value,
-    streamUrl: props.content?.video?.stream_url ?? null,
-  }),
-  (payload) => {
-    console.log("ChatVideo: sending to VideoTrimmer", payload);
-  },
-  { immediate: true, deep: true },
-);
+// Removed logging watcher that observed trimmer payload
 
 watch(
   () => ({
@@ -401,14 +352,11 @@ watch(
   { immediate: true },
 );
 // Send "Find Similar Content" message
-const { addMessage, loadSession } = useVideoDBChat();
-const trimmerRef = ref(null);
+const { addMessage } = useVideoDBChat();
 const handleFindSimilar = () => {
   if (props.content?.status === "progress") return;
   const video = props.content?.video || {};
   const name = video?.name || "this";
-  // Ensure session exists
-  loadSession?.();
   addMessage?.({
     content: [
       {

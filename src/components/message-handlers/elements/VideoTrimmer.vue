@@ -214,22 +214,11 @@ export default {
       showEndTooltip: false,
       handleWidth: 24, // w-6 = 24px
       containerWidth: 560, // w-[560px]
-      hasLoggedInitialState: false,
     };
-  },
-  created() {
-    console.log("VideoTrimmer: RECEIVED props on create", {
-      streamUrl: this.streamUrl,
-      start: this.start,
-      end: this.end,
-      minTime: this.minTime,
-      maxTime: this.maxTime,
-      thumbnails: this.thumbnails,
-    });
   },
   mounted() {
     this.$nextTick(() => {
-      this.tryLogInitialState();
+      this.updateDocumentListeners();
     });
   },
   computed: {
@@ -262,10 +251,6 @@ export default {
       const sorted = [...this.thumbnails].sort(
         (a, b) => a.timestamp - b.timestamp,
       );
-      console.log("VideoTrimmer: sortedThumbnails", {
-        streamUrl: this.streamUrl,
-        sorted,
-      });
       return sorted;
     },
     // Filter thumbnails that are within the current range (minTime to maxTime)
@@ -275,10 +260,6 @@ export default {
           thumbnail.timestamp >= this.minTime &&
           thumbnail.timestamp <= this.maxTime
         );
-      });
-      console.log("VideoTrimmer: relevantThumbnails", {
-        streamUrl: this.streamUrl,
-        relevant,
       });
       return relevant;
     },
@@ -454,38 +435,8 @@ export default {
         document.removeEventListener("mouseup", this.handleMouseUp);
       }
     },
-    logInitialState() {
-      const snapshot = this.buildStateSnapshot();
-      console.log("VideoTrimmer: initial state", snapshot);
-      this.hasLoggedInitialState = true;
-    },
-    logVariables() {
-      const snapshot = this.buildStateSnapshot();
-      console.log("VideoTrimmer: variables", snapshot);
-    },
-    tryLogInitialState() {
-      if (this.hasLoggedInitialState) return;
-      const containerReady = Boolean(this.$refs.containerRef);
-      if (containerReady) {
-        // If thumbnails are already present, log now; otherwise log anyway so we capture initial state
-        this.logInitialState();
-      }
-    },
   },
   watch: {
-    thumbnails: {
-      deep: true,
-      immediate: false,
-      handler(newVal) {
-        console.log("VideoTrimmer: thumbnails (watch)", {
-          streamUrl: this.streamUrl,
-          thumbnails: newVal,
-        });
-        if (!this.hasLoggedInitialState && newVal && newVal.length > 0) {
-          this.tryLogInitialState();
-        }
-      },
-    },
     isDraggingStart() {
       this.updateDocumentListeners();
     },
