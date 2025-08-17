@@ -31,7 +31,7 @@
               isFullScreen
                 ? 'vdb-c-fixed vdb-c-inset-0 vdb-c-z-50 vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-overflow-y-hidden vdb-c-bg-black-64'
                 : hasEditor
-                  ? 'vdb-c-h-[170px] vdb-c-w-full vdb-c-max-w-[300px] vdb-c-overflow-hidden vdb-c-rounded-20'
+                  ? 'vdb-c-h-[170px] vdb-c-w-[300px] vdb-c-max-w-[300px] vdb-c-overflow-hidden vdb-c-rounded-20'
                   : 'vdb-c-w-full'
             "
           >
@@ -40,7 +40,7 @@
                 isFullScreen
                   ? 'vdb-c-h-screen vdb-c-w-screen'
                   : hasEditor
-                    ? 'vdb-c-h-[170px] vdb-c-w-full'
+                    ? 'vdb-c-h-[170px] vdb-c-w-[300px] vdb-c-max-w-[300px]'
                     : 'vdb-c-w-full'
               "
               :stream-url="content.video.stream_url"
