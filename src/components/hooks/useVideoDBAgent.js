@@ -137,6 +137,37 @@ export function useVideoDBAgent(config) {
     return res;
   };
 
+  const generateVideoStream = async (
+    collectionId,
+    videoId,
+    startTime,
+    endTime,
+  ) => {
+    const res = {};
+    try {
+      const startSec = Math.floor(Number(startTime));
+      const endSec = Math.floor(Number(endTime));
+      const params = new URLSearchParams({
+        start_time: String(startSec),
+        end_time: String(endSec),
+      });
+      const response = await fetch(
+        `${httpUrl}/videodb/collection/${collectionId}/video/${videoId}/generate_stream?${params.toString()}`,
+      );
+      const data = await response.json();
+      if (!response.ok || data?.success !== true) {
+        const message = data?.message || "Failed to generate video stream URL";
+        throw new Error(message);
+      }
+      res.status = "success";
+      res.data = data;
+    } catch (error) {
+      res.status = "error";
+      res.error = error;
+    }
+    return res;
+  };
+
   const refetchCollectionVideos = async () => {
     fetchCollectionVideos(session.collectionId).then((res) => {
       activeCollectionVideos.value = res.data;
@@ -638,5 +669,6 @@ export function useVideoDBAgent(config) {
     uploadMedia,
     generateImageUrl,
     generateAudioUrl,
+    generateVideoStream,
   };
 }

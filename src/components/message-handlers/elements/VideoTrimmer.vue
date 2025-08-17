@@ -205,6 +205,8 @@ export default {
     onMaxTimeChange: { type: Function, default: null },
     maxExtension: { type: Number, default: 60 },
     streamUrl: { type: String, default: "" },
+    // Absolute video length hard cap. If provided, right extension will not exceed this.
+    videoLength: { type: Number, default: null },
   },
   data() {
     return {
@@ -399,7 +401,15 @@ export default {
 
           // Safeguard: prevent maxTime from exceeding (original maxTime + maxExtension)
           const maxAllowedTime = this.maxTime + this.maxExtension;
-          const newMaxTime = Math.min(maxAllowedTime, newEndTime);
+          let newMaxTime = Math.min(maxAllowedTime, newEndTime);
+
+          // Absolute cap: do not extend beyond full video length if provided
+          if (
+            typeof this.videoLength === "number" &&
+            isFinite(this.videoLength)
+          ) {
+            newMaxTime = Math.min(newMaxTime, this.videoLength);
+          }
           if (this.onMaxTimeChange) this.onMaxTimeChange(newMaxTime);
 
           // Use the constrained value for end time

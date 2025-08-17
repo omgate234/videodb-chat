@@ -43,10 +43,10 @@
                     ? 'vdb-c-h-[170px] vdb-c-w-[300px] vdb-c-max-w-[300px]'
                     : 'vdb-c-w-full'
               "
-              :stream-url="content.video.stream_url"
+              :stream-url="localStreamUrl"
               :default-controls="false"
               :default-overlay="false"
-              :key="content.video?.stream_url"
+              :key="localStreamUrl"
               @fullScreenChange="handleFullScreenChange"
             >
               <template #overlay>
@@ -57,7 +57,7 @@
               <template v-if="!hasEditor" #controls>
                 <div class="vdb-c-p-20 vdb-c-pt-0">
                   <div class="vdb-c-mb-12">
-                    <ProgressBar :stream-url="content.video.stream_url" />
+                    <ProgressBar :stream-url="localStreamUrl" />
                   </div>
                   <div class="vdb-c-flex vdb-c-w-full vdb-c-justify-between">
                     <div
@@ -76,6 +76,27 @@
 
           <!-- RIGHT: editor slider -->
           <div class="vdb-c-relative vdb-c-w-fit" v-if="hasEditor">
+            <button
+              @click="handleResetTrim"
+              class="vdb-c-shadow-sm vdb-c-absolute -vdb-c-right-8 -vdb-c-top-8 vdb-c-z-10 vdb-c-flex vdb-c-h-24 vdb-c-w-24 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-text-[#242424] hover:vdb-c-bg-pam hover:vdb-c-text-white"
+              aria-label="Reset clip"
+              title="Reset clip"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 15 15"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1.84998 7.49998C1.84998 4.66458 4.05979 1.84998 7.49998 1.84998C10.2783 1.84998 11.6515 3.9064 12.2367 5H10.5C10.2239 5 10 5.22386 10 5.5C10 5.77614 10.2239 6 10.5 6H13.5C13.7761 6 14 5.77614 14 5.5V2.5C14 2.22386 13.7761 2 13.5 2C13.2239 2 13 2.22386 13 2.5V4.31318C12.2955 3.07126 10.6659 0.849976 7.49998 0.849976C3.43716 0.849976 0.849976 4.18537 0.849976 7.49998C0.849976 10.8146 3.43716 14.15 7.49998 14.15C9.44382 14.15 11.0622 13.3808 12.2145 12.2084C12.8315 11.5806 13.3133 10.839 13.6418 10.0407C13.7469 9.78536 13.6251 9.49315 13.3698 9.38806C13.1144 9.28296 12.8222 9.40478 12.7171 9.66014C12.4363 10.3425 12.0251 10.9745 11.5013 11.5074C10.5295 12.4963 9.16504 13.15 7.49998 13.15C4.05979 13.15 1.84998 10.3354 1.84998 7.49998Z"
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                ></path>
+              </svg>
+            </button>
             <VideoTrimmer
               :start="localStart"
               :end="localEnd"
@@ -87,6 +108,7 @@
               :onMinTimeChange="handleMinTimeChange"
               :onMaxTimeChange="handleMaxTimeChange"
               :stream-url="content.video.stream_url"
+              :video-length="content.video.length"
             />
           </div>
           <div
@@ -317,6 +339,7 @@ const minTime = ref(props.content?.video?.start ?? 0);
 const maxTime = ref(props.content?.video?.end ?? 0);
 const localStart = ref(minTime.value);
 const localEnd = ref(maxTime.value);
+const localStreamUrl = ref(props.content?.video?.stream_url || "");
 
 // callbacks consumed by VideoTrimmer
 const handleStartChange = (start) => {
@@ -348,11 +371,48 @@ watch(
       localStart.value = start;
       localEnd.value = end;
     }
+    localStreamUrl.value = props.content?.video?.stream_url || "";
   },
   { immediate: true },
 );
-// Send "Find Similar Content" message
-const { addMessage } = useVideoDBChat();
+// API from context and Send "Find Similar Content" message
+const { addMessage, generateVideoStream, activeCollectionData } =
+  useVideoDBChat();
+
+// Debounced refresh of stream URL when trimmed range changes
+let debounceTimer = null;
+watch(
+  () => [localStart.value, localEnd.value],
+  async ([start, end]) => {
+    if (!hasEditor.value) return;
+    const video = props.content?.video;
+    const collectionId = activeCollectionData?.value?.id;
+    if (!video?.id || !collectionId) return;
+    if (typeof start !== "number" || typeof end !== "number") return;
+    if (start >= end) return;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      const res = await generateVideoStream(collectionId, video.id, start, end);
+      if (res?.status === "success" && res?.data?.stream_url) {
+        localStreamUrl.value = res.data.stream_url;
+      }
+    }, 400);
+  },
+);
+// Reset trim and stream url to original values
+const handleResetTrim = () => {
+  const v = props.content?.video || {};
+  if (typeof v.start === "number" && typeof v.end === "number") {
+    minTime.value = v.start;
+    maxTime.value = v.end;
+    localStart.value = v.start;
+    localEnd.value = v.end;
+  }
+  if (v.stream_url) {
+    localStreamUrl.value = v.stream_url;
+  }
+};
 const handleFindSimilar = () => {
   if (props.content?.status === "progress") return;
   const video = props.content?.video || {};
