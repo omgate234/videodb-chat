@@ -23,7 +23,6 @@
       <div
         id="left-side"
         class="vdb-c-absolute vdb-c-top-0 vdb-c-h-full"
-        :class="startLeft"
         :style="{
           left: '0',
           width: `${startLeft}px`,
@@ -36,7 +35,6 @@
       <div
         id="right-side"
         class="vdb-c-absolute vdb-c-top-0 vdb-c-h-full"
-        :class="endLeft"
         :style="{
           left: `${endLeft}px`,
           right: '0',
@@ -49,7 +47,6 @@
       <div
         class="vdb-c-absolute vdb-c-top-0 vdb-c-flex vdb-c-h-full vdb-c-w-24 vdb-c-cursor-ew-resize vdb-c-items-center vdb-c-justify-center vdb-c-transition-colors"
         id="start-handle"
-        :class="startLeft"
         :style="{
           left: `${startLeft}px`,
           width: '24px',
@@ -66,7 +63,6 @@
       <div
         class="vdb-c-absolute vdb-c-top-0 vdb-c-flex vdb-c-h-full vdb-c-w-24 vdb-c-cursor-ew-resize vdb-c-items-center vdb-c-justify-center vdb-c-transition-colors"
         id="end-handle"
-        :class="endLeft"
         :style="{
           left: `${endLeft}px`,
           width: '24px',
@@ -82,8 +78,7 @@
       <!-- Top horizontal bar -->
       <div
         id="top-bar"
-        class="vdb-c-absolute"
-        :class="startLeft"
+        class="vdb-c-absolute vdb-c-cursor-grab"
         :style="{
           left: `${startLeft + 24}px`,
           right: `${560 - endLeft}px`,
@@ -92,13 +87,13 @@
           backgroundColor: '#EC5B16',
           zIndex: 0,
         }"
+        @mousedown="(e) => handleBlockMouseDown(e)"
       ></div>
 
       <!-- Bottom horizontal bar -->
       <div
         id="bottom-bar"
-        class="vdb-c-absolute"
-        :class="startLeft"
+        class="vdb-c-absolute vdb-c-cursor-grab"
         :style="{
           left: `${startLeft + 24}px`,
           right: `${560 - endLeft}px`,
@@ -107,6 +102,7 @@
           backgroundColor: '#EC5B16',
           zIndex: 0,
         }"
+        @mousedown="(e) => handleBlockMouseDown(e)"
       ></div>
 
       <!-- Inside corner arcs - Top Left -->
@@ -212,6 +208,8 @@ export default {
     return {
       isDraggingStart: false,
       isDraggingEnd: false,
+      isDraggingBlock: false,
+      dragOffset: 0,
       showStartTooltip: false,
       showEndTooltip: false,
       handleWidth: 24, // w-6 = 24px
@@ -343,6 +341,16 @@ export default {
       }
       this.updateDocumentListeners();
     },
+    handleBlockMouseDown(e) {
+      e.preventDefault();
+      this.isDraggingBlock = true;
+      const container = this.$refs.containerRef;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        this.dragOffset = e.clientX - (rect.left + this.startLeft);
+      }
+      this.updateDocumentListeners();
+    },
     handleMouseMove(e) {
       const container = this.$refs.containerRef;
       if (!container) return;
@@ -427,16 +435,55 @@ export default {
         const constrainedEndTime = Math.max(newEndTime, this.start);
         if (this.onEndChange) this.onEndChange(constrainedEndTime);
       }
+
+      if (this.isDraggingBlock) {
+        const mouseX = e.clientX - containerRect.left;
+        const blockWidthPx = this.endLeft - this.startLeft;
+        let newStartLeft = mouseX - this.dragOffset;
+        const maxStartLeft = this.availableWidth - blockWidthPx;
+        newStartLeft = Math.max(0, Math.min(newStartLeft, maxStartLeft));
+        const newStartPercent = (newStartLeft / this.availableWidth) * 100;
+        const newStartTime = this.percentToTime(newStartPercent);
+        const duration = this.end - this.start;
+        let newEndTime = newStartTime + duration;
+        // clamp by videoLength if provided
+        const videoLength =
+          typeof this.videoLength === "number" && isFinite(this.videoLength)
+            ? this.videoLength
+            : null;
+        if (videoLength !== null) {
+          if (newEndTime > videoLength) {
+            const overshoot = newEndTime - videoLength;
+            newEndTime = videoLength;
+            // shift back start to keep duration if needed
+            const adjustedStart = Math.max(0, newStartTime - overshoot);
+            if (this.onStartChange) this.onStartChange(adjustedStart);
+            if (this.onEndChange) this.onEndChange(newEndTime);
+            return;
+          }
+          if (newStartTime < 0) {
+            const shift = -newStartTime;
+            const adjustedEnd = Math.min(videoLength, newEndTime + shift);
+            if (this.onStartChange) this.onStartChange(0);
+            if (this.onEndChange) this.onEndChange(adjustedEnd);
+            return;
+          }
+        }
+        if (this.onStartChange) this.onStartChange(newStartTime);
+        if (this.onEndChange) this.onEndChange(newEndTime);
+      }
     },
     handleMouseUp() {
       this.isDraggingStart = false;
       this.isDraggingEnd = false;
+      this.isDraggingBlock = false;
       this.showStartTooltip = false;
       this.showEndTooltip = false;
       this.updateDocumentListeners();
     },
     updateDocumentListeners() {
-      const dragging = this.isDraggingStart || this.isDraggingEnd;
+      const dragging =
+        this.isDraggingStart || this.isDraggingEnd || this.isDraggingBlock;
       if (dragging) {
         document.addEventListener("mousemove", this.handleMouseMove);
         document.addEventListener("mouseup", this.handleMouseUp);
@@ -451,6 +498,9 @@ export default {
       this.updateDocumentListeners();
     },
     isDraggingEnd() {
+      this.updateDocumentListeners();
+    },
+    isDraggingBlock() {
       this.updateDocumentListeners();
     },
   },

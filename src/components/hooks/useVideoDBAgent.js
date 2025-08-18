@@ -353,6 +353,46 @@ export function useVideoDBAgent(config) {
       });
   };
 
+  const renameSession = async (sessionId, name) => {
+    const trimmed = (name || "").trim();
+    if (trimmed.length === 0) {
+      throw new Error("Session name cannot be empty.");
+    }
+    try {
+      const response = await fetch(`${httpUrl}/session/${sessionId}/rename`, {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: trimmed }),
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (e) {
+        // ignore parse errors; some servers may return empty body on success
+      }
+
+      if (!response.ok) {
+        const message = (data && data.message) || "Failed to rename session.";
+        throw new Error(message);
+      }
+
+      const index = sessions.value.findIndex((s) => s.session_id === sessionId);
+      if (index !== -1) {
+        sessions.value[index] = { ...sessions.value[index], name: trimmed };
+      }
+
+      return data || { success: true };
+    } catch (error) {
+      if (debug)
+        console.error("debug :videodb-chat error renaming session", error);
+      throw error;
+    }
+  };
+
   const updateCollection = async () => {
     try {
       const res = await fetchCollections();
@@ -660,6 +700,7 @@ export function useVideoDBAgent(config) {
     addMessage,
     loadSession,
     deleteSession,
+    renameSession,
     updateCollection,
     createCollection,
     deleteCollection,

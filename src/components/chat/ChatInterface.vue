@@ -35,6 +35,7 @@
         @create-collection="showCreateCollectionModal = true"
         @delete-session="showDeleteSessionDialog"
         @delete-collection="promptDeleteCollection"
+        @update-session-name="handleUpdateSessionName"
         @agent-click="
           if (!chatLoading) {
             handleTagAgent($event, false);
@@ -467,7 +468,19 @@ const {
   deleteVideo,
   deleteAudio,
   deleteImage,
+  renameSession,
 } = useChatHook(props.chatHookConfig);
+
+// Always provide a callable generateVideoStream, even if a custom hook omits it
+const safeGenerateVideoStream = async (...args) => {
+  if (typeof generateVideoStream === "function") {
+    return generateVideoStream(...args);
+  }
+  return {
+    status: "error",
+    error: new Error("generateVideoStream unavailable"),
+  };
+};
 
 const {
   chatInput,
@@ -724,6 +737,14 @@ const confirmDeleteSession = () => {
   deleteSession(sessionToDelete.value);
   showDeleteDialog.value = false;
   sessionToDelete.value = null;
+};
+
+const handleUpdateSessionName = async ({ sessionId: _sessionId, name }) => {
+  try {
+    await renameSession(_sessionId, name);
+  } catch (error) {
+    console.error("Error renaming session:", error?.message || error);
+  }
 };
 
 // --- Upload Dialog Handlers ---
@@ -1006,7 +1027,7 @@ provide("videodb-chat", {
   activeCollectionVideos,
   activeCollectionAudios,
   activeCollectionImages,
-  generateVideoStream,
+  generateVideoStream: safeGenerateVideoStream,
   setChatInput,
   registerMessageHandler,
   uploadMedia,

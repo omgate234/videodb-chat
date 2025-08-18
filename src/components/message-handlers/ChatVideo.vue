@@ -117,6 +117,7 @@
           >
             <div class="vdb-c-group vdb-c-relative">
               <button
+                @click="handleConvertToVertical"
                 :class="[
                   'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam',
                   content.status === 'progress'
@@ -161,6 +162,7 @@
             </div>
             <div class="vdb-c-group vdb-c-relative">
               <button
+                @click="handleDownloadStream"
                 class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam"
               >
                 <svg
@@ -335,11 +337,24 @@ const hasEditor = computed(() => {
 });
 
 // trim range (draggable handles)
-const minTime = ref(props.content?.video?.start ?? 0);
-const maxTime = ref(props.content?.video?.end ?? 0);
-const localStart = ref(minTime.value);
-const localEnd = ref(maxTime.value);
-const localStreamUrl = ref(props.content?.video?.stream_url || "");
+const initialVideo = props.content?.video || {};
+const initialStart =
+  typeof initialVideo.start === "number" ? initialVideo.start : 0;
+const initialEnd = typeof initialVideo.end === "number" ? initialVideo.end : 0;
+const initialLen =
+  typeof initialVideo.length === "number" ? initialVideo.length : null;
+const paddedInitMin = Math.max(0, initialStart - 15);
+const paddedInitMax =
+  initialLen !== null && isFinite(initialLen)
+    ? Math.min(initialLen, initialEnd + 15)
+    : initialEnd + 15;
+const minTime = ref(paddedInitMin);
+const maxTime = ref(paddedInitMax);
+const localStart = ref(initialStart);
+const localEnd = ref(initialEnd);
+const localStreamUrl = ref(initialVideo?.stream_url || "");
+const lastVideoId = ref(null);
+const usingGeneratedStream = ref(false);
 
 // callbacks consumed by VideoTrimmer
 const handleStartChange = (start) => {
@@ -357,24 +372,60 @@ const handleMaxTimeChange = (newMaxTime) => {
 
 // Removed logging watcher that observed trimmer payload
 
+// Re-init ONLY when the video id changes
 watch(
-  () => ({
-    id: props.content?.video?.id,
-    stream: props.content?.video?.stream_url,
-    start: props.content?.video?.start,
-    end: props.content?.video?.end,
-  }),
-  ({ start, end }) => {
-    if (typeof start === "number" && typeof end === "number") {
-      minTime.value = start;
-      maxTime.value = end;
+  () => props.content?.video?.id,
+  (id) => {
+    const v = props.content?.video || {};
+    if (id && id !== lastVideoId.value) {
+      lastVideoId.value = id;
+      const start = typeof v.start === "number" ? v.start : 0;
+      const end = typeof v.end === "number" ? v.end : 0;
+      const len = typeof v.length === "number" ? v.length : null;
+      const paddedMin = Math.max(0, start - 15);
+      const paddedMax =
+        len !== null && isFinite(len) ? Math.min(len, end + 15) : end + 15;
+      minTime.value = paddedMin;
+      maxTime.value = paddedMax;
       localStart.value = start;
       localEnd.value = end;
+      usingGeneratedStream.value = false;
+      localStreamUrl.value = v.stream_url || "";
     }
-    localStreamUrl.value = props.content?.video?.stream_url || "";
   },
   { immediate: true },
 );
+
+// If upstream start/end genuinely change (e.g., server edit), sync them
+watch(
+  () => [props.content?.video?.start, props.content?.video?.end],
+  ([start, end], [prevStart, prevEnd]) => {
+    if (start !== prevStart || end !== prevEnd) {
+      const v = props.content?.video || {};
+      const s = typeof start === "number" ? start : 0;
+      const e = typeof end === "number" ? end : 0;
+      const len = typeof v.length === "number" ? v.length : null;
+      const paddedMin = Math.max(0, s - 15);
+      const paddedMax =
+        len !== null && isFinite(len) ? Math.min(len, e + 15) : e + 15;
+      minTime.value = paddedMin;
+      maxTime.value = paddedMax;
+      localStart.value = s;
+      localEnd.value = e;
+    }
+  },
+);
+
+// Don’t overwrite a generated/trimmed stream url with the original one
+watch(
+  () => props.content?.video?.stream_url,
+  (s, prev) => {
+    if (!usingGeneratedStream.value && s !== prev) {
+      localStreamUrl.value = s || "";
+    }
+  },
+);
+
 // API from context and Send "Find Similar Content" message
 const { addMessage, generateVideoStream, activeCollectionData } =
   useVideoDBChat();
@@ -390,11 +441,14 @@ watch(
     if (!video?.id || !collectionId) return;
     if (typeof start !== "number" || typeof end !== "number") return;
     if (start >= end) return;
+    // Guard: ensure generateVideoStream is available (custom hooks may omit it)
+    if (typeof generateVideoStream !== "function") return;
 
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
       const res = await generateVideoStream(collectionId, video.id, start, end);
       if (res?.status === "success" && res?.data?.stream_url) {
+        usingGeneratedStream.value = true;
         localStreamUrl.value = res.data.stream_url;
       }
     }, 400);
@@ -404,12 +458,13 @@ watch(
 const handleResetTrim = () => {
   const v = props.content?.video || {};
   if (typeof v.start === "number" && typeof v.end === "number") {
-    minTime.value = v.start;
-    maxTime.value = v.end;
+    minTime.value = Math.max(0, v.start - 15);
+    maxTime.value = Math.min(v.end + 15, v.length);
     localStart.value = v.start;
     localEnd.value = v.end;
   }
   if (v.stream_url) {
+    usingGeneratedStream.value = false;
     localStreamUrl.value = v.stream_url;
   }
 };
@@ -433,6 +488,24 @@ const handleFindSimilar = () => {
         text: video?.text ?? null,
       },
     },
+  });
+};
+
+const handleConvertToVertical = () => {
+  if (props.content?.status === "progress") return;
+  const video = props.content?.video || {};
+  const text = `@reel_maker, work on the video with video id: \`${video?.id ?? ""}\` from start: ${localStart.value} to end : ${localEnd.value}`;
+  addMessage?.({
+    content: [{ type: "text", text }],
+  });
+};
+
+const handleDownloadStream = () => {
+  if (props.content?.status === "progress") return;
+  const video = props.content?.video || {};
+  const text = `@download download the stream with URL: \`${localStreamUrl.value}\` from \`${video?.name ?? "the above video"}\``;
+  addMessage?.({
+    content: [{ type: "text", text }],
   });
 };
 </script>
