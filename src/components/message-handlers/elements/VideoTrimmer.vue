@@ -55,6 +55,8 @@
           zIndex: 0,
         }"
         @mousedown="(e) => handleMouseDown(e, true)"
+        @mouseenter="handleStartEnter"
+        @mouseleave="handleStartLeave"
       >
         <ThreeDots />
       </div>
@@ -71,6 +73,8 @@
           zIndex: 0,
         }"
         @mousedown="(e) => handleMouseDown(e, false)"
+        @mouseenter="handleEndEnter"
+        @mouseleave="handleEndLeave"
       >
         <ThreeDots />
       </div>
@@ -153,28 +157,52 @@
     <!-- Tooltips positioned outside container -->
     <div
       v-if="showStartTooltip"
-      class="vdb-c-absolute vdb-c-whitespace-nowrap vdb-c-rounded vdb-c-bg-black vdb-c-px-8 vdb-c-py-4 vdb-c-text-xs vdb-c-text-white"
+      class="vdb-c-absolute vdb-c-flex vdb-c-h-32 vdb-c-items-center vdb-c-justify-center vdb-c-whitespace-nowrap vdb-c-rounded-lg vdb-c-bg-nan vdb-c-px-14 vdb-c-text-sm vdb-c-text-white"
       :style="{
         left: `${startLeft + 12}px`,
         top: '0px',
-        transform: 'translate(-50%, calc(-100% - 10px))',
+        transform: 'translate(-50%, calc(-100% - 12px))',
         zIndex: 300,
       }"
     >
       {{ formatTime(start) }}
+      <span
+        class="vdb-c-absolute"
+        :style="{
+          left: '50%',
+          bottom: '-8px',
+          width: '16px',
+          height: '16px',
+          backgroundColor: '#242424',
+          transform: 'translateX(-50%) rotate(45deg)',
+          zIndex: -1,
+        }"
+      ></span>
     </div>
 
     <div
       v-if="showEndTooltip"
-      class="vdb-c-absolute vdb-c-whitespace-nowrap vdb-c-rounded vdb-c-bg-black vdb-c-px-8 vdb-c-py-4 vdb-c-text-xs vdb-c-text-white"
+      class="vdb-c-absolute vdb-c-flex vdb-c-h-32 vdb-c-items-center vdb-c-justify-center vdb-c-whitespace-nowrap vdb-c-rounded-lg vdb-c-bg-nan vdb-c-px-14 vdb-c-text-sm vdb-c-text-white"
       :style="{
         left: `${endLeft + 12}px`,
         top: '0px',
-        transform: 'translate(-50%, calc(-100% - 10px))',
+        transform: 'translate(-50%, calc(-100% - 12px))',
         zIndex: 300,
       }"
     >
       {{ formatTime(end) }}
+      <span
+        class="vdb-c-absolute"
+        :style="{
+          left: '50%',
+          bottom: '-8px',
+          width: '16px',
+          height: '16px',
+          backgroundColor: '#242424',
+          transform: 'translateX(-50%) rotate(45deg)',
+          zIndex: -1,
+        }"
+      ></span>
     </div>
   </div>
 </template>
@@ -561,6 +589,18 @@ export default {
         document.removeEventListener("mousemove", this.handleMouseMove);
         document.removeEventListener("mouseup", this.handleMouseUp);
       }
+    },
+    handleStartEnter() {
+      this.showStartTooltip = true;
+    },
+    handleStartLeave() {
+      if (!this.isDraggingStart) this.showStartTooltip = false;
+    },
+    handleEndEnter() {
+      this.showEndTooltip = true;
+    },
+    handleEndLeave() {
+      if (!this.isDraggingEnd) this.showEndTooltip = false;
     },
   },
   watch: {
