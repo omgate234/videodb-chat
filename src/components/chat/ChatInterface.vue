@@ -335,6 +335,7 @@ import Header from "./elements/Header.vue";
 import ChatSearchResults from "../message-handlers/ChatSearchResults.vue";
 import ChatVideo from "../message-handlers/ChatVideo.vue";
 import ChatVideos from "../message-handlers/ChatVideos.vue";
+import DeepSearchContent from "../message-handlers/deepsearch/DeepSearchContent.vue";
 import ImageHandler from "../message-handlers/ImageHandler.vue";
 import TextResponse from "../message-handlers/TextResponse.vue";
 
@@ -528,6 +529,7 @@ watch(chatAttachments, async (newAttachments) => {
 
 registerMessageHandler("video", ChatVideo);
 registerMessageHandler("videos", ChatVideos);
+registerMessageHandler("deepsearch", DeepSearchContent);
 registerMessageHandler("text", TextResponse);
 registerMessageHandler("search_results", ChatSearchResults);
 registerMessageHandler("image", ImageHandler);

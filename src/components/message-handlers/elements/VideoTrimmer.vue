@@ -2,7 +2,7 @@
   <div class="relative">
     <div
       ref="containerRef"
-      class="vdb-c-relative vdb-c-h-[170px] vdb-c-w-[560px] vdb-c-select-none vdb-c-overflow-hidden vdb-c-bg-black"
+      class="vdb-c-relative vdb-c-h-[170px] vdb-c-w-full vdb-c-select-none vdb-c-overflow-hidden vdb-c-bg-black"
       :style="{ borderRadius: '20px' }"
     >
       <!-- Dynamic thumbnail rendering -->
@@ -85,7 +85,7 @@
         class="vdb-c-absolute vdb-c-cursor-grab"
         :style="{
           left: `${startLeft + 24}px`,
-          right: `${560 - endLeft}px`,
+          right: `${containerWidth - endLeft}px`,
           top: '0',
           height: '10px',
           backgroundColor: '#EC5B16',
@@ -100,7 +100,7 @@
         class="vdb-c-absolute vdb-c-cursor-grab"
         :style="{
           left: `${startLeft + 24}px`,
-          right: `${560 - endLeft}px`,
+          right: `${containerWidth - endLeft}px`,
           bottom: '0',
           height: '10px',
           backgroundColor: '#EC5B16',
@@ -124,7 +124,7 @@
       <div
         :style="{
           position: 'absolute',
-          right: `${560 - endLeft + 20}px`,
+          right: `${containerWidth - endLeft + 20}px`,
           top: '10px',
         }"
       >
@@ -146,7 +146,7 @@
       <div
         :style="{
           position: 'absolute',
-          right: `${560 - endLeft + 20}px`,
+          right: `${containerWidth - endLeft + 20}px`,
           bottom: '30px',
         }"
       >
@@ -243,12 +243,14 @@ export default {
       showStartTooltip: false,
       showEndTooltip: false,
       handleWidth: 24, // w-6 = 24px
-      containerWidth: 560, // w-[560px]
+      containerWidth: 560, // defaults to 560px, updated via ResizeObserver
+      resizeObserver: null,
     };
   },
   mounted() {
     this.$nextTick(() => {
       this.updateDocumentListeners();
+      this.measureAndObserveContainer();
     });
   },
   computed: {
@@ -369,6 +371,32 @@ export default {
     },
   },
   methods: {
+    measureAndObserveContainer() {
+      const container = this.$refs.containerRef;
+      if (!container) return;
+      const measure = () => {
+        const rect = container.getBoundingClientRect();
+        if (
+          rect &&
+          rect.width &&
+          Math.floor(rect.width) !== this.containerWidth
+        ) {
+          this.containerWidth = Math.floor(rect.width);
+        }
+      };
+      // Initial measure
+      measure();
+      // Observe future size changes
+      if (typeof ResizeObserver !== "undefined") {
+        this.resizeObserver = new ResizeObserver(() => {
+          measure();
+        });
+        this.resizeObserver.observe(container);
+      } else {
+        // Fallback: listen to window resize
+        window.addEventListener("resize", measure);
+      }
+    },
     buildStateSnapshot() {
       const container = this.$refs.containerRef;
       const rect = container ? container.getBoundingClientRect() : null;
@@ -617,6 +645,16 @@ export default {
   beforeUnmount() {
     document.removeEventListener("mousemove", this.handleMouseMove);
     document.removeEventListener("mouseup", this.handleMouseUp);
+    if (this.resizeObserver) {
+      try {
+        const container = this.$refs.containerRef;
+        if (container) this.resizeObserver.unobserve(container);
+        this.resizeObserver.disconnect();
+      } catch {}
+      this.resizeObserver = null;
+    } else {
+      window.removeEventListener("resize", this.measureAndObserveContainer);
+    }
   },
 };
 </script>
