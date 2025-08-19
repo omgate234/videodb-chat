@@ -80,6 +80,49 @@
               </button>
             </div>
           </div>
+
+          <div
+            v-if="finalStatus === 'success'"
+            class="vdb-c-mt-2 vdb-c-flex vdb-c-items-center vdb-c-gap-12"
+          >
+            <WithPopper
+              popper-text="Not helpful"
+              tooltip-css="vdb-c-bg-[#3F3F3F] vdb-c-text-white vdb-c-rounded-full vdb-c-px-12 vdb-c-py-8"
+            >
+              <template #button>
+                <button
+                  class="vdb-c-flex vdb-c-h-28 vdb-c-w-28 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full hover:vdb-c-bg-[#EFEFEF]"
+                  @click="selectFeedback('down')"
+                >
+                  <component
+                    :is="
+                      selectedFeedback === 'down'
+                        ? ThumbsDownClicked
+                        : ThumbsDown
+                    "
+                    class="vdb-c-h-24 vdb-c-w-24 vdb-c-text-black"
+                  />
+                </button>
+              </template>
+            </WithPopper>
+
+            <WithPopper
+              popper-text="Helpful"
+              tooltip-css="vdb-c-bg-[#3F3F3F] vdb-c-text-white vdb-c-rounded-full vdb-c-px-12 vdb-c-py-8"
+            >
+              <template #button>
+                <button
+                  class="vdb-c-flex vdb-c-h-28 vdb-c-w-28 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full hover:vdb-c-bg-[#EFEFEF]"
+                  @click="selectFeedback('up')"
+                >
+                  <component
+                    :is="selectedFeedback === 'up' ? ThumbsUpClicked : ThumbsUp"
+                    class="vdb-c-h-24 vdb-c-w-24 vdb-c-text-black"
+                  />
+                </button>
+              </template>
+            </WithPopper>
+          </div>
         </div>
       </div>
     </div>
@@ -94,6 +137,11 @@ import ChatMessageSteps from "./elements/ChatMessageSteps.vue";
 
 import { useVideoDBChat } from "../../context.js";
 import ChevronDown from "../icons/ChevronDown.vue";
+import WithPopper from "../atoms/WithPopper.vue";
+import ThumbsDown from "../icons/ThumbsDown.vue";
+import ThumbsDownClicked from "../icons/ThumbsDownClicked.vue";
+import ThumbsUp from "../icons/ThumbsUp.vue";
+import ThumbsUpClicked from "../icons/ThumbsUpClicked.vue";
 
 const props = defineProps({
   message: {
@@ -205,14 +253,14 @@ const handleShowLess = (runStartIndex) => {
 };
 
 const finalStatus = computed(() => {
-  if (props.message.status === "error") {
-    return "error";
-  }
-  const assistantContent = props.message?.content?.find(
-    (c) => c.agent_name === "assistant",
-  );
-  return assistantContent?.status || props.message.status;
+  return props.message.status;
 });
+
+// Feedback state for this message
+const selectedFeedback = ref("");
+const selectFeedback = (val) => {
+  selectedFeedback.value = val;
+};
 </script>
 
 <style>
