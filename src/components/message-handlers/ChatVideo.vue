@@ -19,7 +19,53 @@
               : 'vdb-c-full xl:vdb-c-1/2 vdb-c-overflow-hidden vdb-c-rounded-20 sm:vdb-c-w-3/4 lg:vdb-c-w-3/5 xl:vdb-c-w-1/2'
           "
         >
+          <!-- Vertical 9:16 wrapper when not fullscreen -->
+          <div
+            v-if="isVertical && !isFullScreen"
+            class="vdb-c-relative vdb-c-w-full"
+            :style="{ paddingTop: verticalPadding }"
+          >
+            <div class="vdb-c-absolute vdb-c-inset-0">
+              <VideoDBPlayer
+                :class="
+                  isFullScreen
+                    ? 'vdb-c-h-screen vdb-c-w-screen'
+                    : 'vdb-c-h-full vdb-c-w-full'
+                "
+                :stream-url="content.video.stream_url"
+                :default-controls="false"
+                :default-overlay="false"
+                @fullScreenChange="handleFullScreenChange"
+              >
+                <template #overlay>
+                  <BigCenterButton
+                    class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-1/2 vdb-c-h-32 vdb-c-w-32 md:vdb-c-h-48 md:vdb-c-w-48"
+                  />
+                </template>
+                <template #controls>
+                  <div class="vdb-p-pt-0 vdb-c-p-20">
+                    <div class="sm:vdb-p-mx-8 vdb-c-mb-8 md:vdb-c-mb-12">
+                      <ProgressBar :stream-url="content.video.stream_url" />
+                    </div>
+                    <div class="vdb-c-flex vdb-c-w-full vdb-c-justify-between">
+                      <div
+                        class="vdb-c-z-10 vdb-c-ml-0 vdb-c-flex vdb-c-items-center"
+                      >
+                        <PlayPauseButton />
+                        <VolumeControlButton />
+                        <TimeCode />
+                      </div>
+
+                      <FullScreenButton class="" />
+                    </div>
+                  </div>
+                </template>
+              </VideoDBPlayer>
+            </div>
+          </div>
+          <!-- Default (horizontal or fullscreen) -->
           <VideoDBPlayer
+            v-else
             :class="isFullScreen ? 'vdb-c-h-screen vdb-c-w-screen' : ''"
             :stream-url="content.video.stream_url"
             :default-controls="false"
@@ -56,7 +102,10 @@
         <div
           class="vdb-c-full xl:vdb-c-1/2 vdb-c-animate-pulse vdb-c-overflow-hidden vdb-c-rounded-20 sm:vdb-c-w-3/4 lg:vdb-c-w-3/5 xl:vdb-c-w-1/2"
         >
-          <div class="vdb-c-relative vdb-c-w-full" style="padding-top: 56.25%">
+          <div
+            class="vdb-c-relative vdb-c-w-full"
+            :style="{ paddingTop: verticalPadding }"
+          >
             <div
               class="vdb-c-absolute vdb-c-inset-0 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-bg-gray-200"
             ></div>
@@ -72,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import {
   VideoDBPlayer,
   TimeCode,
@@ -97,14 +146,29 @@ const props = defineProps({
 });
 
 const isFullScreen = ref(false);
+const isVertical = computed(() => {
+  return (
+    !!(props?.content && props.content.video && props.content.video.style) &&
+    String(props.content.video.style).toLowerCase() === "vertical"
+  );
+});
+// 9:16 => 177.78%
+const verticalPadding = computed(() =>
+  isVertical.value ? "177.78%" : "56.25%",
+);
 
-const handleFullScreenChange = () => {
-  isFullScreen.value = !isFullScreen.value;
-  if (isFullScreen.value) {
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
+const handleFullScreenChange = async () => {
+  try {
+    isFullScreen.value = !isFullScreen.value;
+    if (isFullScreen.value) {
+      const el = document.documentElement;
+      if (el.requestFullscreen) await el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } else {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  } catch {}
 };
 </script>
 
