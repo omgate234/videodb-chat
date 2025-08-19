@@ -103,6 +103,7 @@
               :minTime="minTime"
               :maxTime="maxTime"
               :thumbnails="content.video.thumbnail_data"
+              :video-thumbnail-url="content.video.thumbnail_url"
               :onStartChange="handleStartChange"
               :onEndChange="handleEndChange"
               :onMinTimeChange="handleMinTimeChange"
@@ -326,14 +327,7 @@ const handleFullScreenChange = async () => {
 };
 
 const hasEditor = computed(() => {
-  const v = props.content?.video ?? {};
-  return (
-    v &&
-    typeof v.start === "number" &&
-    typeof v.end === "number" &&
-    Array.isArray(v.thumbnail_data) &&
-    v.thumbnail_data.length > 0
-  );
+  return props.content?.agent_name === "deepsearch";
 });
 
 // trim range (draggable handles)

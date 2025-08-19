@@ -197,6 +197,8 @@ export default {
       type: Array,
       default: () => [],
     },
+    // Optional fallback for preview images when no `thumbnails` are present
+    videoThumbnailUrl: { type: String, default: "" },
     onMinTimeChange: { type: Function, default: null },
     onMaxTimeChange: { type: Function, default: null },
     maxExtension: { type: Number, default: 60 },
@@ -247,14 +249,82 @@ export default {
       );
     },
     // Calculate thumbnail positioning for dynamic display
+    isFallback() {
+      return (
+        !(Array.isArray(this.thumbnails) && this.thumbnails.length > 0) &&
+        typeof this.videoThumbnailUrl === "string" &&
+        this.videoThumbnailUrl
+      );
+    },
+    effectiveThumbnails() {
+      // If we have provided thumbnails, use them
+      if (Array.isArray(this.thumbnails) && this.thumbnails.length > 0) {
+        return this.thumbnails;
+      }
+      // Otherwise, build a synthetic set using the fallback `videoThumbnailUrl`
+      if (this.isFallback) {
+        const videoLen =
+          typeof this.videoLength === "number" && isFinite(this.videoLength)
+            ? this.videoLength
+            : null;
+        const start = Number.isFinite(this.start) ? this.start : 0;
+        const end = Number.isFinite(this.end) ? this.end : start;
+        const mid = start + (end - start) / 2;
+
+        const clamp = (t) => {
+          if (t < 0) return 0;
+          if (videoLen !== null && t > videoLen) return videoLen;
+          return t;
+        };
+
+        const timestamps = [];
+
+        // 4 thumbnails before start at 10s intervals
+        for (let i = 1; i <= 4; i++) {
+          const t = start - 10 * i;
+          if (t >= 0) timestamps.push(t);
+        }
+
+        // start, mid, end
+        timestamps.push(start, mid, end);
+
+        // 4 thumbnails after end at 10s intervals
+        for (let i = 1; i <= 4; i++) {
+          const t = end + 10 * i;
+          if (videoLen === null || t <= videoLen) timestamps.push(t);
+        }
+
+        // Normalize, clamp and dedupe
+        const deduped = Array.from(
+          new Set(
+            timestamps
+              .map((t) => clamp(t))
+              .filter((t) => Number.isFinite(t))
+              .map((t) => Number(t.toFixed(3))),
+          ),
+        );
+
+        return deduped
+          .sort((a, b) => a - b)
+          .map((t) => ({
+            timestamp: t,
+            thumbnail_url: this.videoThumbnailUrl,
+          }));
+      }
+      return [];
+    },
     sortedThumbnails() {
-      const sorted = [...this.thumbnails].sort(
+      const sorted = [...this.effectiveThumbnails].sort(
         (a, b) => a.timestamp - b.timestamp,
       );
       return sorted;
     },
     // Filter thumbnails that are within the current range (minTime to maxTime)
     relevantThumbnails() {
+      // When using fallback frames, show all synthesized frames so pre/post are visible
+      if (this.isFallback) {
+        return this.sortedThumbnails;
+      }
       const relevant = this.sortedThumbnails.filter((thumbnail) => {
         return (
           thumbnail.timestamp >= this.minTime &&
