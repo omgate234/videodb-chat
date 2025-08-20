@@ -166,7 +166,7 @@ const finalStatus = computed(() => {
 // Feedback state for this message
 const selectedFeedback = ref("");
 const selectFeedback = (val) => {
-  selectedFeedback.value = val;
+  selectedFeedback.value = selectedFeedback.value === val ? "" : val;
 };
 </script>
 

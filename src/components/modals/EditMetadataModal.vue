@@ -29,6 +29,28 @@
         class="vdb-c-flex vdb-c-flex-1 vdb-c-flex-col vdb-c-gap-16 vdb-c-overflow-auto vdb-c-p-20"
       >
         <template v-if="hasMetadata">
+          <!-- Search Description -->
+          <section
+            class="vdb-c-rounded-[10px] vdb-c-border vdb-c-border-[#EFEFEF]"
+          >
+            <header
+              class="vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-t-[10px] vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12"
+            >
+              <CursorTextIcon
+                class="vdb-c-h-24 vdb-c-w-24 vdb-c-text-[#242424]"
+              />
+              <h3 class="vdb-c-text-[16px] vdb-c-font-semibold">
+                Search Description
+              </h3>
+            </header>
+            <div class="vdb-c-p-16">
+              <ModalTextarea
+                v-model="localSearchDescription"
+                placeholder="Enter description"
+              />
+            </div>
+          </section>
+
           <!-- Actors -->
           <section
             v-if="localActors.length"
@@ -139,17 +161,20 @@ import { computed, ref, watch } from "vue";
 import Button from "../buttons/Button.vue";
 import CrossIcon from "../icons/Cross.vue";
 import ModalInput from "../atoms/ModalInput.vue";
+import ModalTextarea from "../atoms/ModalTextarea.vue";
 import PersonIcon from "../icons/PersonIcon.vue";
 import ObjectIcon from "../icons/ObjectIcon.vue";
 import EmotionIcon from "../icons/EmotionIcon.vue";
 import ShotIcon from "../icons/ShotIcon.vue";
 import StarOutlined from "../icons/StarOutlined.vue";
+import CursorTextIcon from "../icons/CursorTextIcon.vue";
 
 const emit = defineEmits(["close", "save"]);
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   metadata: { type: [Object, null], default: null },
+  searchDescription: { type: String, default: "" },
 });
 
 const hasMetadata = computed(() => !!props.metadata);
@@ -160,6 +185,7 @@ const localObjects = ref([]);
 const localEmotion = ref("");
 const localShotType = ref("");
 const localIsSong = ref(false);
+const localSearchDescription = ref("");
 
 // Formatting helpers
 const toTitleCase = (value) => {
@@ -187,6 +213,14 @@ watch(
     localEmotion.value = humanize(val.emotion);
     localShotType.value = humanize(val.shot_type);
     localIsSong.value = Boolean(val.is_song);
+  },
+  { immediate: true },
+);
+
+watch(
+  () => props.searchDescription,
+  (val) => {
+    localSearchDescription.value = typeof val === "string" ? val : "";
   },
   { immediate: true },
 );

@@ -1,13 +1,14 @@
 <template>
   <div class="vdb-c-w-full">
-    <input
+    <textarea
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
       @input="onInput"
       @focus="isFocused = true"
       @blur="onBlur"
-      class="vdb-c-w-full vdb-c-px-16 vdb-c-py-12 vdb-c-text-[14px] vdb-c-leading-[20px] vdb-c-outline-none vdb-c-transition vdb-c-duration-150"
+      rows="4"
+      class="vdb-c-w-full vdb-c-resize-none vdb-c-px-16 vdb-c-py-12 vdb-c-text-[14px] vdb-c-leading-[20px] vdb-c-outline-none vdb-c-transition vdb-c-duration-150"
       :class="[
         'vdb-c-rounded-[8px] vdb-c-bg-[#F7F7F7] vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#EFEFEF]',
         isFocused
@@ -26,7 +27,7 @@
 
 <script>
 export default {
-  name: "ModalInput",
+  name: "ModalTextarea",
   props: {
     modelValue: { type: [String, Number], default: "" },
     placeholder: { type: String, default: "" },

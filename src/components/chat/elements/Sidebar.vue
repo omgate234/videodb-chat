@@ -299,12 +299,24 @@
                     <template #content>
                       <button
                         @click.stop="copySessionId(session.session_id)"
-                        class="mb-6\ vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy"
+                        :class="[
+                          'vdb-c-mb-6 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy',
+                          {
+                            'vdb-c-text-[#53B745]':
+                              copiedSessionId === session.session_id,
+                          },
+                        ]"
                       >
-                        <CopyIcon />
-                        <span class="vdb-c-text-sm vdb-c-text-black">
-                          Copy ID
-                        </span>
+                        <template v-if="copiedSessionId === session.session_id">
+                          <CheckIcon />
+                          <span class="vdb-c-text-sm">Copied</span>
+                        </template>
+                        <template v-else>
+                          <CopyIcon />
+                          <span class="vdb-c-text-sm vdb-c-text-black">
+                            Copy ID
+                          </span>
+                        </template>
                       </button>
                       <button
                         @click.stop="startEditing(session)"
@@ -408,6 +420,7 @@ import ComposeIcon from "../../icons/Compose.vue";
 import DeleteIcon from "../../icons/Delete.vue";
 import PlusIcon from "../../icons/Plus.vue";
 import CopyIcon from "../../icons/CopyIcon.vue";
+import CheckIcon from "../../icons/Check.vue";
 import DotVertical from "../../icons/DotVertical.vue";
 import EditIcon from "../../icons/Edit.vue";
 import Popper from "vue3-popper";
@@ -486,6 +499,8 @@ const isOpen = ref(false);
 const hoveredCollection = ref(null);
 const editingSessionId = ref(null);
 const editingName = ref("");
+const copiedSessionId = ref(null);
+const copyFeedbackTimeout = ref(null);
 
 const visibleSections = computed(() => {
   return props.sidebarSections;
@@ -603,6 +618,14 @@ const saveSessionName = (session) => {
 const copySessionId = async (sessionId) => {
   try {
     await navigator.clipboard.writeText(String(sessionId));
+    copiedSessionId.value = sessionId;
+    if (copyFeedbackTimeout.value) {
+      clearTimeout(copyFeedbackTimeout.value);
+    }
+    copyFeedbackTimeout.value = setTimeout(() => {
+      copiedSessionId.value = null;
+      copyFeedbackTimeout.value = null;
+    }, 2000);
   } catch (error) {
     console.error("Failed to copy session ID", error);
   }

@@ -90,15 +90,7 @@
                 />
               </button>
               <div
-                class="vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
-                style="
-                  box-shadow:
-                    0 55px 16px 0 rgba(0, 0, 0, 0),
-                    0 36px 14px 0 rgba(0, 0, 0, 0.01),
-                    0 20px 12px 0 rgba(0, 0, 0, 0.04),
-                    0 9px 9px 0 rgba(0, 0, 0, 0.07),
-                    0 2px 5px 0 rgba(0, 0, 0, 0.08);
-                "
+                class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
                 Convert to Vertical
               </div>
@@ -113,15 +105,7 @@
                 />
               </button>
               <div
-                class="vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
-                style="
-                  box-shadow:
-                    0 55px 16px 0 rgba(0, 0, 0, 0),
-                    0 36px 14px 0 rgba(0, 0, 0, 0.01),
-                    0 20px 12px 0 rgba(0, 0, 0, 0.04),
-                    0 9px 9px 0 rgba(0, 0, 0, 0.07),
-                    0 2px 5px 0 rgba(0, 0, 0, 0.08);
-                "
+                class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
                 Download
               </div>
@@ -142,15 +126,7 @@
                 />
               </button>
               <div
-                class="vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
-                style="
-                  box-shadow:
-                    0 55px 16px 0 rgba(0, 0, 0, 0),
-                    0 36px 14px 0 rgba(0, 0, 0, 0.01),
-                    0 20px 12px 0 rgba(0, 0, 0, 0.04),
-                    0 9px 9px 0 rgba(0, 0, 0, 0.07),
-                    0 2px 5px 0 rgba(0, 0, 0, 0.08);
-                "
+                class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
                 Find Similar Content
               </div>
@@ -173,15 +149,7 @@
                 />
               </button>
               <div
-                class="vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
-                style="
-                  box-shadow:
-                    0 55px 16px 0 rgba(0, 0, 0, 0),
-                    0 36px 14px 0 rgba(0, 0, 0, 0.01),
-                    0 20px 12px 0 rgba(0, 0, 0, 0.04),
-                    0 9px 9px 0 rgba(0, 0, 0, 0.07),
-                    0 2px 5px 0 rgba(0, 0, 0, 0.08);
-                "
+                class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
                 Edit Meta Information
               </div>
@@ -189,6 +157,7 @@
             <EditMetadataModal
               :show="showEditModal"
               :metadata="videoMetadata"
+              :search-description="props.content?.video?.text || ''"
               @close="showEditModal = false"
               @save="handleSaveMeta"
             />
@@ -351,7 +320,7 @@ watch(
 watch(
   () => props.content?.video?.stream_url,
   (s, prev) => {
-    if (!usingGeneratedStream.value && s !== prev) {
+    if (!usingGeneratedStream.value && !usingWindowStream.value && s !== prev) {
       localStreamUrl.value = s || "";
     }
   },
@@ -422,12 +391,30 @@ const handleFindSimilar = () => {
   });
 };
 
+const formatTime = (totalSeconds) => {
+  const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+};
+
 const handleConvertToVertical = () => {
   if (props.content?.status === "progress") return;
   const video = props.content?.video || {};
-  const text = `@reel_maker, work on the video with video id: \`${video?.id ?? ""}\` from start: ${localStart.value} to end : ${localEnd.value}`;
+  const startStr = formatTime(localStart.value);
+  const endStr = formatTime(localEnd.value);
+  const text = `@reel_maker, work on the video \`${video?.name ?? ""}\` from start: ${startStr} to end: ${endStr}`;
   addMessage?.({
     content: [{ type: "text", text }],
+    additional_data: {
+      video_id: video?.id ?? null,
+      start: video?.start ?? null,
+      end: video?.end ?? null,
+    },
   });
 };
 
@@ -454,5 +441,15 @@ const handleDownloadStream = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+</style>
+<style scoped>
+.vdb-c-tooltip-shadow {
+  box-shadow:
+    0 55px 16px 0 rgba(0, 0, 0, 0),
+    0 36px 14px 0 rgba(0, 0, 0, 0.01),
+    0 20px 12px 0 rgba(0, 0, 0, 0.04),
+    0 9px 9px 0 rgba(0, 0, 0, 0.07),
+    0 2px 5px 0 rgba(0, 0, 0, 0.08);
 }
 </style>
