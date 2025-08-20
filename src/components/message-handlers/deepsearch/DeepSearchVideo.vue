@@ -23,6 +23,7 @@
             "
           >
             <VideoDBPlayer
+              ref="playerRef"
               :class="
                 isFullScreen
                   ? 'vdb-c-h-screen vdb-c-w-screen'
@@ -33,6 +34,9 @@
               :default-overlay="false"
               :key="localStreamUrl"
               @fullScreenChange="handleFullScreenChange"
+              @play="handlePlayerPlay"
+              @timeupdate="handlePlayerTimeUpdate"
+              @loadeddata="handlePlayerLoadedData"
             >
               <template #overlay>
                 <BigCenterButton
@@ -219,6 +223,9 @@ const handleFullScreenChange = async () => {
   } catch {}
 };
 
+// Player instance for controlling play/pause/seek
+const playerRef = ref(null);
+
 const hasEditor = computed(() => {
   return props.content?.agent_name === "deepsearch";
 });
@@ -255,13 +262,51 @@ const localEnd = ref(initialEnd);
 const localStreamUrl = ref(initialVideo?.stream_url || "");
 const lastVideoId = ref(null);
 const usingGeneratedStream = ref(false);
+const usingWindowStream = ref(false);
+const segmentEnded = ref(false);
+
+// Window stream details
+const windowStreamUrl = computed(
+  () => props.content?.video?.metadata?.window_stream_url || "",
+);
+const windowStart = computed(() => {
+  const v = props.content?.video || {};
+  const start = typeof v.start === "number" ? v.start : 0;
+  return Math.max(0, start - 15);
+});
+const windowEnd = computed(() => {
+  const v = props.content?.video || {};
+  const end = typeof v.end === "number" ? v.end : 0;
+  const len = typeof v.length === "number" ? v.length : null;
+  const raw = end + 15;
+  return len !== null && isFinite(len) ? Math.min(len, raw) : raw;
+});
+const selectionWithinWindow = computed(() => {
+  const s = Number(localStart.value);
+  const e = Number(localEnd.value);
+  if (!Number.isFinite(s) || !Number.isFinite(e)) return false;
+  if (!windowStreamUrl.value) return false;
+  return s >= windowStart.value && e <= windowEnd.value && s < e;
+});
+const clipStartRel = computed(() => {
+  const rel = Number(localStart.value) - Number(windowStart.value);
+  return Number.isFinite(rel) ? Math.max(0, rel) : 0;
+});
+const clipEndRel = computed(() => {
+  const rel = Number(localEnd.value) - Number(windowStart.value);
+  const startRel = clipStartRel.value;
+  if (!Number.isFinite(rel)) return startRel;
+  return Math.max(startRel, rel);
+});
 
 // callbacks consumed by VideoTrimmer
 const handleStartChange = (start) => {
   localStart.value = start;
+  segmentEnded.value = false;
 };
 const handleEndChange = (end) => {
   localEnd.value = end;
+  segmentEnded.value = false;
 };
 const handleMinTimeChange = (newMinTime) => {
   minTime.value = newMinTime;
@@ -290,6 +335,8 @@ watch(
       localStart.value = start;
       localEnd.value = end;
       usingGeneratedStream.value = false;
+      usingWindowStream.value = false;
+      segmentEnded.value = false;
       localStreamUrl.value = v.stream_url || "";
     }
   },
@@ -341,9 +388,23 @@ watch(
     if (!video?.id || !collectionId) return;
     if (typeof start !== "number" || typeof end !== "number") return;
     if (start >= end) return;
+    // If selection is covered by the window stream, use it and simulate trimming
+    if (selectionWithinWindow.value && windowStreamUrl.value) {
+      usingWindowStream.value = true;
+      usingGeneratedStream.value = false;
+      // Switch to window stream if needed
+      if (localStreamUrl.value !== windowStreamUrl.value) {
+        localStreamUrl.value = windowStreamUrl.value;
+      }
+      // No generation required in this case
+      if (debounceTimer) clearTimeout(debounceTimer);
+      return;
+    }
+
+    // Outside window: fall back to generating a precise stream
+    usingWindowStream.value = false;
     // Guard: ensure generateVideoStream is available (custom hooks may omit it)
     if (typeof generateVideoStream !== "function") return;
-
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
       const res = await generateVideoStream(collectionId, video.id, start, end);
@@ -365,6 +426,8 @@ const handleResetTrim = () => {
   }
   if (v.stream_url) {
     usingGeneratedStream.value = false;
+    usingWindowStream.value = false;
+    segmentEnded.value = false;
     localStreamUrl.value = v.stream_url;
   }
 };
@@ -425,6 +488,61 @@ const handleDownloadStream = () => {
   addMessage?.({
     content: [{ type: "text", text }],
   });
+};
+
+// Player event handlers to simulate trimming within window stream
+const handlePlayerPlay = () => {
+  if (!usingWindowStream.value) return;
+  const instance = playerRef.value;
+  if (!instance) return;
+  const currentTime = Number(instance.time) || 0;
+  const startRel = Number(clipStartRel.value) || 0;
+  const endRel = Number(clipEndRel.value) || startRel;
+  const epsilon = 0.25;
+  // If segment previously ended and user presses play, replay from start of segment
+  if (segmentEnded.value) {
+    try {
+      instance.seekTo?.(startRel);
+      segmentEnded.value = false;
+      // Let play continue
+    } catch {}
+    return;
+  }
+  if (currentTime < startRel - epsilon || currentTime > endRel + epsilon) {
+    try {
+      instance.seekTo?.(startRel);
+    } catch {}
+  }
+};
+
+const handlePlayerTimeUpdate = (evt) => {
+  if (!usingWindowStream.value) return;
+  const instance = playerRef.value;
+  if (!instance) return;
+  const t =
+    (typeof instance.time === "number" ? instance.time : null) ??
+    (evt && (evt.detail?.time ?? evt.time)) ??
+    0;
+  const endRel = Number(clipEndRel.value) || 0;
+  const epsilon = 0.05;
+  if (t >= endRel - epsilon) {
+    try {
+      instance.pause?.();
+      instance.seekTo?.(endRel);
+      segmentEnded.value = true;
+    } catch {}
+  }
+};
+
+const handlePlayerLoadedData = () => {
+  if (!usingWindowStream.value) return;
+  const instance = playerRef.value;
+  if (!instance) return;
+  const startRel = Number(clipStartRel.value) || 0;
+  try {
+    instance.seekTo?.(startRel);
+    segmentEnded.value = false;
+  } catch {}
 };
 </script>
 
