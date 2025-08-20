@@ -157,7 +157,16 @@
             </div>
             <div class="vdb-c-group vdb-c-relative">
               <button
-                class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam"
+                :disabled="
+                  !videoMetadata || Object.keys(videoMetadata).length === 0
+                "
+                @click="openEditModal"
+                :class="[
+                  'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam',
+                  !videoMetadata
+                    ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                    : '',
+                ]"
               >
                 <MediaEditIcon
                   className="vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 group-hover:vdb-c-text-white"
@@ -177,6 +186,12 @@
                 Edit Meta Information
               </div>
             </div>
+            <EditMetadataModal
+              :show="showEditModal"
+              :metadata="videoMetadata"
+              @close="showEditModal = false"
+              @save="handleSaveMeta"
+            />
           </div>
         </div>
       </div>
@@ -211,6 +226,7 @@ import MediaEditIcon from "../../icons/MediaEdit.vue";
 import FindSimilarIcon from "../../icons/FindSimilar.vue";
 import "@videodb/player-vue/dist/style.css";
 import VideoTrimmer from "../elements/VideoTrimmer.vue";
+import EditMetadataModal from "../../modals/EditMetadataModal.vue";
 
 const props = defineProps({
   content: { type: Object, required: true },
@@ -237,6 +253,19 @@ const handleFullScreenChange = async () => {
 const hasEditor = computed(() => {
   return props.content?.agent_name === "deepsearch";
 });
+
+const videoMetadata = computed(
+  () => props.content?.video?.metadata?.source ?? null,
+);
+const showEditModal = ref(false);
+const openEditModal = () => {
+  if (!videoMetadata.value) return;
+  showEditModal.value = true;
+};
+const handleSaveMeta = () => {
+  // Placeholder: no save logic yet. Close modal.
+  showEditModal.value = false;
+};
 
 // trim range (draggable handles)
 const initialVideo = props.content?.video || {};

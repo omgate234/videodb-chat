@@ -66,9 +66,19 @@
 
             <!-- Right column: content -->
             <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-12">
+              <!-- Registered handler (string or object) -->
+              <component
+                v-if="getRegisteredHandler(step)"
+                :is="getRegisteredHandler(step)"
+                :step="step"
+                :index="index"
+                :status="status"
+                :active-index="activeIndex"
+              />
+
               <!-- String Action -->
               <div
-                v-if="typeof step === 'string'"
+                v-else-if="typeof step === 'string'"
                 class="vdb-c-flex vdb-c-items-center vdb-c-gap-8"
               >
                 <span
@@ -92,74 +102,16 @@
               </div>
 
               <!-- Process Action -->
-              <div
+              <ProcessSteps
                 v-else-if="step.type === 'process'"
-                class="vdb-c-flex vdb-c-flex-col vdb-c-gap-12"
-              >
-                <!-- Process Header -->
-                <button
-                  type="button"
-                  class="vdb-c-flex vdb-c-w-fit vdb-c-items-center vdb-c-gap-8 vdb-c-bg-transparent vdb-c-text-left"
-                  @click="toggleProcess(index)"
-                >
-                  <!-- title: 16px / 500 -->
-                  <span
-                    class="vdb-c-w-fit vdb-c-text-[16px] vdb-c-font-medium vdb-c-text-kilvish-800"
-                  >
-                    {{ step.title }}
-                  </span>
+                :step="step"
+                :index="index"
+                :status="status"
+                :active-index="activeIndex"
+                :is-expanded="isProcessExpanded(index)"
+                :toggle="() => toggleProcess(index)"
+              />
 
-                  <ChevronDown
-                    class="vdb-c-ml-auto"
-                    :class="{
-                      'vdb-c-rotate-180 vdb-c-transform':
-                        isProcessExpanded(index),
-                    }"
-                    :stroke-width="2"
-                    :stroke-color="'#343E4F'"
-                  />
-                </button>
-
-                <!-- Process Sub-steps (no indent per spec) -->
-                <div
-                  v-if="isProcessExpanded(index)"
-                  class="vdb-c-flex vdb-c-flex-col vdb-c-gap-12"
-                >
-                  <div
-                    v-for="(process, processIndex) in step.processes"
-                    :key="processIndex"
-                  >
-                    <!-- Pill (content-width, not full width) -->
-                    <div
-                      class="vdb-c-inline-flex vdb-c-items-center vdb-c-gap-6 vdb-c-self-start vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-bg-[#EFEFEF] vdb-c-px-20 vdb-c-py-4"
-                      :class="{
-                        'soft-blink':
-                          index === activeIndex &&
-                          processIndex === step.processes.length - 1 &&
-                          status !== 'success',
-                      }"
-                    >
-                      <SearchIcon
-                        className="vdb-c-h-12 vdb-c-w-12"
-                        color="#000000"
-                      />
-
-                      <div class="vdb-c-flex vdb-c-items-baseline vdb-c-gap-6">
-                        <span
-                          class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-text-kilvish-900"
-                        >
-                          {{ process.process_name }}
-                        </span>
-                        <span
-                          class="vdb-c-font-mono vdb-c-text-[12px] vdb-c-font-normal vdb-c-text-kilvish-700"
-                        >
-                          {{ process.process_content }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
               <!-- /Process Action -->
             </div>
           </div>
@@ -182,7 +134,26 @@ import {
 import ChevronDown from "../../icons/ChevronDown.vue";
 import StatusProcessing from "../../icons/StatusProcessing.vue";
 import StatusComplete from "../../icons/StatusComplete.vue";
+import TargetIcon from "../../icons/TargetIcon.vue";
+import ShuffleIcon from "../../icons/ShuffleIcon.vue";
+import QuoteIcon from "../../icons/QuoteIcon.vue";
+import CountdownTimerIcon from "../../icons/CountdownTimerIcon.vue";
+import CrossCircledIcon from "../../icons/CrossCircledIcon.vue";
+import MixerHorizontalIcon from "../../icons/MixerHorizontalIcon.vue";
+import CircleBackslashIcon from "../../icons/CircleBackslashIcon.vue";
+import CursorTextIcon from "../../icons/CursorTextIcon.vue";
+import ActivityLogIcon from "../../icons/ActivityLogIcon.vue";
+import RowsIcon from "../../icons/RowsIcon.vue";
+import ObjectIcon from "../../icons/ObjectIcon.vue";
 import SearchIcon from "../../icons/SearchIcon.vue";
+import ProcessSteps from "./ProcessSteps.vue";
+import { useVideoDBChat } from "../../../context.js";
+
+const { stepActionHandlers } = useVideoDBChat();
+const getStepType = (s) =>
+  typeof s === "string" ? "string" : s?.type || "unknown";
+const getRegisteredHandler = (s) =>
+  stepActionHandlers?.[getStepType(s)] || null;
 
 const props = defineProps({
   steps: { type: Array, default: () => [] },
@@ -306,6 +277,34 @@ const toggleProcess = (i) => {
   expandedProcesses.value = next;
 };
 const isProcessExpanded = (i) => expandedProcesses.value.has(i);
+
+// Map process name to an icon component (case-insensitive, liberal matching)
+const getProcessIcon = (rawName) => {
+  const name = (rawName || "").toString().toLowerCase().trim();
+
+  // Specific patterns first
+  if (name.includes("searching")) return CountdownTimerIcon; // Searching
+  if (name.includes("search")) return SearchIcon; // Search
+
+  if (name.includes("paraphrases")) return RowsIcon; // Paraphrases (plural)
+  if (name.includes("paraphrasing")) return ShuffleIcon; // Paraphrasing
+  if (name.includes("paraphrase")) return QuoteIcon; // Paraphrase
+
+  if (name.includes("intent")) return TargetIcon; // Intent
+  if (name.includes("diagnosis")) return ActivityLogIcon; // Diagnosis
+
+  if (name.includes("joiner")) return MixerHorizontalIcon; // Joiner
+  if (name.includes("empty")) return CircleBackslashIcon; // Empty / Empty Join
+
+  if (name.includes("query") || name.includes("query setup"))
+    return CursorTextIcon; // Query / Query Setup
+
+  if (name.includes("no") || name.includes("no result"))
+    return CrossCircledIcon; // No / No Results
+
+  // Fallback
+  return ObjectIcon;
+};
 </script>
 
 <style scoped>

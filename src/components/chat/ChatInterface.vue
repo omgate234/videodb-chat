@@ -489,6 +489,8 @@ const {
   setChatInput,
   messageHandlers,
   registerMessageHandler,
+  stepActionHandlers,
+  registerStepActionHandler,
 } = useChatInterface();
 
 // Watch chatAttachments for new uploads
@@ -1004,6 +1006,7 @@ defineExpose({
   chatInputRef,
   conversations,
   messageHandlers,
+  stepActionHandlers,
   addMessage,
   loadSession,
   activeCollectionData,
@@ -1013,6 +1016,7 @@ defineExpose({
   createNewSession,
   setChatInput,
   registerMessageHandler,
+  registerStepActionHandler,
   uploadMedia,
   isScrolled,
 });
@@ -1023,6 +1027,7 @@ provide("videodb-chat", {
   chatLoading,
   conversations,
   messageHandlers,
+  stepActionHandlers,
   addMessage,
   loadSession,
   activeCollectionData,
@@ -1032,6 +1037,7 @@ provide("videodb-chat", {
   generateVideoStream: safeGenerateVideoStream,
   setChatInput,
   registerMessageHandler,
+  registerStepActionHandler,
   uploadMedia,
 });
 </script>

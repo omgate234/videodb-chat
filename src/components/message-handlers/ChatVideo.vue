@@ -16,7 +16,7 @@
           :class="
             isFullScreen
               ? 'vdb-c-fixed vdb-c-inset-0 vdb-c-z-50 vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-overflow-y-hidden vdb-c-bg-black-64'
-              : 'vdb-c-full xl:vdb-c-1/2 vdb-c-overflow-hidden vdb-c-rounded-20 sm:vdb-c-w-3/4 lg:vdb-c-w-3/5 xl:vdb-c-w-1/2'
+              : 'vdb-c-full xl:vdb-c-1/2 vdb-c-aspect-[9/16] vdb-c-overflow-hidden vdb-c-rounded-20 sm:vdb-c-h-[75vh] lg:vdb-c-h-[60vh] xl:vdb-c-h-[50vh]'
           "
         >
           <!-- Vertical 9:16 wrapper when not fullscreen -->
@@ -52,11 +52,8 @@
                         class="vdb-c-z-10 vdb-c-ml-0 vdb-c-flex vdb-c-items-center"
                       >
                         <PlayPauseButton />
-                        <VolumeControlButton />
                         <TimeCode />
                       </div>
-
-                      <FullScreenButton class="" />
                     </div>
                   </div>
                 </template>

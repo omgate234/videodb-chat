@@ -278,7 +278,7 @@
                     </span>
                   </template>
                 </span>
-                <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-4">
+                <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-6">
                   <Popper
                     class="vdb-session-menu"
                     hover
@@ -299,7 +299,7 @@
                     <template #content>
                       <button
                         @click.stop="copySessionId(session.session_id)"
-                        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy"
+                        class="mb-6\ vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy"
                       >
                         <CopyIcon />
                         <span class="vdb-c-text-sm vdb-c-text-black">
@@ -308,7 +308,7 @@
                       </button>
                       <button
                         @click.stop="startEditing(session)"
-                        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy"
+                        class="vdb-c-mb-[2.5px] vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy"
                       >
                         <EditIcon />
                         <span class="vdb-c-text-sm vdb-c-text-black"
@@ -316,7 +316,7 @@
                         >
                       </button>
                       <div
-                        class="vdb-c-my-2 vdb-c-h-px vdb-c-bg-[#EDEDED]"
+                        class="vdb-c-my-2 vdb-c-mb-[2.5px] vdb-c-h-px vdb-c-bg-[#EDEDED]"
                       ></div>
                       <button
                         @click.stop="

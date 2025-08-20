@@ -23,7 +23,7 @@
         class="show-more-divider vdb-c-mt-4 vdb-c-flex vdb-c-justify-center"
       >
         <button
-          class="vdb-c-relative vdb-c-z-10 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12 vdb-c-text-sm vdb-c-text-black vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#EFEFEF] vdb-c-transition-opacity hover:vdb-c-opacity-90"
+          class="vdb-c-relative vdb-c-z-10 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12 vdb-c-text-sm vdb-c-text-black vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#EFEFEF] vdb-c-transition-colors vdb-c-duration-100 hover:vdb-c-bg-[#EFEFEF]"
           @click="handleShowMore"
         >
           See more
@@ -36,7 +36,7 @@
         class="show-more-divider vdb-c-mt-4 vdb-c-flex vdb-c-justify-center"
       >
         <button
-          class="vdb-c-relative vdb-c-z-10 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12 vdb-c-text-sm vdb-c-text-black vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#EFEFEF] vdb-c-transition-opacity hover:vdb-c-opacity-90"
+          class="vdb-c-relative vdb-c-z-10 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12 vdb-c-text-sm vdb-c-text-black vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#EFEFEF] vdb-c-transition-colors vdb-c-duration-100 hover:vdb-c-bg-[#EFEFEF]"
           @click="handleShowLess"
         >
           See less
@@ -128,3 +128,19 @@ const handleShowLess = () => {
   visibleCount.value = Math.min(BATCH_SIZE, total.value);
 };
 </script>
+
+<style scoped>
+.show-more-divider {
+  position: relative;
+}
+.show-more-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e5e7eb; /* divider line color */
+  transform: translateY(-50%);
+}
+</style>
