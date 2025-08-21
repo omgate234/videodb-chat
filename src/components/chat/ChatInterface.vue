@@ -338,7 +338,7 @@ import ChatVideos from "../message-handlers/ChatVideos.vue";
 import DeepSearchContent from "../message-handlers/deepsearch/DeepSearchContent.vue";
 import ImageHandler from "../message-handlers/ImageHandler.vue";
 import TextResponse from "../message-handlers/TextResponse.vue";
-
+import SMPContent from "../message-handlers/smp_agent/SMPContent.vue";
 import CheckIcon from "../icons/Check.vue";
 import CollectionIcon from "../icons/Collection.vue";
 import DeleteIcon from "../icons/Delete3.vue";
@@ -535,6 +535,7 @@ registerMessageHandler("deepsearch", DeepSearchContent);
 registerMessageHandler("text", TextResponse);
 registerMessageHandler("search_results", ChatSearchResults);
 registerMessageHandler("image", ImageHandler);
+registerMessageHandler("snp_agent", SMPContent);
 
 const isStaticPage = ref(false);
 const chatWindowRef = ref(null);

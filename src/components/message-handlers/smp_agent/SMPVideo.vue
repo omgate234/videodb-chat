@@ -173,6 +173,13 @@
             />
           </div>
         </div>
+        <p
+          v-if="content.video?.text"
+          class="vdb-c-p-16 vdb-c-pt-0 vdb-c-text-sm vdb-c-text-kilvish-800"
+        >
+          <span class="vdb-c-font-[500]">Summary: </span
+          >{{ content.video?.text }}
+        </p>
       </div>
 
       <div v-else-if="content.status === 'progress'">
