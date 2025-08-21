@@ -95,7 +95,7 @@
                     closeSidebar();
                   "
                   :class="[
-                    'vdb-c-ml-24 vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-between vdb-c-truncate vdb-c-rounded-lg vdb-c-p-8 vdb-c-text-sm vdb-c-font-medium vdb-c-text-vdb-darkishgrey',
+                    'vdb-c-ml-24 vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-between vdb-c-truncate vdb-c-rounded-lg vdb-c-p-8 vdb-c-px-16 vdb-c-text-sm vdb-c-font-medium vdb-c-text-vdb-darkishgrey',
                     {
                       'vdb-c-bg-[#FFF5EC]':
                         showSelectedCollection &&

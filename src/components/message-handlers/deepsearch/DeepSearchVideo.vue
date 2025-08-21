@@ -38,10 +38,20 @@
               @timeupdate="handlePlayerTimeUpdate"
               @loadeddata="handlePlayerLoadedData"
             >
-              <template #overlay>
-                <BigCenterButton
-                  class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-1/2 vdb-c-h-48 vdb-c-w-48 vdb-c-translate-x-[-50%] vdb-c-translate-y-[-50%]"
-                />
+              <template #controls>
+                <div class="vdb-p-pt-0 vdb-c-p-8">
+                  <div class="sm:vdb-p-mx-8 vdb-c-mb-6 md:vdb-c-mb-6">
+                    <ProgressBar :stream-url="content.video.stream_url" />
+                  </div>
+                  <div class="vdb-c-flex vdb-c-w-full vdb-c-justify-between">
+                    <div
+                      class="vdb-c-z-10 vdb-c-ml-0 vdb-c-flex vdb-c-items-center"
+                    >
+                      <PlayPauseButton />
+                    </div>
+                    <FullScreenButton class="" />
+                  </div>
+                </div>
               </template>
             </VideoDBPlayer>
           </div>
@@ -191,7 +201,15 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useVideoDBChat } from "../../../context.js";
-import { VideoDBPlayer, BigCenterButton } from "@videodb/player-vue";
+import {
+  VideoDBPlayer,
+  TimeCode,
+  BigCenterButton,
+  VolumeControlButton,
+  PlayPauseButton,
+  FullScreenButton,
+  ProgressBar,
+} from "@videodb/player-vue";
 import ResetIcon from "../../icons/Reset.vue";
 import RotateIcon from "../../icons/Rotate.vue";
 import DownloadIcon from "../../icons/Download.vue";
@@ -524,11 +542,11 @@ const handlePlayerTimeUpdate = (evt) => {
     (evt && (evt.detail?.time ?? evt.time)) ??
     0;
   const endRel = Number(clipEndRel.value) || 0;
-  const epsilon = 0.05;
+  const epsilon = 0.1;
   if (t >= endRel - epsilon) {
     try {
       instance.pause?.();
-      instance.seekTo?.(endRel);
+      instance.seekTo?.(startRel);
       segmentEnded.value = true;
     } catch {}
   }

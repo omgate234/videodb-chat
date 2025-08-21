@@ -80,27 +80,6 @@
             </div>
           </section>
 
-          <!-- Objects -->
-          <section
-            class="vdb-c-rounded-[10px] vdb-c-border vdb-c-border-[#EFEFEF]"
-          >
-            <header
-              class="vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-t-[10px] vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12"
-            >
-              <ObjectIcon class="vdb-c-h-24 vdb-c-w-24 vdb-c-text-[#242424]" />
-              <h3 class="vdb-c-text-[16px] vdb-c-font-semibold">Objects</h3>
-            </header>
-            <div class="vdb-c-flex vdb-c-flex-wrap vdb-c-gap-12 vdb-c-p-16">
-              <div
-                v-for="(obj, idx) in localObjects"
-                :key="idx"
-                class="vdb-c-min-w-[180px] vdb-c-basis-[calc(25%-9px)]"
-              >
-                <ModalInput v-model="localObjects[idx]" />
-              </div>
-            </div>
-          </section>
-
           <!-- Emotions -->
           <section
             class="vdb-c-rounded-[10px] vdb-c-border vdb-c-border-[#EFEFEF]"

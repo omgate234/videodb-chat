@@ -22,7 +22,11 @@
     </button>
 
     <!-- Process Sub-steps -->
-    <div v-if="isExpanded" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-12">
+    <div
+      v-if="isExpanded"
+      ref="subStepsContainerEl"
+      class="scrollbar-hidden vdb-c-flex vdb-c-max-h-[355px] vdb-c-flex-col vdb-c-gap-12 vdb-c-overflow-y-auto"
+    >
       <div
         v-for="(process, processIndex) in step.processes"
         :key="processIndex"
@@ -61,6 +65,7 @@
 </template>
 
 <script setup>
+import { ref, watch, nextTick } from "vue";
 import ChevronDown from "../../icons/ChevronDown.vue";
 import TargetIcon from "../../icons/TargetIcon.vue";
 import ShuffleIcon from "../../icons/ShuffleIcon.vue";
@@ -73,6 +78,7 @@ import CursorTextIcon from "../../icons/CursorTextIcon.vue";
 import ActivityLogIcon from "../../icons/ActivityLogIcon.vue";
 import RowsIcon from "../../icons/RowsIcon.vue";
 import SearchIcon from "../../icons/SearchIcon.vue";
+import ObjectIcon from "../../icons/ObjectIcon.vue";
 
 const props = defineProps({
   step: { type: Object, required: true },
@@ -82,6 +88,46 @@ const props = defineProps({
   isExpanded: { type: Boolean, required: true },
   toggle: { type: Function, required: true },
 });
+
+// Auto-scroll sub-steps to bottom when expanded or when processes change
+const subStepsContainerEl = ref(null);
+
+const scrollSubStepsToBottom = () => {
+  const el = subStepsContainerEl.value;
+  if (!el) return;
+  try {
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  } catch (e) {
+    el.scrollTop = el.scrollHeight;
+  }
+};
+
+const queueAutoScroll = () => {
+  nextTick(() => {
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(scrollSubStepsToBottom);
+    } else {
+      scrollSubStepsToBottom();
+    }
+  });
+};
+
+watch(
+  () => props.isExpanded,
+  (expanded) => {
+    if (expanded) queueAutoScroll();
+  },
+  { immediate: false },
+);
+
+// Scroll on any change to processes (length or content)
+watch(
+  () => props.step?.processes,
+  () => {
+    if (props.isExpanded) queueAutoScroll();
+  },
+  { deep: true },
+);
 
 const getProcessIcon = (rawName) => {
   const name = (rawName || "").toString().toLowerCase().trim();
@@ -97,7 +143,7 @@ const getProcessIcon = (rawName) => {
   if (name.includes("query")) return CursorTextIcon;
   if (name.includes("no") || name.includes("no result"))
     return CrossCircledIcon;
-  return SearchIcon;
+  return ObjectIcon;
 };
 </script>
 
@@ -115,5 +161,14 @@ const getProcessIcon = (rawName) => {
 }
 .soft-blink {
   animation: softBlink 1.8s ease-in-out infinite;
+}
+
+/* hide scrollbars while preserving scroll behavior */
+.scrollbar-hidden {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 </style>
