@@ -587,6 +587,50 @@ export function useVideoDBAgent(config) {
     }
   };
 
+  const updateMessageReaction = async (msgId, reaction) => {
+    if (!session.sessionId) {
+      throw new Error("No active session.");
+    }
+    if (!msgId) {
+      throw new Error("Message ID is required.");
+    }
+
+    try {
+      const response = await fetch(
+        `${httpUrl}/session/${session.sessionId}/message/${msgId}/reaction`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reaction }),
+        },
+      );
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (e) {
+        // Some servers may return empty body on success
+      }
+
+      if (!response.ok) {
+        const message = (data && data.message) || "Failed to update reaction.";
+        throw new Error(message);
+      }
+
+      return data || { success: true };
+    } catch (error) {
+      if (debug)
+        console.error(
+          "debug :videodb-chat error updating message reaction",
+          error,
+        );
+      throw error;
+    }
+  };
+
   const addClientLoadingMessage = (convId) => {
     const messages = Object.values(conversations[convId]);
     const lastMessage = messages[messages.length - 1];
@@ -711,5 +755,6 @@ export function useVideoDBAgent(config) {
     generateImageUrl,
     generateAudioUrl,
     generateVideoStream,
+    updateMessageReaction,
   };
 }

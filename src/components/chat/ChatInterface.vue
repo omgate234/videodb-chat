@@ -470,6 +470,7 @@ const {
   deleteAudio,
   deleteImage,
   renameSession,
+  updateMessageReaction,
 } = useChatHook(props.chatHookConfig);
 
 // Always provide a callable generateVideoStream, even if a custom hook omits it
@@ -1040,6 +1041,7 @@ provide("videodb-chat", {
   registerMessageHandler,
   registerStepActionHandler,
   uploadMedia,
+  updateMessageReaction,
 });
 </script>
 

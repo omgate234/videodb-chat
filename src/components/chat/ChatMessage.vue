@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import TextResponse from "../message-handlers/TextResponse.vue";
 import ImageHandler from "../message-handlers/ImageHandler.vue";
 import ChatMessageSteps from "./elements/ChatMessageSteps.vue";
@@ -147,7 +147,7 @@ const props = defineProps({
   },
 });
 
-const { messageHandlers } = useVideoDBChat();
+const { messageHandlers, updateMessageReaction } = useVideoDBChat();
 
 const isUser = computed(() => props.message.msg_type === "input");
 const isAssistant = computed(() => props.message.msg_type === "output");
@@ -163,10 +163,46 @@ const finalStatus = computed(() => {
   return assistantContent?.status || props.message.status;
 });
 
-// Feedback state for this message
+const ReactionMap = Object.freeze({
+  UP: "like",
+  DOWN: "dislike",
+  NONE: null,
+});
+
 const selectedFeedback = ref("");
-const selectFeedback = (val) => {
-  selectedFeedback.value = selectedFeedback.value === val ? "" : val;
+
+// initialize from message.reaction if present
+watch(
+  () => props.message?.reaction,
+  (val) => {
+    if (val === ReactionMap.UP) selectedFeedback.value = "up";
+    else if (val === ReactionMap.DOWN) selectedFeedback.value = "down";
+    else selectedFeedback.value = "";
+  },
+  { immediate: true },
+);
+
+const selectFeedback = async (val) => {
+  const previous = selectedFeedback.value;
+  const toggled = previous === val ? "" : val;
+  // optimistic update
+  selectedFeedback.value = toggled;
+
+  // map to API value
+  const reaction =
+    toggled === "up"
+      ? ReactionMap.UP
+      : toggled === "down"
+        ? ReactionMap.DOWN
+        : ReactionMap.NONE;
+
+  try {
+    await updateMessageReaction?.(props.message.msg_id, reaction);
+  } catch (e) {
+    // rollback on failure
+    selectedFeedback.value = previous;
+    console.error("Failed to update reaction:", e?.message || e);
+  }
 };
 </script>
 
