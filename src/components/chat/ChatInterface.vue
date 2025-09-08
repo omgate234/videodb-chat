@@ -182,7 +182,7 @@
                         i === Object.keys(conversations).length - 1,
                     }"
                   />
-                  <div class="vdb-c-h-[100px]"></div>
+                  <div class="vdb-c-h-[90px]"></div>
                 </div>
 
                 <component

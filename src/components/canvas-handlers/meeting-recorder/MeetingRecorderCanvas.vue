@@ -16,17 +16,27 @@
   />
 
   <!-- Bottom buttons (visible initially) -->
-  <div
+  <TransitionGroup
+    name="mr-btn-fade"
+    tag="div"
     class="meeting-recorder-canvas-buttons vdb-c-absolute vdb-c-bottom-0 vdb-c-left-0 vdb-c-z-[100] vdb-c-flex vdb-c-h-fit vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-gap-20 vdb-c-pb-6 vdb-c-pt-20"
   >
-    <Button :icon="Live" label="See Live Analysis" @click="openLiveAnalysis" />
+    <Button
+      key="live-btn"
+      :icon="Live"
+      label="See Live Analysis"
+      :isActive="isLiveAnalysisOpen"
+      @click="openLiveAnalysis"
+    />
     <Button
       v-if="showMeetingAnalysisButton"
+      key="meeting-btn"
       :icon="Robot"
       label="Meeting Analysis"
+      :isActive="isMeetingAnalysisOpen"
       @click="openMeetingAnalysis"
     />
-  </div>
+  </TransitionGroup>
 </template>
 
 <script setup>
@@ -125,5 +135,19 @@ function makeFloating() {
     rgba(255, 255, 255, 0.5) -11.38%,
     #fff 90%
   );
+}
+
+/* Fade/slide for bottom buttons */
+.mr-btn-fade-enter-active,
+.mr-btn-fade-leave-active {
+  transition: all 200ms ease;
+}
+.mr-btn-fade-enter-from,
+.mr-btn-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.mr-btn-fade-move {
+  transition: transform 200ms ease;
 }
 </style>

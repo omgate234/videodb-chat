@@ -299,6 +299,7 @@ watch(
 watch(
   () => message.value?.metadata,
   (m) => {
+    console.log(">>> Message Metadata", message.value);
     const ctx = m?.meeting_context;
     if (!ctx) return;
     if (Array.isArray(ctx.main_goals))
@@ -307,8 +308,11 @@ watch(
     if (Array.isArray(ctx.topics)) selectedTopics.value = new Set(ctx.topics);
     if (typeof ctx.discussion_topic_text === "string")
       discussionTopicText.value = ctx.discussion_topic_text;
+
+    // Close the drawer when metadata is present (already filled previously)
+    isOpen.value = false;
   },
-  { deep: true },
+  { deep: true, immediate: true },
 );
 
 async function handleSave() {

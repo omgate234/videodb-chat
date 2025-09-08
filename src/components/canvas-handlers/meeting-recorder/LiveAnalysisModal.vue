@@ -3,7 +3,7 @@
   <aside
     id="live-analysis"
     ref="modalRef"
-    class="vdb-c-absolute vdb-c-flex vdb-c-flex-col vdb-c-gap-[16px] vdb-c-rounded-8 vdb-c-border-[1.18px] vdb-c-border-[#E5E7EB] vdb-c-bg-white vdb-c-text-black vdb-c-shadow-2"
+    class="vdb-c-absolute vdb-c-z-[50px] vdb-c-flex vdb-c-flex-col vdb-c-gap-[16px] vdb-c-rounded-[10px] vdb-c-border-[1.18px] vdb-c-border-[#E5E7EB] vdb-c-bg-white vdb-c-text-black vdb-c-shadow-2"
     :class="{
       'vdb-c-transition-all vdb-c-duration-200 vdb-c-ease-in-out':
         animateTransition,
@@ -12,7 +12,10 @@
   >
     <!-- HEADER (styling copied exactly as requested; only title & buttons differ) -->
     <div
-      class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-border-b vdb-c-border-gray-200 vdb-c-bg-[#F7F7F7] vdb-c-px-20 vdb-c-py-12"
+      class="vdb-c-flex vdb-c-w-full vdb-c-cursor-move vdb-c-items-center vdb-c-justify-between vdb-c-border-b vdb-c-border-gray-200 vdb-c-bg-[#F7F7F7] vdb-c-px-20 vdb-c-py-12"
+      :class="{
+        'vdb-c-cursor-move': viewMode !== 'top' && viewMode !== 'bottom',
+      }"
       @mousedown="startDrag"
     >
       <div
@@ -60,7 +63,7 @@
 
     <!-- MAIN (scroll area) -->
     <div
-      class="scrollbar-hide vdb-c-flex vdb-c-flex-[1_0_0] vdb-c-flex-col vdb-c-items-start vdb-c-gap-20 vdb-c-self-stretch vdb-c-overflow-auto vdb-c-bg-white vdb-c-p-20"
+      class="scrollbar-hide vdb-c-flex vdb-c-flex-[1_0_0] vdb-c-flex-col vdb-c-items-start vdb-c-gap-20 vdb-c-self-stretch vdb-c-overflow-auto vdb-c-rounded-b-[10px] vdb-c-bg-white vdb-c-p-20"
     >
       <!-- Live analysis list -->
       <TransitionGroup
@@ -125,20 +128,24 @@
       </TransitionGroup>
     </div>
 
-    <!-- Resize handles (unchanged) -->
+    <!-- Resize handles (only show when not in top/bottom view modes) -->
     <div
+      v-if="viewMode !== 'top' && viewMode !== 'bottom'"
       class="vdb-c-absolute vdb-c-right-0 vdb-c-top-0 vdb-c-h-full vdb-c-w-2 vdb-c-cursor-col-resize vdb-c-bg-transparent"
       @mousedown="(e) => startResize('right', e)"
     ></div>
     <div
+      v-if="viewMode !== 'top' && viewMode !== 'bottom'"
       class="vdb-c-absolute vdb-c-left-0 vdb-c-top-0 vdb-c-h-full vdb-c-w-2 vdb-c-cursor-col-resize vdb-c-bg-transparent"
       @mousedown="(e) => startResize('left', e)"
     ></div>
     <div
+      v-if="viewMode !== 'top' && viewMode !== 'bottom'"
       class="vdb-c-absolute vdb-c-bottom-0 vdb-c-left-0 vdb-c-h-2 vdb-c-w-full vdb-c-cursor-row-resize vdb-c-bg-transparent"
       @mousedown="(e) => startResize('bottom', e)"
     ></div>
     <div
+      v-if="viewMode !== 'top' && viewMode !== 'bottom'"
       class="vdb-c-absolute vdb-c-left-0 vdb-c-top-0 vdb-c-h-2 vdb-c-w-full vdb-c-cursor-row-resize vdb-c-bg-transparent"
       @mousedown="(e) => startResize('top', e)"
     ></div>
@@ -165,7 +172,7 @@ const modalRef = ref(null);
 const animateTransition = ref(false);
 
 const position = ref({ x: 24, y: 24 });
-const size = ref({ width: 300, height: 400 });
+const size = ref({ width: 360, height: 400 });
 
 const isDragging = ref(false);
 const dragStart = ref({ x: 0, y: 0, startX: 0, startY: 0 });
@@ -200,10 +207,10 @@ const modalStyle = computed(() => {
     };
   } else {
     return {
-      left: `24px`,
-      top: `24px`,
-      width: `30%`,
-      height: `calc(100% - 48px)`,
+      left: `${position.value.x}px`,
+      top: `${position.value.y}px`,
+      width: `${size.value.width}px`,
+      height: `${size.value.height}px`,
     };
   }
 });
@@ -217,6 +224,7 @@ function changeViewMode(mode) {
   setTimeout(() => (animateTransition.value = false), 250);
 }
 function startDrag(e) {
+  if (viewMode.value === "top" || viewMode.value === "bottom") return;
   isDragging.value = true;
   dragStart.value = {
     x: e.clientX,
@@ -229,7 +237,12 @@ function startDrag(e) {
   e.preventDefault();
 }
 function handleDrag(e) {
-  if (!isDragging.value) return;
+  if (
+    !isDragging.value ||
+    viewMode.value === "top" ||
+    viewMode.value === "bottom"
+  )
+    return;
   const deltaX = e.clientX - dragStart.value.x;
   const deltaY = e.clientY - dragStart.value.y;
   position.value = {
@@ -243,6 +256,7 @@ function stopDrag() {
   document.removeEventListener("mouseup", stopDrag);
 }
 function startResize(direction, event) {
+  if (viewMode.value === "top" || viewMode.value === "bottom") return;
   isResizing.value = true;
   resizeDirection.value = direction;
   resizeStart.value = {
@@ -258,15 +272,20 @@ function startResize(direction, event) {
   event.preventDefault();
 }
 function handleResize(e) {
-  if (!isResizing.value) return;
+  if (
+    !isResizing.value ||
+    viewMode.value === "top" ||
+    viewMode.value === "bottom"
+  )
+    return;
   const dx = e.clientX - resizeStart.value.x;
   const dy = e.clientY - resizeStart.value.y;
   switch (resizeDirection.value) {
     case "right":
-      size.value.width = Math.max(200, resizeStart.value.startWidth + dx);
+      size.value.width = Math.max(360, resizeStart.value.startWidth + dx);
       break;
     case "left": {
-      const newW = Math.max(200, resizeStart.value.startWidth - dx);
+      const newW = Math.max(360, resizeStart.value.startWidth - dx);
       const newX =
         resizeStart.value.startX + (resizeStart.value.startWidth - newW);
       size.value.width = newW;
@@ -274,10 +293,10 @@ function handleResize(e) {
       break;
     }
     case "bottom":
-      size.value.height = Math.max(150, resizeStart.value.startHeight + dy);
+      size.value.height = Math.max(160, resizeStart.value.startHeight + dy);
       break;
     case "top": {
-      const newH = Math.max(150, resizeStart.value.startHeight - dy);
+      const newH = Math.max(160, resizeStart.value.startHeight - dy);
       const newY =
         resizeStart.value.startY + (resizeStart.value.startHeight - newH);
       size.value.height = newH;

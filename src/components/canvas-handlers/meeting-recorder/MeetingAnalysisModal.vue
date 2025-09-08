@@ -2,12 +2,14 @@
   <Transition name="modal-fade" appear>
     <div
       v-if="isOpen"
+      ref="modalRef"
       class="vdb-c-select-none vdb-c-border vdb-c-border-[#E5E7EB] vdb-c-bg-[#FFFFFF]"
       :class="
         isFloating
-          ? 'vdb-c-absolute vdb-c-bottom-24 vdb-c-right-24 vdb-c-top-24 vdb-c-z-10 vdb-c-h-[95%] vdb-c-w-[397px] vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-shadow-[0_8px_24px_rgba(0,0,0,0.08)]'
+          ? 'vdb-c-absolute vdb-c-right-12 vdb-c-top-12 vdb-c-z-10 vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-shadow-[0_8px_24px_rgba(0,0,0,0.08)]'
           : 'vdb-c-rounded-0 vdb-c-relative vdb-c-w-full'
       "
+      :style="isFloating ? modalStyle : {}"
       role="dialog"
       aria-modal="true"
       aria-label="Meeting Assistant"
@@ -19,7 +21,8 @@
       >
         <!-- Header -->
         <div
-          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-border-b vdb-c-border-gray-200 vdb-c-bg-[#F7F7F7] vdb-c-px-20 vdb-c-py-12"
+          class="vdb-c-flex vdb-c-w-full vdb-c-cursor-move vdb-c-items-center vdb-c-justify-between vdb-c-border-b vdb-c-border-gray-200 vdb-c-bg-[#F7F7F7] vdb-c-px-20 vdb-c-py-12"
+          @mousedown="startDrag"
         >
           <div
             class="vdb-c-text-[18px] vdb-c-font-[600] vdb-c-capitalize vdb-c-leading-[27px] vdb-c-text-black"
@@ -199,7 +202,7 @@
                 >
                   <button
                     type="button"
-                    class="vdb-c-flex vdb-c-h-[16px] vdb-c-w-[16px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-4 vdb-c-border vdb-c-transition"
+                    class="vdb-c-flex vdb-c-h-[16px] vdb-c-w-[16px] vdb-c-min-w-[16px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-4 vdb-c-border vdb-c-transition"
                     :class="
                       item.covered
                         ? 'vdb-c-border-[#EC5B16] vdb-c-bg-[#EC5B16]'
@@ -236,12 +239,34 @@
           </section>
         </div>
       </div>
+
+      <!-- Resize handles -->
+      <div
+        v-if="isFloating"
+        class="vdb-c-absolute vdb-c-right-0 vdb-c-top-0 vdb-c-h-full vdb-c-w-2 vdb-c-cursor-col-resize vdb-c-bg-transparent"
+        @mousedown="(e) => startResize('right', e)"
+      ></div>
+      <div
+        v-if="isFloating"
+        class="vdb-c-absolute vdb-c-left-0 vdb-c-top-0 vdb-c-h-full vdb-c-w-2 vdb-c-cursor-col-resize vdb-c-bg-transparent"
+        @mousedown="(e) => startResize('left', e)"
+      ></div>
+      <div
+        v-if="isFloating"
+        class="vdb-c-absolute vdb-c-bottom-0 vdb-c-left-0 vdb-c-h-2 vdb-c-w-full vdb-c-cursor-row-resize vdb-c-bg-transparent"
+        @mousedown="(e) => startResize('bottom', e)"
+      ></div>
+      <div
+        v-if="isFloating"
+        class="vdb-c-absolute vdb-c-left-0 vdb-c-top-0 vdb-c-h-2 vdb-c-w-full vdb-c-cursor-row-resize vdb-c-bg-transparent"
+        @mousedown="(e) => startResize('top', e)"
+      ></div>
     </div>
   </Transition>
 </template>
 
 <script setup>
-import { computed, watch, ref } from "vue";
+import { computed, watch, ref, onUnmounted } from "vue";
 import { useVideoDBChat } from "../../../context";
 import Pinned from "./Pinned.vue";
 import UnPinned from "./UnPinned.vue";
@@ -255,6 +280,35 @@ const props = defineProps({
 const emit = defineEmits(["close", "toggle-floating"]);
 
 const { canvasState } = useVideoDBChat();
+
+/* ── Dragging and Resizing State ─────────────────────────────────── */
+const modalRef = ref(null);
+const position = ref({ x: 24, y: 24 });
+const size = ref({ width: 397, height: 500 });
+
+const isDragging = ref(false);
+const dragStart = ref({ x: 0, y: 0, startX: 0, startY: 0 });
+
+const isResizing = ref(false);
+const resizeStart = ref({
+  x: 0,
+  y: 0,
+  startWidth: 0,
+  startHeight: 0,
+  startX: 0,
+  startY: 0,
+});
+const resizeDirection = ref("");
+
+const modalStyle = computed(() => {
+  if (!props.isFloating) return {};
+  return {
+    left: `${position.value.x}px`,
+    top: `${position.value.y}px`,
+    width: `${size.value.width}px`,
+    height: `${size.value.height}px`,
+  };
+});
 
 /** Normalize escaped percent signs coming from the stream */
 const normalize = (t = "") => t.replaceAll("\\%", "%").trim();
@@ -309,6 +363,100 @@ function toggleChecklist(idx) {
   const item = localChecklist.value[idx];
   if (item) item.covered = !item.covered;
 }
+
+/* ── Dragging Functions ───────────────────────────────────────────── */
+function startDrag(e) {
+  if (!props.isFloating) return;
+  isDragging.value = true;
+  dragStart.value = {
+    x: e.clientX,
+    y: e.clientY,
+    startX: position.value.x,
+    startY: position.value.y,
+  };
+  document.addEventListener("mousemove", handleDrag);
+  document.addEventListener("mouseup", stopDrag);
+  e.preventDefault();
+}
+
+function handleDrag(e) {
+  if (!isDragging.value || !props.isFloating) return;
+  const deltaX = e.clientX - dragStart.value.x;
+  const deltaY = e.clientY - dragStart.value.y;
+  position.value = {
+    x: Math.max(0, dragStart.value.startX + deltaX),
+    y: Math.max(0, dragStart.value.startY + deltaY),
+  };
+}
+
+function stopDrag() {
+  isDragging.value = false;
+  document.removeEventListener("mousemove", handleDrag);
+  document.removeEventListener("mouseup", stopDrag);
+}
+
+/* ── Resizing Functions ───────────────────────────────────────────── */
+function startResize(direction, event) {
+  if (!props.isFloating) return;
+  isResizing.value = true;
+  resizeDirection.value = direction;
+  resizeStart.value = {
+    x: event.clientX,
+    y: event.clientY,
+    startWidth: size.value.width,
+    startHeight: size.value.height,
+    startX: position.value.x,
+    startY: position.value.y,
+  };
+  document.addEventListener("mousemove", handleResize);
+  document.addEventListener("mouseup", stopResize);
+  event.preventDefault();
+}
+
+function handleResize(e) {
+  if (!isResizing.value || !props.isFloating) return;
+  const dx = e.clientX - resizeStart.value.x;
+  const dy = e.clientY - resizeStart.value.y;
+
+  switch (resizeDirection.value) {
+    case "right":
+      size.value.width = Math.max(360, resizeStart.value.startWidth + dx);
+      break;
+    case "left": {
+      const newW = Math.max(360, resizeStart.value.startWidth - dx);
+      const newX =
+        resizeStart.value.startX + (resizeStart.value.startWidth - newW);
+      size.value.width = newW;
+      position.value.x = Math.max(0, newX);
+      break;
+    }
+    case "bottom":
+      size.value.height = Math.max(160, resizeStart.value.startHeight + dy);
+      break;
+    case "top": {
+      const newH = Math.max(160, resizeStart.value.startHeight - dy);
+      const newY =
+        resizeStart.value.startY + (resizeStart.value.startHeight - newH);
+      size.value.height = newH;
+      position.value.y = Math.max(0, newY);
+      break;
+    }
+  }
+}
+
+function stopResize() {
+  isResizing.value = false;
+  resizeDirection.value = "";
+  document.removeEventListener("mousemove", handleResize);
+  document.removeEventListener("mouseup", stopResize);
+}
+
+onUnmounted(() => {
+  document.removeEventListener("mousemove", handleDrag);
+  document.removeEventListener("mouseup", stopDrag);
+  document.removeEventListener("mousemove", handleResize);
+  document.removeEventListener("mouseup", stopResize);
+});
 
 /** When the modal re-opens, collapse the "see all" views for a clean start */
 watch(
