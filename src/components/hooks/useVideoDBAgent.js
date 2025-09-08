@@ -137,6 +137,35 @@ export function useVideoDBAgent(config) {
     return res;
   };
 
+  const appendMessageMetadata = async (msgId, metadata) => {
+    const res = {};
+    try {
+      const response = await fetch(
+        `${httpUrl}/session/message/${msgId}/metadata`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(metadata),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      res.status = "success";
+      res.data = data;
+    } catch (error) {
+      res.status = "error";
+      res.error = error;
+    }
+    return res;
+  };
+
   const refetchCollectionVideos = async () => {
     fetchCollectionVideos(session.collectionId).then((res) => {
       activeCollectionVideos.value = res.data;
@@ -638,5 +667,6 @@ export function useVideoDBAgent(config) {
     uploadMedia,
     generateImageUrl,
     generateAudioUrl,
+    appendMessageMetadata,
   };
 }
