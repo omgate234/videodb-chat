@@ -331,11 +331,16 @@ watch(
 );
 
 /* ── Helpers ───────────────────────────────────────────────────── */
-function formatTime(sec = 0) {
-  const s = Math.max(0, Math.floor(sec));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, "0")}`;
+function formatTime(timestamp = 0) {
+  // Handle microsecond timestamps (convert to milliseconds for Date constructor)
+  const milliseconds = Math.floor(timestamp / 1_000);
+  const date = new Date(milliseconds);
+
+  // Format as HH:MM:SS in local timezone
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+
+  return `${hours}:${minutes}`;
 }
 function itemKey(item, idx) {
   // deterministic key across updates
