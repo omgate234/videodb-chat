@@ -2,7 +2,7 @@
   <div
     v-if="isOpen"
     ref="modalRef"
-    class="max-h-[8] vdb-c-select-none vdb-c-border vdb-c-border-[#E5E7EB] vdb-c-bg-[#FFFFFF]"
+    class="vdb-c-max-h-[80%] vdb-c-select-none vdb-c-border vdb-c-border-[#E5E7EB] vdb-c-bg-[#FFFFFF]"
     :class="
       isFloating
         ? 'vdb-c-absolute vdb-c-z-10 vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-shadow-[0_8px_24px_rgba(0,0,0,0.08)]'
@@ -15,7 +15,7 @@
   >
     <!-- Shell -->
     <div
-      class="vdb-c-flex vdb-c-max-h-[80vh] vdb-c-flex-col vdb-c-items-start vdb-c-overflow-hidden vdb-c-pb-24 vdb-c-transition-all vdb-c-duration-300"
+      class="scrollbar-hide vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-start vdb-c-overflow-hidden vdb-c-pb-24 vdb-c-transition-all vdb-c-duration-300"
       :class="isFloating ? 'vdb-c-rounded-12' : 'vdb-c-rounded-0'"
     >
       <!-- Header -->
@@ -60,7 +60,7 @@
 
       <!-- Main (scroll area) -->
       <div
-        class="scrollbar-hide vdb-c-flex vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col vdb-c-items-start vdb-c-gap-30 vdb-c-overflow-y-auto vdb-c-px-20 vdb-c-py-16"
+        class="scrollbar-hide vdb-c-flex vdb-c-min-h-0 vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col vdb-c-items-start vdb-c-gap-30 vdb-c-overflow-y-auto vdb-c-px-20 vdb-c-py-16"
       >
         <!-- Live Insights -->
         <section
@@ -91,6 +91,47 @@
             </div>
           </div>
 
+          <!-- Highlights Card -->
+          <div
+            class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-16 vdb-c-rounded-[10px] vdb-c-border vdb-c-border-yellow-200 vdb-c-bg-yellow-50 vdb-c-p-12"
+          >
+            <div
+              class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-12"
+            >
+              <div
+                class="vdb-c-inline-flex vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-[48px] vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[13px] vdb-c-font-[600] vdb-c-text-black"
+              >
+                Highlights
+              </div>
+              <div
+                v-if="highlights.length === 0"
+                class="vdb-c-text-[13px] vdb-c-text-[#6B7280]"
+              >
+                No highlights available
+              </div>
+              <ul
+                v-else
+                class="scrollbar-hide vdb-c-max-h-[200px] vdb-c-w-full vdb-c-list-disc vdb-c-overflow-auto vdb-c-pl-20"
+              >
+                <li
+                  v-for="(item, idx) in visibleHighlights"
+                  :key="'hl-' + idx + '-' + item.text"
+                  class="vdb-c-text-[14px] vdb-c-leading-[24px] vdb-c-text-black"
+                >
+                  {{ normalize(item.text) }}
+                </li>
+              </ul>
+            </div>
+
+            <button
+              v-if="highlights.length > 2"
+              class="vdb-c-inline-flex vdb-c-items-center vdb-c-gap-1 vdb-c-rounded-[999px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-8 vdb-c-text-[13px] vdb-c-font-[500] vdb-c-leading-[16px] vdb-c-tracking-[0.065px] vdb-c-text-black vdb-c-transition hover:vdb-c-bg-[#F9FAFB]"
+              @click="toggleSeeAll('highlights')"
+            >
+              {{ showAllHighlights ? "See less" : "See all" }}
+            </button>
+          </div>
+
           <!-- High Priority Card -->
           <div
             class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-16 vdb-c-rounded-[10px] vdb-c-border vdb-c-border-[#FFE9D3] vdb-c-bg-[#FFF5EC] vdb-c-p-12"
@@ -103,7 +144,14 @@
               >
                 High Priority
               </div>
+              <div
+                v-if="highPriority.length === 0"
+                class="vdb-c-text-[13px] vdb-c-text-[#6B7280]"
+              >
+                No high priority insights available
+              </div>
               <ul
+                v-else
                 class="scrollbar-hide vdb-c-max-h-[200px] vdb-c-w-full vdb-c-list-disc vdb-c-overflow-auto vdb-c-pl-20"
               >
                 <li
@@ -138,7 +186,14 @@
                 Opportunity
               </div>
 
+              <div
+                v-if="opportunities.length === 0"
+                class="vdb-c-text-[13px] vdb-c-text-[#6B7280]"
+              >
+                No opportunities available
+              </div>
               <ul
+                v-else
                 class="scrollbar-hide vdb-c-max-h-[200px] vdb-c-w-full vdb-c-list-disc vdb-c-overflow-auto vdb-c-pl-20"
               >
                 <li
@@ -183,7 +238,14 @@
             Suggested Questions/Actions
           </div>
 
+          <div
+            v-if="questions.length === 0"
+            class="vdb-c-text-[13px] vdb-c-text-[#6B7280]"
+          >
+            No suggested questions or actions
+          </div>
           <TransitionGroup
+            v-else
             name="list-fade"
             tag="ul"
             class="scrollbar-hide vdb-c-max-h-[200px] vdb-c-w-full vdb-c-list-disc vdb-c-overflow-auto vdb-c-pl-20"
@@ -221,6 +283,13 @@
           </div>
 
           <div
+            v-if="localChecklist.length === 0"
+            class="vdb-c-text-[13px] vdb-c-text-[#6B7280]"
+          >
+            No checklist items
+          </div>
+          <div
+            v-else
             class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-12"
           >
             <TransitionGroup
@@ -345,9 +414,15 @@ const opportunities = computed(() =>
     (x) => (x.type || "").toLowerCase() === "opportunity",
   ),
 );
+const highlights = computed(() =>
+  liveInsights.value.filter(
+    (x) => (x.type || "").toLowerCase() === "highlights",
+  ),
+);
 
 const showAllHigh = ref(false);
 const showAllOpp = ref(false);
+const showAllHighlights = ref(false);
 const latestTwo = (arr) => (arr.length <= 2 ? arr : arr.slice(-2));
 
 const visibleHighPriority = computed(() =>
@@ -355,6 +430,9 @@ const visibleHighPriority = computed(() =>
 );
 const visibleOpportunities = computed(() =>
   showAllOpp.value ? opportunities.value : latestTwo(opportunities.value),
+);
+const visibleHighlights = computed(() =>
+  showAllHighlights.value ? highlights.value : latestTwo(highlights.value),
 );
 
 /**
@@ -399,6 +477,8 @@ watch(
 function toggleSeeAll(which) {
   if (which === "high") showAllHigh.value = !showAllHigh.value;
   if (which === "opp") showAllOpp.value = !showAllOpp.value;
+  if (which === "highlights")
+    showAllHighlights.value = !showAllHighlights.value;
 }
 
 function toggleChecklist(idx) {
@@ -449,6 +529,7 @@ watch(
     if (open) {
       showAllHigh.value = false;
       showAllOpp.value = false;
+      showAllHighlights.value = false;
       // Ensure correct initial anchor when opening in floating mode
       if (props.isFloating) snapToTopRight();
     }
