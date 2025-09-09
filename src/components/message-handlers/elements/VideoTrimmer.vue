@@ -9,7 +9,7 @@
       <img
         v-for="(thumbnail, index) in relevantThumbnails"
         :key="`${thumbnail.timestamp}-${index}`"
-        :src="thumbnail.thumbnail_url"
+        :src="removeQueryParams(thumbnail.thumbnail_url)"
         :alt="`Frame at ${thumbnail.timestamp}s`"
         class="vdb-c-absolute vdb-c-h-full vdb-c-object-cover"
         :style="{
@@ -27,7 +27,7 @@
           left: '0',
           width: `${startLeft}px`,
           backgroundColor: 'rgba(0,0,0,0.4)',
-          zIndex: -100,
+          zIndex: 0,
         }"
       ></div>
 
@@ -338,7 +338,7 @@ export default {
           .sort((a, b) => a - b)
           .map((t) => ({
             timestamp: t,
-            thumbnail_url: this.videoThumbnailUrl,
+            thumbnail_url: this.removeQueryParams(this.videoThumbnailUrl),
           }));
       }
       return [];
@@ -371,6 +371,19 @@ export default {
     },
   },
   methods: {
+    removeQueryParams(url) {
+      if (!url || typeof url !== "string") return url;
+      try {
+        const urlObj = new URL(url);
+        return `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+      } catch (error) {
+        // If URL parsing fails, try simple string manipulation
+        const questionMarkIndex = url.indexOf("?");
+        return questionMarkIndex !== -1
+          ? url.substring(0, questionMarkIndex)
+          : url;
+      }
+    },
     measureAndObserveContainer() {
       const container = this.$refs.containerRef;
       if (!container) return;
