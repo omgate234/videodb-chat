@@ -235,6 +235,7 @@ const mainGoals = [
   "Strategic Planning",
   "Daily Standup",
   "Client meeting",
+  "Demo Showcase",
   "Other",
 ];
 const selectedMainGoals = ref(new Set()); // empty
@@ -263,11 +264,7 @@ function toggleTopic(t) {
 }
 
 const canSave = computed(
-  () =>
-    objective.value.trim().length > 0 &&
-    selectedTopics.value.size > 0 &&
-    (selectedMainGoals.value.size > 0 ||
-      discussionTopicText.value.trim().length > 0),
+  () => objective.value.trim().length > 0 && selectedMainGoals.value.size > 0,
 );
 
 /* chat ctx */
@@ -285,11 +282,7 @@ onMounted(() => {
 watch(
   () => props.content,
   (c) => {
-    console.log(">>> CanvasState", canvasState);
-
-    console.log(">>> CanvasState-Status", canvasState.show, canvasState.type);
     if (canvasState.show && canvasState.type === "meeting_recorder") {
-      console.log("canvasState.content", c);
       canvasState.content = c;
     }
   },
@@ -299,7 +292,6 @@ watch(
 watch(
   () => message.value?.metadata,
   (m) => {
-    console.log(">>> Message Metadata", message.value);
     const ctx = m?.meeting_context;
     if (!ctx) return;
     if (Array.isArray(ctx.main_goals))
@@ -328,7 +320,8 @@ async function handleSave() {
     },
   };
 
-  appendMessageMetadata && appendMessageMetadata(props.msgId, metadata);
+  const targetMsgId = props.content?.msg_id || props.msgId;
+  appendMessageMetadata && appendMessageMetadata(targetMsgId, metadata);
   openCanvas && openCanvas("meeting_recorder", props.content);
 
   // 2) Auto-close the drawer

@@ -41,7 +41,7 @@
 
 <script setup>
 import { useVideoDBChat } from "../../../context";
-import { ref, watch, computed } from "vue";
+import { ref, computed } from "vue";
 import Button from "./Button.vue";
 import Robot from "./Robot.vue";
 import Live from "./Live.vue";
@@ -61,29 +61,6 @@ const props = defineProps({
 
 // Use content from canvas state instead of props
 const content = computed(() => canvasState.content || {});
-
-// Watch for content changes to update canvas state
-watch(
-  () => content.value,
-  (newContent) => {
-    console.log("MeetingRecorderCanvas content updated:", newContent);
-
-    // If content has live_analysis, we might want to show live analysis button
-    if (newContent?.live_analysis && newContent.live_analysis.length > 0) {
-      // Live analysis is available
-      console.log("Live analysis data available:", newContent.live_analysis);
-    }
-
-    // If content has meeting_assistant data, we can show meeting analysis
-    if (newContent?.meeting_assistant) {
-      console.log(
-        "Meeting assistant data available:",
-        newContent.meeting_assistant,
-      );
-    }
-  },
-  { deep: true, immediate: true },
-);
 
 function openMeetingAnalysis() {
   isMeetingAnalysisOpen.value = true;
