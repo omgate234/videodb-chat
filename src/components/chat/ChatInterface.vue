@@ -35,6 +35,7 @@
         @create-collection="showCreateCollectionModal = true"
         @delete-session="showDeleteSessionDialog"
         @delete-collection="promptDeleteCollection"
+        @update-session-name="handleUpdateSessionName"
         @agent-click="
           if (!chatLoading) {
             handleTagAgent($event, false);
@@ -488,6 +489,7 @@ const {
   deleteVideo,
   deleteAudio,
   deleteImage,
+  renameSession,
   appendMessageMetadata,
 } = useChatHook(props.chatHookConfig);
 
@@ -773,6 +775,14 @@ const confirmDeleteSession = () => {
   deleteSession(sessionToDelete.value);
   showDeleteDialog.value = false;
   sessionToDelete.value = null;
+};
+
+const handleUpdateSessionName = async ({ sessionId: _sessionId, name }) => {
+  try {
+    await renameSession(_sessionId, name);
+  } catch (error) {
+    console.error("Error renaming session:", error?.message || error);
+  }
 };
 
 // --- Upload Dialog Handlers ---
