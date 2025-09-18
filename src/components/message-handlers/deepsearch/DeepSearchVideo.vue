@@ -41,7 +41,7 @@
               <template #controls>
                 <div class="vdb-p-pt-0 vdb-c-p-8">
                   <div class="sm:vdb-p-mx-8 vdb-c-mb-6 md:vdb-c-mb-6">
-                    <ProgressBar :stream-url="content.video.stream_url" />
+                    <ProgressBar :stream-url="localStreamUrl" />
                   </div>
                   <div class="vdb-c-flex vdb-c-w-full vdb-c-justify-between">
                     <PlayPauseButton class="vdb-c-scale-75" />
@@ -195,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useVideoDBChat } from "../../../context.js";
 import {
   VideoDBPlayer,
@@ -276,8 +276,8 @@ const localEnd = ref(initialEnd);
 const localStreamUrl = ref(initialVideo?.stream_url || "");
 const lastVideoId = ref(null);
 const usingGeneratedStream = ref(false);
-const usingWindowStream = ref(false);
 const segmentEnded = ref(false);
+const generatedStreams = ref([]); // To store generated streams { url, start, end }
 
 // Window stream details
 const windowStreamUrl = computed(
@@ -295,19 +295,48 @@ const windowEnd = computed(() => {
   const raw = end + 15;
   return len !== null && isFinite(len) ? Math.min(len, raw) : raw;
 });
-const selectionWithinWindow = computed(() => {
+const usingCachedStream = ref(false);
+const activeCachedStream = ref(null);
+
+const availableStreams = computed(() => {
+  const streams = [...generatedStreams.value];
+  if (windowStreamUrl.value) {
+    streams.push({
+      stream_url: windowStreamUrl.value,
+      start: windowStart.value,
+      end: windowEnd.value,
+    });
+  }
+  return streams;
+});
+
+const containingStream = computed(() => {
   const s = Number(localStart.value);
   const e = Number(localEnd.value);
-  if (!Number.isFinite(s) || !Number.isFinite(e)) return false;
-  if (!windowStreamUrl.value) return false;
-  return s >= windowStart.value && e <= windowEnd.value && s < e;
+  if (!Number.isFinite(s) || !Number.isFinite(e) || s >= e) return null;
+
+  let bestStream = null;
+  for (const stream of availableStreams.value) {
+    if (s >= stream.start && e <= stream.end) {
+      if (
+        !bestStream ||
+        stream.end - stream.start < bestStream.end - bestStream.start
+      ) {
+        bestStream = stream;
+      }
+    }
+  }
+  return bestStream;
 });
+
 const clipStartRel = computed(() => {
-  const rel = Number(localStart.value) - Number(windowStart.value);
+  if (!activeCachedStream.value) return 0;
+  const rel = Number(localStart.value) - Number(activeCachedStream.value.start);
   return Number.isFinite(rel) ? Math.max(0, rel) : 0;
 });
 const clipEndRel = computed(() => {
-  const rel = Number(localEnd.value) - Number(windowStart.value);
+  if (!activeCachedStream.value) return 0;
+  const rel = Number(localEnd.value) - Number(activeCachedStream.value.start);
   const startRel = clipStartRel.value;
   if (!Number.isFinite(rel)) return startRel;
   return Math.max(startRel, rel);
@@ -349,9 +378,11 @@ watch(
       localStart.value = start;
       localEnd.value = end;
       usingGeneratedStream.value = false;
-      usingWindowStream.value = false;
+      usingCachedStream.value = false;
+      activeCachedStream.value = null;
       segmentEnded.value = false;
       localStreamUrl.value = v.stream_url || "";
+      generatedStreams.value = [];
     }
   },
   { immediate: true },
@@ -381,7 +412,7 @@ watch(
 watch(
   () => props.content?.video?.stream_url,
   (s, prev) => {
-    if (!usingGeneratedStream.value && !usingWindowStream.value && s !== prev) {
+    if (!usingGeneratedStream.value && !usingCachedStream.value && s !== prev) {
       localStreamUrl.value = s || "";
     }
   },
@@ -402,27 +433,50 @@ watch(
     if (!video?.id || !collectionId) return;
     if (typeof start !== "number" || typeof end !== "number") return;
     if (start >= end) return;
-    // If selection is covered by the window stream, use it and simulate trimming
-    if (selectionWithinWindow.value && windowStreamUrl.value) {
-      usingWindowStream.value = true;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    if (containingStream.value) {
+      const isSameStream =
+        localStreamUrl.value === containingStream.value.stream_url;
+
+      usingCachedStream.value = true;
+      activeCachedStream.value = containingStream.value;
       usingGeneratedStream.value = false;
-      // Switch to window stream if needed
-      if (localStreamUrl.value !== windowStreamUrl.value) {
-        localStreamUrl.value = windowStreamUrl.value;
+
+      if (isSameStream) {
+        // Same stream, just seek to new relative start
+        await nextTick();
+        const instance = playerRef.value;
+        if (instance) {
+          try {
+            const startRel = Number(clipStartRel.value) || 0;
+            instance.seekTo?.(startRel);
+            segmentEnded.value = false;
+          } catch (e) {
+            console.error("Failed to seek:", e);
+          }
+        }
+      } else {
+        // Different stream, so update URL. Player will reload and 'loadeddata' handler will seek.
+        localStreamUrl.value = containingStream.value.stream_url;
       }
-      // No generation required in this case
-      if (debounceTimer) clearTimeout(debounceTimer);
       return;
     }
 
-    // Outside window: fall back to generating a precise stream
-    usingWindowStream.value = false;
+    usingCachedStream.value = false;
+    activeCachedStream.value = null;
+
     // Guard: ensure generateVideoStream is available (custom hooks may omit it)
     if (typeof generateVideoStream !== "function") return;
-    if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
       const res = await generateVideoStream(collectionId, video.id, start, end);
       if (res?.status === "success" && res?.data?.stream_url) {
+        generatedStreams.value.push({
+          stream_url: res.data.stream_url,
+          start: start,
+          end: end,
+        });
         usingGeneratedStream.value = true;
         localStreamUrl.value = res.data.stream_url;
       }
@@ -440,9 +494,11 @@ const handleResetTrim = () => {
   }
   if (v.stream_url) {
     usingGeneratedStream.value = false;
-    usingWindowStream.value = false;
+    usingCachedStream.value = false;
+    activeCachedStream.value = null;
     segmentEnded.value = false;
     localStreamUrl.value = v.stream_url;
+    generatedStreams.value = [];
   }
 };
 const handleFindSimilar = () => {
@@ -511,13 +567,13 @@ const handleDownloadStream = () => {
 
 // Player event handlers to simulate trimming within window stream
 const handlePlayerPlay = () => {
-  if (!usingWindowStream.value) return;
+  if (!usingCachedStream.value) return;
   const instance = playerRef.value;
   if (!instance) return;
   const currentTime = Number(instance.time) || 0;
   const startRel = Number(clipStartRel.value) || 0;
   const endRel = Number(clipEndRel.value) || startRel;
-  const epsilon = 0.25;
+  const epsilon = 0.5;
   // If segment previously ended and user presses play, replay from start of segment
   if (segmentEnded.value) {
     try {
@@ -535,7 +591,7 @@ const handlePlayerPlay = () => {
 };
 
 const handlePlayerTimeUpdate = (evt) => {
-  if (!usingWindowStream.value) return;
+  if (!usingCachedStream.value) return;
   const instance = playerRef.value;
   if (!instance) return;
   const t =
@@ -543,7 +599,7 @@ const handlePlayerTimeUpdate = (evt) => {
     (evt && (evt.detail?.time ?? evt.time)) ??
     0;
   const endRel = Number(clipEndRel.value) || 0;
-  const epsilon = 0.1;
+  const epsilon = 0.5;
   if (t >= endRel - epsilon) {
     try {
       instance.pause?.();
@@ -554,7 +610,7 @@ const handlePlayerTimeUpdate = (evt) => {
 };
 
 const handlePlayerLoadedData = () => {
-  if (!usingWindowStream.value) return;
+  if (!usingCachedStream.value) return;
   const instance = playerRef.value;
   if (!instance) return;
   const startRel = Number(clipStartRel.value) || 0;
