@@ -217,7 +217,6 @@
               :placeholder="chatInputPlaceholder"
               :context-data="activeVideoData || activeCollectionData"
               @on-submit="handleAddMessage"
-              @troveo-submit="handleTroveoSubmit"
               @tag-agent="handleTagAgent($event, false)"
             />
           </div>
@@ -769,11 +768,19 @@ const createNewSession = () => {
   videoId.value = null;
   showCollectionView.value = false;
   taggedAgent.value = [];
+  // Clear troveo config when starting new session
+  if (chatInputRef.value && chatInputRef.value.clearTroveoConfig) {
+    chatInputRef.value.clearTroveoConfig();
+  }
   loadSession();
 };
 
 const handleSessionClick = (sessionId) => {
   showCollectionView.value = false;
+  // Clear troveo config when switching sessions
+  if (chatInputRef.value && chatInputRef.value.clearTroveoConfig) {
+    chatInputRef.value.clearTroveoConfig();
+  }
   loadSession(sessionId);
 };
 
@@ -1047,10 +1054,6 @@ const handleAddMessage = async ({
     additional_info: additional_info,
   });
   taggedAgent.value = [];
-};
-
-const handleTroveoSubmit = async (data) => {
-  await handleAddMessage(data);
 };
 
 onUnmounted(() => {

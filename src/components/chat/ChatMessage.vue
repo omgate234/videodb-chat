@@ -30,21 +30,37 @@
         <!-- Troveo Agent Configuration Display -->
         <div
           v-if="message.additional_info && isTroveoAgentMessage"
-          class="vdb-c-mt-4 vdb-c-rounded-lg vdb-c-border vdb-c-border-blue-200 vdb-c-bg-blue-50 vdb-c-p-4"
+          class="vdb-c-bg-dark-gray-50 vdb-c-mt-16 vdb-c-rounded-2xl vdb-c-border vdb-c-border-gray-200 vdb-c-p-16"
         >
-          <h4
-            class="vdb-c-mb-2 vdb-c-text-sm vdb-c-font-medium vdb-c-text-black"
+          <div
+            class="vdb-c-mb-12 vdb-c-flex vdb-c-items-center vdb-c-space-x-8"
           >
-            Troveo Agent Configuration
-          </h4>
-          <div class="vdb-c-text-xs vdb-c-text-neutral-950">
-            <div class="vdb-c-mb-1">
-              <span class="vdb-c-font-medium">Search for:</span>
-              {{ message.additional_info.searchFor }}
+            <h4
+              class="vdb-c-text-lg vdb-c-font-semibold vdb-c-text-dark-gray-900"
+            >
+              Troveo Agent Configuration
+            </h4>
+          </div>
+          <div class="vdb-c-space-y-8">
+            <div class="vdb-c-flex vdb-c-items-center vdb-c-space-x-8">
+              <span
+                class="vdb-c-text-base vdb-c-font-medium vdb-c-uppercase vdb-c-tracking-wide vdb-c-text-dark-gray-600"
+                >Search for:</span
+              >
+              <span
+                class="vdb-c-text-lg vdb-c-font-medium vdb-c-capitalize vdb-c-text-dark-gray-900"
+                >{{ message.additional_info.searchFor }}</span
+              >
             </div>
-            <div>
-              <span class="vdb-c-font-medium">Thinking mode:</span>
-              {{ message.additional_info.thinkingMode }}
+            <div class="vdb-c-flex vdb-c-items-center vdb-c-space-x-8">
+              <span
+                class="vdb-c-text-base vdb-c-font-medium vdb-c-uppercase vdb-c-tracking-wide vdb-c-text-dark-gray-600"
+                >Thinking mode:</span
+              >
+              <span
+                class="vdb-c-text-lg vdb-c-font-medium vdb-c-capitalize vdb-c-text-dark-gray-900"
+                >{{ message.additional_info.thinkingMode }}</span
+              >
             </div>
           </div>
         </div>
@@ -163,7 +179,7 @@ const finalStatus = computed(() => {
 });
 
 const isTroveoAgentMessage = computed(() => {
-  return props.message.agents && props.message.agents.includes("troveo_agent");
+  return props.message.agents && props.message.agents.includes("troveo_search");
 });
 </script>
 

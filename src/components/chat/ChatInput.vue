@@ -5,6 +5,7 @@
         'vdb-c-relative vdb-c-border vdb-c-p-8',
         inputFocused ? 'vdb-c-border-kilvish-600' : 'vdb-c-border-kilvish-400',
         isExpanded ? 'vdb-c-rounded-20' : 'vdb-c-rounded-[50px]',
+        shouldShowTroveoConfig ? 'pb-8 vdb-c-rounded-b-8' : '',
       ]"
     >
       <div
@@ -44,7 +45,7 @@
       <div v-if="shouldShowTroveoConfig" class="vdb-c-m-8 vdb-c-mb-14">
         <TroveoAgentConfig
           :message-text="chatInput"
-          :on-send="handleTroveoSubmit"
+          @config-change="handleTroveoConfigChange"
         />
       </div>
 
@@ -154,12 +155,7 @@ const props = defineProps({
 
 const { chatInput, chatAttachments, chatLoading } = useVideoDBChat();
 
-const emit = defineEmits([
-  "on-submit",
-  "on-change",
-  "tag-agent",
-  "troveo-submit",
-]);
+const emit = defineEmits(["on-submit", "on-change", "tag-agent"]);
 
 const charCount = ref(0);
 const inputFocused = ref(false);
@@ -203,12 +199,15 @@ const isExpanded = computed(
 );
 
 const isTroveoAgentTagged = computed(() => {
-  return chatInput.value.includes("@troveo_agent");
+  return chatInput.value.includes("@troveo_search");
 });
 
 const shouldShowTroveoConfig = computed(() => {
   return isTroveoAgentTagged.value && chatInput.value.trim() !== "";
 });
+
+const troveoConfig = ref(null);
+const persistentTroveoConfig = ref(null);
 
 const handleInput = (e) => {
   const newValue = e.target.value;
@@ -335,33 +334,34 @@ const handleSubmit = async (e) => {
   if (isInputDisabled.value) return;
   e.preventDefault();
   if (!showAgentList.value && chatInput.value.trim() !== "") {
-    // If troveo_agent is tagged, don't submit immediately
-    if (isTroveoAgentTagged.value) {
-      return; // Let the TroveoAgentConfig handle the submission
-    }
-
-    emit("on-submit", {
+    const submitData = {
       text: chatInput.value,
       images: imageAttachments.value,
-    });
+    };
+
+    // If troveo_agent is tagged, include the configuration
+    if (isTroveoAgentTagged.value && troveoConfig.value) {
+      submitData.additional_info = troveoConfig.value;
+    }
+    // If troveo_agent is not tagged but we have persistent config, include it
+    else if (!isTroveoAgentTagged.value && persistentTroveoConfig.value) {
+      submitData.additional_info = persistentTroveoConfig.value;
+    }
+
+    emit("on-submit", submitData);
     chatInput.value = "";
     clearAllAttachments();
     charCount.value = 0;
     resetTag();
+    // Don't reset troveoConfig or persistentTroveoConfig - keep them for future messages
     await nextTick();
     adjustHeight();
   }
 };
 
-const handleTroveoSubmit = (data) => {
-  emit("troveo-submit", data);
-  chatInput.value = "";
-  clearAllAttachments();
-  charCount.value = 0;
-  resetTag();
-  nextTick(() => {
-    adjustHeight();
-  });
+const handleTroveoConfigChange = (config) => {
+  troveoConfig.value = config;
+  persistentTroveoConfig.value = config; // Store for future messages
 };
 
 function adjustHeight() {
@@ -392,8 +392,14 @@ const clearAllAttachments = () => {
   chatAttachments.splice(0, chatAttachments.length);
 };
 
+const clearTroveoConfig = () => {
+  troveoConfig.value = null;
+  persistentTroveoConfig.value = null;
+};
+
 defineExpose({
   focus,
+  clearTroveoConfig,
 });
 </script>
 
