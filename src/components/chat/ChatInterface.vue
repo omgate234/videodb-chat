@@ -217,6 +217,7 @@
               :placeholder="chatInputPlaceholder"
               :context-data="activeVideoData || activeCollectionData"
               @on-submit="handleAddMessage"
+              @troveo-submit="handleTroveoSubmit"
               @tag-agent="handleTagAgent($event, false)"
             />
           </div>
@@ -1015,7 +1016,11 @@ const promptDeleteCollection = async (collection) => {
   }
 };
 
-const handleAddMessage = async ({ text = "", images = [] }) => {
+const handleAddMessage = async ({
+  text = "",
+  images = [],
+  additional_info = null,
+}) => {
   if (!sessionId.value) {
     loadSession();
   }
@@ -1039,8 +1044,13 @@ const handleAddMessage = async ({ text = "", images = [] }) => {
   addMessage({
     content: content,
     agents: taggedAgent.value,
+    additional_info: additional_info,
   });
   taggedAgent.value = [];
+};
+
+const handleTroveoSubmit = async (data) => {
+  await handleAddMessage(data);
 };
 
 onUnmounted(() => {

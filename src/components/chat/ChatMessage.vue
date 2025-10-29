@@ -26,6 +26,28 @@
           :conv-id="message.conv_id"
           :msg-id="message.msg_id"
         />
+
+        <!-- Troveo Agent Configuration Display -->
+        <div
+          v-if="message.additional_info && isTroveoAgentMessage"
+          class="vdb-c-mt-4 vdb-c-rounded-lg vdb-c-border vdb-c-border-blue-200 vdb-c-bg-blue-50 vdb-c-p-4"
+        >
+          <h4
+            class="vdb-c-mb-2 vdb-c-text-sm vdb-c-font-medium vdb-c-text-black"
+          >
+            Troveo Agent Configuration
+          </h4>
+          <div class="vdb-c-text-xs vdb-c-text-neutral-950">
+            <div class="vdb-c-mb-1">
+              <span class="vdb-c-font-medium">Search for:</span>
+              {{ message.additional_info.searchFor }}
+            </div>
+            <div>
+              <span class="vdb-c-font-medium">Thinking mode:</span>
+              {{ message.additional_info.thinkingMode }}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="isAssistant">
@@ -138,6 +160,10 @@ const finalStatus = computed(() => {
     (c) => c.agent_name === "assistant",
   );
   return assistantContent?.status || props.message.status;
+});
+
+const isTroveoAgentMessage = computed(() => {
+  return props.message.agents && props.message.agents.includes("troveo_agent");
 });
 </script>
 

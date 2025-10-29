@@ -40,6 +40,14 @@
         />
       </div>
 
+      <!-- Troveo Agent Configuration -->
+      <div v-if="shouldShowTroveoConfig" class="vdb-c-m-8 vdb-c-mb-14">
+        <TroveoAgentConfig
+          :message-text="chatInput"
+          :on-send="handleTroveoSubmit"
+        />
+      </div>
+
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
         <!-- Upload Button -->
         <div
@@ -127,6 +135,7 @@ import PaperClipIcon from "../icons/PaperClip.vue";
 import SendIcon from "../icons/Send.vue";
 import ChatInputImagePreview from "./elements/ChatInputImagePreview.vue";
 import EllipsesLoading from "./elements/EllipsesLoading.vue";
+import TroveoAgentConfig from "./elements/TroveoAgentConfig.vue";
 
 const props = defineProps({
   placeholder: {
@@ -145,7 +154,12 @@ const props = defineProps({
 
 const { chatInput, chatAttachments, chatLoading } = useVideoDBChat();
 
-const emit = defineEmits(["on-submit", "on-change", "tag-agent"]);
+const emit = defineEmits([
+  "on-submit",
+  "on-change",
+  "tag-agent",
+  "troveo-submit",
+]);
 
 const charCount = ref(0);
 const inputFocused = ref(false);
@@ -187,6 +201,14 @@ const isInputDisabled = computed(() => {
 const isExpanded = computed(
   () => isTextBoxExpanded.value || chatAttachments.length > 0,
 );
+
+const isTroveoAgentTagged = computed(() => {
+  return chatInput.value.includes("@troveo_agent");
+});
+
+const shouldShowTroveoConfig = computed(() => {
+  return isTroveoAgentTagged.value && chatInput.value.trim() !== "";
+});
 
 const handleInput = (e) => {
   const newValue = e.target.value;
@@ -313,6 +335,11 @@ const handleSubmit = async (e) => {
   if (isInputDisabled.value) return;
   e.preventDefault();
   if (!showAgentList.value && chatInput.value.trim() !== "") {
+    // If troveo_agent is tagged, don't submit immediately
+    if (isTroveoAgentTagged.value) {
+      return; // Let the TroveoAgentConfig handle the submission
+    }
+
     emit("on-submit", {
       text: chatInput.value,
       images: imageAttachments.value,
@@ -324,6 +351,17 @@ const handleSubmit = async (e) => {
     await nextTick();
     adjustHeight();
   }
+};
+
+const handleTroveoSubmit = (data) => {
+  emit("troveo-submit", data);
+  chatInput.value = "";
+  clearAllAttachments();
+  charCount.value = 0;
+  resetTag();
+  nextTick(() => {
+    adjustHeight();
+  });
 };
 
 function adjustHeight() {
