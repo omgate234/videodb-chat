@@ -153,8 +153,6 @@ const props = defineProps({
   },
 });
 
-console.log("Hi from ChatInput.vue");
-
 const { chatInput, chatAttachments, chatLoading } = useVideoDBChat();
 
 const emit = defineEmits(["on-submit", "on-change", "tag-agent"]);
