@@ -61,12 +61,12 @@
               <input
                 type="radio"
                 v-model="config.thinkingMode"
-                value="fast"
+                value="recall"
                 class="vdb-c-h-16 vdb-c-w-16 vdb-c-border-dark-gray-300 vdb-c-text-orange-500 focus:vdb-c-ring-8 focus:vdb-c-ring-orange-500 focus:vdb-c-ring-offset-8"
               />
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-                >Fast</span
+                >Recall</span
               >
             </label>
             <label
@@ -75,12 +75,12 @@
               <input
                 type="radio"
                 v-model="config.thinkingMode"
-                value="thinking"
+                value="precision"
                 class="vdb-c-h-16 vdb-c-w-16 vdb-c-border-dark-gray-300 vdb-c-text-orange-500 focus:vdb-c-ring-8 focus:vdb-c-ring-orange-500 focus:vdb-c-ring-offset-8"
               />
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-                >Thinking</span
+                >Precision</span
               >
             </label>
           </div>
@@ -103,8 +103,8 @@ const props = defineProps({
 const emit = defineEmits(["config-change"]);
 
 const config = ref({
-  searchFor: "scenes",
-  thinkingMode: "fast",
+  searchFor: "",
+  thinkingMode: "",
 });
 
 const isConfigComplete = computed(() => {
