@@ -158,7 +158,7 @@ function copyId(id) {
     });
 }
 
-const emit = defineEmits(["delete-video"]);
+const emit = defineEmits(["delete-video", "video-click"]);
 </script>
 
 <style scoped>

@@ -17,20 +17,19 @@
 </template>
 
 <script>
-import { defineProps } from "vue";
 export default {
   name: "Share",
+  props: {
+    className: {
+      type: String,
+      default: "",
+    },
+    fill: {
+      type: String,
+      default: "#FFF5EC",
+    },
+  },
 };
-defineProps({
-  className: {
-    type: String,
-    default: "",
-  },
-  fill: {
-    type: String,
-    default: "#FFF5EC",
-  },
-});
 </script>
 
 <style scoped>
