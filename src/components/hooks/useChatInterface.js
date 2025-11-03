@@ -2,9 +2,15 @@ import { ref, reactive } from "vue";
 
 export function useChatInterface() {
   const messageHandlers = {};
+  const canvasHandlers = {};
   const stepActionHandlers = {};
   const chatInput = ref("");
   const chatAttachments = reactive([]);
+  const canvasState = reactive({
+    show: false,
+    type: null,
+    content: null,
+  });
 
   const registerMessageHandler = (contentType, handler) => {
     messageHandlers[contentType] = handler;
