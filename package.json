@@ -69,6 +69,7 @@
     "vue-tsc": "^2.0.29"
   },
   "dependencies": {
+    "@videodb/chat-vue": "github:omgate234/videodb-chat#feat/troveo",
     "@videodb/player-vue": "~0.0.6",
     "dayjs": "^1.11.13",
     "katex": "^0.16.11",
