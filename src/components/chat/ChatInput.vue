@@ -8,6 +8,18 @@
         shouldShowTroveoConfig ? 'pb-8 vdb-c-rounded-b-8' : '',
       ]"
     >
+      <!-- Overlay for New Session -->
+      <div
+        v-if="showNewSessionOverlay"
+        class="vdb-c-absolute vdb-c-inset-0 vdb-c-z-50 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-20 vdb-c-bg-white vdb-c-bg-opacity-95"
+      >
+        <button
+          @click="handleStartNewChat"
+          class="vdb-c-font-sans vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-orange vdb-c-px-24 vdb-c-py-12 vdb-c-text-sm vdb-c-font-bold vdb-c-uppercase vdb-c-text-white vdb-c-shadow-lg vdb-c-transition hover:vdb-c-bg-orange-600"
+        >
+          Start New Chat
+        </button>
+      </div>
       <div
         v-if="showAgentList"
         class="vdb-c-absolute vdb-c-left-0 vdb-c-z-50 vdb-c-w-full vdb-c--translate-y-full vdb-c-transform vdb-c-px-18 vdb-c-pb-12"
@@ -78,6 +90,7 @@
           :placeholder="placeholder"
           autocomplete="off"
           :value="chatInput"
+          :disabled="!inputEnabled"
           @input="handleInput"
           @focus="inputFocused = true"
           @blur="handleBlur"
@@ -151,11 +164,20 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  inputEnabled: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const { chatInput, chatAttachments, chatLoading } = useVideoDBChat();
 
-const emit = defineEmits(["on-submit", "on-change", "tag-agent"]);
+const emit = defineEmits([
+  "on-submit",
+  "on-change",
+  "tag-agent",
+  "start-new-chat",
+]);
 
 const charCount = ref(0);
 const inputFocused = ref(false);
@@ -191,7 +213,12 @@ const isInputDisabled = computed(() => {
       attachment.upload_status === "uploading" ||
       attachment.upload_status === "in_queue",
   );
-  return chatLoading.value || charCount.value < 1 || hasUploadingImages;
+  return (
+    !props.inputEnabled ||
+    chatLoading.value ||
+    charCount.value < 1 ||
+    hasUploadingImages
+  );
 });
 
 const isExpanded = computed(
@@ -204,6 +231,10 @@ const isTroveoAgentTagged = computed(() => {
 
 const shouldShowTroveoConfig = computed(() => {
   return isTroveoAgentTagged.value && chatInput.value.trim() !== "";
+});
+
+const showNewSessionOverlay = computed(() => {
+  return !props.inputEnabled && !chatLoading.value;
 });
 
 const troveoConfig = ref(null);
@@ -395,6 +426,10 @@ const clearAllAttachments = () => {
 const clearTroveoConfig = () => {
   troveoConfig.value = null;
   persistentTroveoConfig.value = null;
+};
+
+const handleStartNewChat = () => {
+  emit("start-new-chat");
 };
 
 defineExpose({

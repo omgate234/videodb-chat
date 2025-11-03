@@ -103,8 +103,8 @@ const props = defineProps({
 const emit = defineEmits(["config-change"]);
 
 const config = ref({
-  searchFor: "",
-  thinkingMode: "",
+  searchFor: "scenes",
+  thinkingMode: "recall",
 });
 
 const isConfigComplete = computed(() => {

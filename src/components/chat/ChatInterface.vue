@@ -218,10 +218,12 @@
               ref="chatInputRef"
               :agents="agents"
               :input-disabled="chatLoading"
+              :input-enabled="isInputEnabled"
               :placeholder="chatInputPlaceholder"
               :context-data="activeVideoData || activeCollectionData"
               @on-submit="handleAddMessage"
               @tag-agent="handleTagAgent($event, false)"
+              @start-new-chat="createNewSession"
             />
           </div>
         </div>
@@ -488,6 +490,7 @@ const notificationCenterRef = ref(null);
 
 const showCollectionView = ref(false);
 const taggedAgent = ref([]);
+const isInputEnabled = ref(true);
 
 const useChatHook = props.customChatHook || useVideoDBAgent;
 const {
@@ -793,6 +796,7 @@ const createNewSession = () => {
   videoId.value = null;
   showCollectionView.value = false;
   taggedAgent.value = [];
+  isInputEnabled.value = true;
   // Clear troveo config when starting new session
   if (chatInputRef.value && chatInputRef.value.clearTroveoConfig) {
     chatInputRef.value.clearTroveoConfig();
@@ -1091,6 +1095,7 @@ const handleAddMessage = async ({
     additional_info: additional_info,
   });
   taggedAgent.value = [];
+  isInputEnabled.value = false;
 };
 
 onUnmounted(() => {
