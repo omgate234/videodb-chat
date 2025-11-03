@@ -1,5 +1,5 @@
 <template>
-  <div class="vdb-c-py-16 md:vdb-c-py-24">
+  <div class="vdb-c-z-[1000] vdb-c-py-16 md:vdb-c-py-24">
     <div
       v-if="headerMainText"
       class="vdb-c-flex vdb-c-items-center vdb-c-gap-16"
