@@ -52,7 +52,7 @@
         <div class="vdb-c-mt-16 vdb-c-space-y-12">
           <label
             class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-            >Thinking mode</label
+            >Thinking</label
           >
           <div class="vdb-c-flex vdb-c-space-x-24">
             <label
@@ -66,7 +66,7 @@
               />
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-                >Recall</span
+                >Wide Search</span
               >
             </label>
             <label
@@ -80,7 +80,7 @@
               />
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-                >Precision</span
+                >Exact Match</span
               >
             </label>
           </div>

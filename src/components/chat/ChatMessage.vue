@@ -69,7 +69,11 @@
               >
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-capitalize vdb-c-text-dark-gray-900"
-                >{{ message.additional_info.thinkingMode }}</span
+                >{{
+                  message.additional_info.thinkingMode === "recall"
+                    ? "Wide Search"
+                    : "Exact Match"
+                }}</span
               >
             </div>
           </div>
