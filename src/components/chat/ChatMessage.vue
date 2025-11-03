@@ -29,7 +29,11 @@
 
         <!-- Troveo Agent Configuration Display -->
         <div
-          v-if="message.additional_info && isTroveoAgentMessage"
+          v-if="
+            message.additional_info &&
+            (message.additional_info.thinkingMode ||
+              message.additional_info.searchFor)
+          "
           class="vdb-c-bg-dark-gray-50 vdb-c-mt-16 vdb-c-rounded-2xl vdb-c-border vdb-c-border-gray-200 vdb-c-p-16"
         >
           <div
@@ -42,7 +46,10 @@
             </h4>
           </div>
           <div class="vdb-c-space-y-8">
-            <div class="vdb-c-flex vdb-c-items-center vdb-c-space-x-8">
+            <div
+              v-if="message.additional_info.searchFor"
+              class="vdb-c-flex vdb-c-items-center vdb-c-space-x-8"
+            >
               <span
                 class="vdb-c-text-base vdb-c-font-medium vdb-c-uppercase vdb-c-tracking-wide vdb-c-text-dark-gray-600"
                 >Search for:</span
@@ -52,7 +59,10 @@
                 >{{ message.additional_info.searchFor }}</span
               >
             </div>
-            <div class="vdb-c-flex vdb-c-items-center vdb-c-space-x-8">
+            <div
+              v-if="message.additional_info.thinkingMode"
+              class="vdb-c-flex vdb-c-items-center vdb-c-space-x-8"
+            >
               <span
                 class="vdb-c-text-base vdb-c-font-medium vdb-c-uppercase vdb-c-tracking-wide vdb-c-text-dark-gray-600"
                 >Thinking mode:</span
