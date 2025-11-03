@@ -274,7 +274,7 @@ const selectFeedback = async (val) => {
     await updateMessageReaction?.(props.message.msg_id, reaction);
   } catch (e) {
     selectedFeedback.value = previous;
-    console.error("Failed to update reaction:", e?.message || e);
+    // Failed to update reaction
   }
 };
 </script>

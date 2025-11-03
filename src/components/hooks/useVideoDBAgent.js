@@ -68,7 +68,6 @@ const apiRequest = async (rootUrl, endpoint, options = {}) => {
 
 export function useVideoDBAgent(config) {
   const { debug = false, socketUrl, httpUrl } = config;
-  if (debug) console.log("debug :videodb-chat config", config);
   const socket = io(socketUrl);
 
   const callApi = (endpoint, options = {}) =>
@@ -207,7 +206,6 @@ export function useVideoDBAgent(config) {
 
   onBeforeMount(() => {
     fetchConfigStatus().then((res) => {
-      if (debug) console.log("debug :videodb-chat config status", res);
       configStatus.value = res.data;
     });
   });
@@ -248,18 +246,14 @@ export function useVideoDBAgent(config) {
   watch(
     () => session.isConnected,
     (val) => {
-      if (debug) console.log("debug :videodb-chat session.isConnected :", val);
+      // Session connection status changed
     },
   );
 
   watch(
     () => conversations,
     (val) => {
-      if (debug)
-        console.log(
-          "debug :videodb-chat conversations updated:",
-          JSON.parse(JSON.stringify(val)),
-        );
+      // Conversations updated
     },
     { deep: true },
   );
@@ -323,13 +317,11 @@ export function useVideoDBAgent(config) {
       sessionId = uuidv4();
       fetchPastMessages = false;
     }
-    if (debug) console.log("debug :videodb-chat session loading", sessionId);
     session.sessionId = sessionId;
     if (!fetchPastMessages) {
       Object.keys(conversations).forEach((key) => delete conversations[key]);
     } else {
       fetchSession(sessionId).then((res) => {
-        if (debug) console.log("debug :videodb-chat session loaded", res);
         if (res.status === "success") {
           session.videoId = res.data.video_id || null;
           session.collectionId =
@@ -361,14 +353,12 @@ export function useVideoDBAgent(config) {
     })
       .then((response) => response.json())
       .then((res) => {
-        if (debug) console.log("debug :videodb-chat session deleted", res);
         sessions.value = sessions.value.filter(
           (s) => s.session_id !== sessionId,
         );
       })
       .catch((error) => {
-        if (debug)
-          console.error("debug :videodb-chat error deleting session", error);
+        // Error deleting session
       });
   };
 
@@ -400,8 +390,6 @@ export function useVideoDBAgent(config) {
 
       return data || { success: true };
     } catch (error) {
-      if (debug)
-        console.error("debug :videodb-chat error renaming session", error);
       throw error;
     }
   };
@@ -455,7 +443,7 @@ export function useVideoDBAgent(config) {
         }
       }
     } catch (error) {
-      console.error("Error updating collections:", error);
+      // Error updating collections
     }
   };
 
@@ -483,7 +471,6 @@ export function useVideoDBAgent(config) {
       await updateCollection();
       return res.data.collection;
     } catch (error) {
-      console.error("Error creating collection:", error);
       throw new Error(
         "An unexpected error occurred while creating the collection.",
       );
@@ -525,7 +512,6 @@ export function useVideoDBAgent(config) {
         throw error;
       }
 
-      console.error("Unexpected error deleting collection:", error);
       throw error;
     }
   };
@@ -560,7 +546,6 @@ export function useVideoDBAgent(config) {
       }
       return data;
     } catch (error) {
-      console.error(`Failed to delete video ${videoId}:`, error);
       throw error;
     }
   };
@@ -596,7 +581,6 @@ export function useVideoDBAgent(config) {
 
       return data;
     } catch (error) {
-      console.error(`Failed to delete audio ${audioId}:`, error);
       throw error;
     }
   };
@@ -631,7 +615,6 @@ export function useVideoDBAgent(config) {
       }
       return data;
     } catch (error) {
-      console.error(`Failed to delete image ${imageId}:`, error);
       throw error;
     }
   };
@@ -671,11 +654,6 @@ export function useVideoDBAgent(config) {
 
       return data || { success: true };
     } catch (error) {
-      if (debug)
-        console.error(
-          "debug :videodb-chat error updating message reaction",
-          error,
-        );
       throw error;
     }
   };
@@ -706,7 +684,6 @@ export function useVideoDBAgent(config) {
   };
 
   const addMessage = (message) => {
-    if (debug) console.log("debug :videodb-chat addMessage", message);
     if (session.isConnected) {
       const convId = Date.now();
       const msgId = convId + 1;
@@ -761,12 +738,10 @@ export function useVideoDBAgent(config) {
   };
 
   socket.on("connect", () => {
-    if (debug) console.log("debug :videodb-chat socket emmited connect");
     session.isConnected = true;
   });
 
   socket.on("chat", (event) => {
-    if (debug) console.log("debug :videodb-chat socket emmited chat", event);
     if (session.sessionId !== event.session_id) return;
     if (session.isConnected) {
       const { conv_id: convId, msg_id: msgId } = event;
@@ -779,7 +754,6 @@ export function useVideoDBAgent(config) {
   });
 
   socket.on("event", (event) => {
-    if (debug) console.log("debug :videodb-chat socket emmited event", event);
     if (event.event_type === "update_data") {
       if (
         event.update === "videos" &&

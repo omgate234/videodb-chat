@@ -634,7 +634,7 @@ const copySessionId = async (sessionId) => {
       copyFeedbackTimeout.value = null;
     }, 2000);
   } catch (error) {
-    console.error("Failed to copy session ID", error);
+    // Failed to copy session ID
   }
 };
 

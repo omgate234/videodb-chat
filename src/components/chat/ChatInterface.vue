@@ -574,7 +574,6 @@ watch(chatAttachments, async (newAttachments) => {
           throw Error("Upload failed");
         }
       } catch (e) {
-        console.log("something went wrong", e);
         attachment.upload_status = "error";
       }
     }
@@ -845,7 +844,7 @@ const handleUpdateSessionName = async ({ sessionId: _sessionId, name }) => {
   try {
     await renameSession(_sessionId, name);
   } catch (error) {
-    console.error("Error renaming session:", error?.message || error);
+    // Error renaming session
   }
 };
 const handleShareSession = (session) => {
@@ -940,7 +939,6 @@ const promptDeleteImage = (image) => {
 
 const confirmDeleteVideo = async () => {
   if (!videoToDelete.value) {
-    console.error("No video to delete.");
     return;
   }
 
@@ -956,7 +954,6 @@ const confirmDeleteVideo = async () => {
       icon: DeleteIcon,
     });
   } catch (error) {
-    console.error(`Error deleting video: ${error.message}`);
     notificationCenterRef.value.addNotification("Error deleting video", {
       type: "error",
       icon: DeleteIcon,
@@ -966,7 +963,6 @@ const confirmDeleteVideo = async () => {
 
 const confirmDeleteAudio = async () => {
   if (!audioToDelete.value) {
-    console.error("No video to delete.");
     return;
   }
 
@@ -982,7 +978,6 @@ const confirmDeleteAudio = async () => {
       icon: DeleteIcon,
     });
   } catch (error) {
-    console.error(`Error deleting audio: ${error.message}`);
     notificationCenterRef.value.addNotification("Error deleting audio", {
       type: "error",
       icon: DeleteIcon,
@@ -992,7 +987,6 @@ const confirmDeleteAudio = async () => {
 
 const confirmDeleteImage = async () => {
   if (!imageToDelete.value) {
-    console.error("No video to delete.");
     return;
   }
 
@@ -1008,7 +1002,6 @@ const confirmDeleteImage = async () => {
       icon: DeleteIcon,
     });
   } catch (error) {
-    console.error(`Error deleting image: ${error.message}`);
     notificationCenterRef.value.addNotification("Error deleting image", {
       type: "error",
       icon: DeleteIcon,
@@ -1033,7 +1026,6 @@ const promptCreateCollection = async (newCollection) => {
       },
     );
   } catch (error) {
-    console.error("Error creating collection:", error.message);
     notificationCenterRef.value.addNotification("Failed to create collection", {
       type: "error",
     });
@@ -1064,7 +1056,7 @@ const promptDeleteCollection = async (collection) => {
       showDeleteCollectionErrorModal.value = true;
       return;
     }
-    console.error("Unexpected error deleting collection:", error);
+    // Unexpected error deleting collection
   }
 };
 

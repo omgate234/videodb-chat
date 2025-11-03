@@ -178,7 +178,7 @@ const copyLink = async () => {
       copied.value = false;
     }, 2000);
   } catch (err) {
-    console.error("Failed to copy link:", err);
+    // Failed to copy link
   }
 };
 const shareOnLinkedIn = () => {
@@ -213,7 +213,6 @@ const initializeShare = async (sid) => {
     }
   } catch (err) {
     error.value = "Failed to create public link";
-    console.error("Error making session public:", err);
   } finally {
     isLoading.value = false;
   }
@@ -239,7 +238,6 @@ watch(
         }
       } catch (err) {
         error.value = "Failed to create public link";
-        console.error("Error making session public:", err);
       } finally {
         isLoading.value = false;
       }
