@@ -127,6 +127,55 @@
           </div>
         </div>
 
+        <!-- Explore Agents -->
+        <div
+          v-if="section === 'agents'"
+          class="sidebar-section vdb-c-flex vdb-c-flex-col vdb-c-gap-4 vdb-c-rounded-lg vdb-c-border vdb-c-border-transparent"
+          :style="{
+            'max-height': `calc(100% / ${visibleSections.length})`,
+          }"
+        >
+          <button
+            @click="toggleExploreAgents()"
+            :class="[
+              'vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-6 vdb-c-font-medium vdb-c-text-pam vdb-c-transition-all vdb-c-duration-300 hover:vdb-c-bg-roy',
+            ]"
+          >
+            <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
+              <AgentIcon class="vdb-c-mr-8" />
+              <span class="vdb-c-font-semibold vdb-c-leading-5"
+                >Explore Agents</span
+              >
+            </div>
+            <div class="vdb-c-p-4">
+              <ChevronDown
+                :class="[
+                  'vdb-c-h-16 vdb-c-w-16 vdb-c-transition-transform vdb-c-duration-300',
+                  { 'vdb-c-rotate-180': showExploreAgents },
+                ]"
+                stroke-color="#464646"
+                :stroke-width="2"
+              />
+            </div>
+          </button>
+          <div
+            v-if="status !== 'inactive' && showExploreAgents"
+            class="vdb-c-overflow-y-scroll vdb-c-rounded-lg vdb-c-px-8 vdb-c-py-4"
+            style="scrollbar-gutter: stable"
+          >
+            <template v-for="(agent, index) in agents" :key="index">
+              <div
+                :class="[
+                  'vdb-c-ml-18 vdb-c-truncate vdb-c-rounded-lg vdb-c-border vdb-c-border-transparent vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm vdb-c-font-medium vdb-c-text-black vdb-c-transition-all vdb-c-duration-75 hover:vdb-c-bg-[#FFF5EC]',
+                ]"
+              >
+                <span class="vdb-c-text-orange"> @ </span>
+                <span> {{ agent.name }} </span>
+              </div>
+            </template>
+          </div>
+        </div>
+
         <!-- Sessions -->
         <div
           v-if="section === 'sessions'"
