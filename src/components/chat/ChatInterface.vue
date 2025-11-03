@@ -374,10 +374,9 @@ import Header from "./elements/Header.vue";
 import ChatSearchResults from "../message-handlers/ChatSearchResults.vue";
 import ChatVideo from "../message-handlers/ChatVideo.vue";
 import ChatVideos from "../message-handlers/ChatVideos.vue";
-import DeepSearchContent from "../message-handlers/deepsearch/DeepSearchContent.vue";
 import ImageHandler from "../message-handlers/ImageHandler.vue";
 import TextResponse from "../message-handlers/TextResponse.vue";
-import SMPContent from "../message-handlers/smp_agent/SMPContent.vue";
+
 import CheckIcon from "../icons/Check.vue";
 import CollectionIcon from "../icons/Collection.vue";
 import DeleteIcon from "../icons/Delete3.vue";
@@ -511,7 +510,6 @@ const {
   loadSession,
   generateImageUrl,
   generateAudioUrl,
-  generateVideoStream,
   uploadMedia,
   createCollection,
   deleteCollection,
@@ -528,20 +526,7 @@ const {
   callApi,
   renameSession,
   makeSessionPublic,
-  renameSession,
-  updateMessageReaction,
 } = useChatHook(props.chatHookConfig);
-
-// Always provide a callable generateVideoStream, even if a custom hook omits it
-const safeGenerateVideoStream = async (...args) => {
-  if (typeof generateVideoStream === "function") {
-    return generateVideoStream(...args);
-  }
-  return {
-    status: "error",
-    error: new Error("generateVideoStream unavailable"),
-  };
-};
 
 const {
   chatInput,
@@ -554,8 +539,6 @@ const {
   canvasState,
   openCanvas,
   closeCanvas,
-  stepActionHandlers,
-  registerStepActionHandler,
 } = useChatInterface();
 
 // Watch chatAttachments for new uploads
@@ -596,11 +579,9 @@ watch(chatAttachments, async (newAttachments) => {
 
 registerMessageHandler("video", ChatVideo);
 registerMessageHandler("videos", ChatVideos);
-registerMessageHandler("deepsearch", DeepSearchContent);
 registerMessageHandler("text", TextResponse);
 registerMessageHandler("search_results", ChatSearchResults);
 registerMessageHandler("image", ImageHandler);
-registerMessageHandler("snp_agent", SMPContent);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
@@ -1129,7 +1110,6 @@ defineExpose({
   chatInputRef,
   conversations,
   messageHandlers,
-  stepActionHandlers,
   addMessage,
   loadSession,
   activeCollectionData,
@@ -1139,7 +1119,6 @@ defineExpose({
   createNewSession,
   setChatInput,
   registerMessageHandler,
-  registerStepActionHandler,
   uploadMedia,
   isScrolled,
   canvasState,
@@ -1153,24 +1132,20 @@ provide("videodb-chat", {
   chatLoading,
   conversations,
   messageHandlers,
-  stepActionHandlers,
   addMessage,
   loadSession,
   activeCollectionData,
   activeCollectionVideos,
   activeCollectionAudios,
   activeCollectionImages,
-  generateVideoStream: safeGenerateVideoStream,
   setChatInput,
   registerMessageHandler,
-  registerStepActionHandler,
   uploadMedia,
   canvasHandlers,
   registerCanvasHandler,
   canvasState,
   openCanvas,
   closeCanvas,
-  updateMessageReaction,
 });
 </script>
 
