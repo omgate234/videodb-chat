@@ -61,12 +61,12 @@
               <input
                 type="radio"
                 v-model="config.thinkingMode"
-                value="recall"
+                value="precision"
                 class="vdb-c-h-16 vdb-c-w-16 vdb-c-border-dark-gray-300 vdb-c-text-orange-500 focus:vdb-c-ring-8 focus:vdb-c-ring-orange-500 focus:vdb-c-ring-offset-8"
               />
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-                >Wide Search</span
+                >Exact Match</span
               >
             </label>
             <label
@@ -75,12 +75,12 @@
               <input
                 type="radio"
                 v-model="config.thinkingMode"
-                value="precision"
+                value="recall"
                 class="vdb-c-h-16 vdb-c-w-16 vdb-c-border-dark-gray-300 vdb-c-text-orange-500 focus:vdb-c-ring-8 focus:vdb-c-ring-orange-500 focus:vdb-c-ring-offset-8"
               />
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-                >Exact Match</span
+                >Wide Search</span
               >
             </label>
           </div>
@@ -104,7 +104,7 @@ const emit = defineEmits(["config-change"]);
 
 const config = ref({
   searchFor: "scenes",
-  thinkingMode: "recall",
+  thinkingMode: "precision",
 });
 
 const isConfigComplete = computed(() => {
