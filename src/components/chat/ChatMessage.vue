@@ -65,7 +65,7 @@
             >
               <span
                 class="vdb-c-text-base vdb-c-font-medium vdb-c-uppercase vdb-c-tracking-wide vdb-c-text-dark-gray-600"
-                >Thinking mode:</span
+                >Mode:</span
               >
               <span
                 class="vdb-c-text-lg vdb-c-font-medium vdb-c-capitalize vdb-c-text-dark-gray-900"

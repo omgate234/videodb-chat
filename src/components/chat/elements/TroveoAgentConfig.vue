@@ -52,7 +52,7 @@
         <div class="vdb-c-mt-16 vdb-c-space-y-12">
           <label
             class="vdb-c-text-lg vdb-c-font-medium vdb-c-text-dark-gray-900"
-            >Thinking</label
+            >Mode:</label
           >
           <div class="vdb-c-flex vdb-c-space-x-24">
             <label
