@@ -12,8 +12,6 @@ export function useChatInterface() {
 
   const registerCanvasHandler = (canvasType, handler) => {
     canvasHandlers[canvasType] = handler;
-  };
-
   const registerStepActionHandler = (typeKey, renderer) => {
     stepActionHandlers[typeKey] = renderer;
   };

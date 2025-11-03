@@ -528,6 +528,7 @@ const {
   callApi,
   renameSession,
   makeSessionPublic,
+  renameSession,
   updateMessageReaction,
 } = useChatHook(props.chatHookConfig);
 
