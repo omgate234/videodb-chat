@@ -529,6 +529,7 @@ const {
   callApi,
   renameSession,
   makeSessionPublic,
+  updateMessageReaction,
 } = useChatHook(props.chatHookConfig);
 
 const {
@@ -1149,6 +1150,7 @@ provide("videodb-chat", {
   canvasState,
   openCanvas,
   closeCanvas,
+  updateMessageReaction,
 });
 </script>
 
