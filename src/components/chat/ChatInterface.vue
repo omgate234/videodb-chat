@@ -224,6 +224,9 @@
               @on-submit="handleAddMessage"
               @tag-agent="handleTagAgent($event, false)"
               @start-new-chat="createNewSession"
+              :class="{
+                'vdb-c-opacity-0': Object.keys(conversations).length > 0,
+              }"
             />
           </div>
         </div>
@@ -425,7 +428,7 @@ const props = defineProps({
           icon: ExternalLink,
         },
         {
-          href: "https://console.videodb.io",
+          href: "https://console.dev.videodb.io",
           text: "VideoDB Console",
         },
       ],
