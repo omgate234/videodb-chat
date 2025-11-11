@@ -32,7 +32,7 @@
         :key="processIndex"
       >
         <div
-          class="vdb-c-inline-flex vdb-c-items-center vdb-c-gap-6 vdb-c-self-start vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-bg-[#EFEFEF] vdb-c-px-20 vdb-c-py-4"
+          class="scrollbar-hidden vdb-c-relative vdb-c-inline-flex vdb-c-max-w-[65vw] vdb-c-items-center vdb-c-gap-6 vdb-c-self-start vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-bg-[#EFEFEF] vdb-c-px-20 vdb-c-py-4 md:vdb-c-max-w-[50vw]"
           :class="{
             'soft-blink':
               index === activeIndex &&
@@ -40,18 +40,27 @@
               status !== 'success',
           }"
         >
+          <!-- icon -->
           <component
             :is="getProcessIcon(process.process_name)"
-            className="vdb-c-h-12 vdb-c-w-12"
+            className="!vdb-c-size-12 vdb-c-min-h-12 vdb-c-min-w-12 vdb-c-text-black"
             color="#000000"
           />
 
-          <div class="vdb-c-flex vdb-c-items-baseline vdb-c-gap-6">
-            <span
-              class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-text-kilvish-900"
-            >
-              {{ process.process_name }}
-            </span>
+          <!-- left: fixed name -->
+          <span
+            class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-text-kilvish-900"
+          >
+            {{ process.process_name }}
+          </span>
+
+          <!-- right: ONLY content scrolls -->
+          <div
+            ref="contentEls"
+            class="scrollbar-hidden vdb-c-flex-1 vdb-c-overflow-x-auto vdb-c-whitespace-nowrap"
+            :class="{ 'shadow-right': showRightShadow[processIndex] }"
+            @scroll="onContentScroll(processIndex)"
+          >
             <span
               class="vdb-c-font-mono vdb-c-text-[12px] vdb-c-font-normal vdb-c-text-kilvish-700"
             >
@@ -65,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, onMounted } from "vue";
 import ChevronDown from "../../icons/ChevronDown.vue";
 import TargetIcon from "../../icons/TargetIcon.vue";
 import ShuffleIcon from "../../icons/ShuffleIcon.vue";
@@ -89,8 +98,34 @@ const props = defineProps({
   toggle: { type: Function, required: true },
 });
 
-// Auto-scroll sub-steps to bottom when expanded or when processes change
 const subStepsContainerEl = ref(null);
+
+const contentEls = ref([]);
+const showRightShadow = ref([]);
+
+const updateShadowForEl = (el, idx) => {
+  if (!el) return;
+  const { scrollWidth, clientWidth, scrollLeft } = el;
+  if (scrollWidth <= clientWidth) {
+    showRightShadow.value[idx] = false;
+    return;
+  }
+  const atRight = Math.ceil(scrollLeft + clientWidth) >= scrollWidth;
+  showRightShadow.value[idx] = !atRight;
+};
+
+const initShadows = () => {
+  showRightShadow.value = props.step.processes.map(() => false);
+  nextTick(() => {
+    contentEls.value.forEach((el, idx) => updateShadowForEl(el, idx));
+  });
+};
+
+const onContentScroll = (idx) => {
+  const el = contentEls.value[idx];
+  if (!el) return;
+  updateShadowForEl(el, idx);
+};
 
 const scrollSubStepsToBottom = () => {
   const el = subStepsContainerEl.value;
@@ -115,19 +150,28 @@ const queueAutoScroll = () => {
 watch(
   () => props.isExpanded,
   (expanded) => {
-    if (expanded) queueAutoScroll();
+    if (expanded) {
+      queueAutoScroll();
+      initShadows();
+    }
   },
   { immediate: false },
 );
 
-// Scroll on any change to processes (length or content)
 watch(
   () => props.step?.processes,
   () => {
-    if (props.isExpanded) queueAutoScroll();
+    if (props.isExpanded) {
+      queueAutoScroll();
+      initShadows();
+    }
   },
   { deep: true },
 );
+
+onMounted(() => {
+  initShadows();
+});
 
 const getProcessIcon = (rawName) => {
   const name = (rawName || "").toString().toLowerCase().trim();
@@ -163,12 +207,24 @@ const getProcessIcon = (rawName) => {
   animation: softBlink 1.8s ease-in-out infinite;
 }
 
-/* hide scrollbars while preserving scroll behavior */
 .scrollbar-hidden {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 .scrollbar-hidden::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.shadow-right::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.9), transparent);
+  pointer-events: none;
 }
 </style>
