@@ -37,6 +37,7 @@ export function useVideoDBAgent(config) {
     return [...sessions.value].sort((a, b) => b.created_at - a.created_at);
   });
   const agents = ref([]);
+  const liveSessions = ref([]);
 
   const conversations = reactive({});
   const activeCollectionData = ref(null);
@@ -74,6 +75,7 @@ export function useVideoDBAgent(config) {
     fetchData(httpUrl, `/videodb/collection/${collectionId}/image`);
 
   const fetchAllAgents = async () => fetchData(httpUrl, "/agent");
+  const fetchLiveSessions = async () => fetchData(httpUrl, "/live_session");
   const fetchConfigStatus = async () => fetchData(httpUrl, "/config/check");
 
   const uploadMedia = async (uploadData) => {
@@ -278,6 +280,11 @@ export function useVideoDBAgent(config) {
       });
       fetchAllAgents().then((res) => {
         agents.value = res.data;
+      });
+      fetchLiveSessions().then((res) => {
+        if (res.status === "success") {
+          liveSessions.value = res.data;
+        }
       });
     }
   });
@@ -702,6 +709,7 @@ export function useVideoDBAgent(config) {
     collections,
     sessions: sessionsSorted,
     agents,
+    liveSessions,
     activeCollectionData,
     activeCollectionVideos,
     activeVideoData,

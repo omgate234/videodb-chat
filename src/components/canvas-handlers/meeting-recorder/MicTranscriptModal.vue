@@ -1,7 +1,7 @@
-<!-- LiveAnalysisModal.vue -->
+<!-- MicTranscriptModal.vue -->
 <template>
   <aside
-    id="live-analysis"
+    id="mic-transcript"
     ref="modalRef"
     class="vdb-c-absolute vdb-c-z-[50px] vdb-c-flex vdb-c-flex-col vdb-c-gap-[16px] vdb-c-rounded-[10px] vdb-c-border-[1.18px] vdb-c-border-[#E5E7EB] vdb-c-bg-white vdb-c-text-black vdb-c-shadow-2"
     :class="{
@@ -10,7 +10,7 @@
     }"
     :style="modalStyle"
   >
-    <!-- HEADER (styling copied exactly as requested; only title & buttons differ) -->
+    <!-- HEADER -->
     <div
       class="vdb-c-flex vdb-c-w-full vdb-c-cursor-move vdb-c-items-center vdb-c-justify-between vdb-c-border-b vdb-c-border-gray-200 vdb-c-bg-[#F7F7F7] vdb-c-px-20 vdb-c-py-12"
       :class="{
@@ -21,7 +21,7 @@
       <div
         class="vdb-c-text-[18px] vdb-c-font-[600] vdb-c-capitalize vdb-c-leading-[27px] vdb-c-text-black"
       >
-        Live Analysis
+        Mic Transcript
       </div>
 
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
@@ -65,7 +65,7 @@
     <div
       class="scrollbar-hide vdb-c-flex vdb-c-flex-[1_0_0] vdb-c-flex-col vdb-c-items-start vdb-c-gap-20 vdb-c-self-stretch vdb-c-overflow-auto vdb-c-rounded-b-[10px] vdb-c-bg-white vdb-c-p-20"
     >
-      <!-- Live analysis list -->
+      <!-- Transcript list -->
       <TransitionGroup
         name="list-fade"
         tag="div"
@@ -74,30 +74,14 @@
         <div
           v-for="(item, idx) in entries"
           :key="itemKey(item, idx)"
-          :class="
-            item.type === 'visual'
-              ? 'vdb-c-rounded-10 vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-justify-center vdb-c-gap-12 vdb-c-self-stretch vdb-c-border vdb-c-border-[#5095FB] vdb-c-bg-[#EFF6FF] vdb-c-p-12'
-              : 'vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-8 vdb-c-self-stretch'
-          "
+          class="vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-8 vdb-c-self-stretch"
         >
           <!-- top row (time + speaker) -->
-          <div
-            :class="
-              item.type === 'visual'
-                ? 'vdb-c-flex vdb-c-items-center vdb-c-gap-12 vdb-c-self-stretch'
-                : 'vdb-c-flex vdb-c-items-center vdb-c-gap-12'
-            "
-          >
+          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-12">
             <!-- time pill -->
             <span
-              :class="
-                item.type === 'visual'
-                  ? 'vdb-c-inline-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-[7px] vdb-c-bg-[#E6F0FF] vdb-c-px-8 vdb-c-py-4 vdb-c-text-[13px] vdb-c-font-[600] vdb-c-leading-[16px] vdb-c-text-black'
-                  : 'vdb-c-inline-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-[7px] vdb-c-bg-[#FFE9D3] vdb-c-px-8 vdb-c-py-4 vdb-c-text-[13px] vdb-c-font-[600] vdb-c-leading-[16px] vdb-c-text-black'
-              "
-              :style="
-                item.type === 'visual' ? 'color:#5095FB' : 'color:#EC5B16'
-              "
+              class="vdb-c-inline-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-[7px] vdb-c-bg-[#FFE9D3] vdb-c-px-8 vdb-c-py-4 vdb-c-text-[13px] vdb-c-font-[600] vdb-c-leading-[16px] vdb-c-text-black"
+              style="color: #ec5b16"
             >
               {{ formatTime(item.start) }}
             </span>
@@ -106,21 +90,13 @@
             <span
               class="vdb-c-text-[13px] vdb-c-font-[500] vdb-c-leading-[16px] vdb-c-text-black"
             >
-              {{
-                item.type === "visual"
-                  ? item.speaker || "Visual Analysis"
-                  : item.speaker || "Speaker"
-              }}
+              {{ item.speaker || "Speaker" }}
             </span>
           </div>
 
           <!-- transcript text -->
           <p
-            :class="
-              item.type === 'visual'
-                ? 'vdb-c-text-[14px] vdb-c-font-[400] vdb-c-leading-[24px] vdb-c-text-black'
-                : 'vdb-c-self-stretch vdb-c-text-[14px] vdb-c-font-[400] vdb-c-leading-[22px] vdb-c-text-black'
-            "
+            class="vdb-c-self-stretch vdb-c-text-[14px] vdb-c-font-[400] vdb-c-leading-[22px] vdb-c-text-black"
           >
             {{ item.text }}
           </p>
@@ -166,7 +142,7 @@ const emit = defineEmits(["close"]);
 
 const { canvasState } = useVideoDBChat();
 
-/* ── View / Position / Resize (kept as-is) ─────────────────────── */
+/* ── View / Position / Resize ─────────────────────── */
 const viewMode = ref("left");
 const modalRef = ref(null);
 const animateTransition = ref(false);
@@ -323,7 +299,7 @@ const content = computed(() => canvasState.content || {});
 const entries = ref([]);
 
 watch(
-  () => content.value?.live_analysis,
+  () => content.value?.mic_transcript,
   (arr) => {
     entries.value = (arr || []).map((x) => ({ ...x }));
   },
@@ -344,7 +320,7 @@ function formatTime(timestamp = 0) {
 }
 function itemKey(item, idx) {
   // deterministic key across updates
-  return `${item.type || "speech"}-${item.speaker || "anon"}-${item.start}-${idx}`;
+  return `${item.speaker || "anon"}-${item.start}-${idx}`;
 }
 </script>
 
@@ -368,7 +344,7 @@ function itemKey(item, idx) {
   transform: translateY(6px);
 }
 
-/* utility from your other modal */
+/* utility */
 .vdb-c-size-28 {
   width: 28px;
   height: 28px;

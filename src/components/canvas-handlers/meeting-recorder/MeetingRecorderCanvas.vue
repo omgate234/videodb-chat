@@ -8,11 +8,18 @@
     @toggle-floating="makeFloating"
   />
 
-  <!-- Live Analysis Modal -->
-  <LiveAnalysisModal
-    v-if="isLiveAnalysisOpen"
+  <!-- Mic Transcript Modal -->
+  <MicTranscriptModal
+    v-if="isMicTranscriptOpen"
     :content="content"
-    @close="closeLiveAnalysis"
+    @close="closeMicTranscript"
+  />
+
+  <!-- System Transcript Modal -->
+  <SystemTranscriptModal
+    v-if="isSystemTranscriptOpen"
+    :content="content"
+    @close="closeSystemTranscript"
   />
 
   <!-- Bottom buttons (visible initially) -->
@@ -22,11 +29,18 @@
     class="meeting-recorder-canvas-buttons vdb-c-absolute vdb-c-bottom-0 vdb-c-left-0 vdb-c-z-[100] vdb-c-flex vdb-c-h-fit vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-gap-20 vdb-c-pb-6 vdb-c-pt-20"
   >
     <Button
-      key="live-btn"
+      key="mic-btn"
       :icon="Live"
-      label="See Live Analysis"
-      :isActive="isLiveAnalysisOpen"
-      @click="openLiveAnalysis"
+      label="Mic Transcript"
+      :isActive="isMicTranscriptOpen"
+      @click="openMicTranscript"
+    />
+    <Button
+      key="system-btn"
+      :icon="Live"
+      label="System Transcript"
+      :isActive="isSystemTranscriptOpen"
+      @click="openSystemTranscript"
     />
     <Button
       v-if="showMeetingAnalysisButton"
@@ -45,13 +59,15 @@ import { ref, computed } from "vue";
 import Button from "./Button.vue";
 import Robot from "./Robot.vue";
 import Live from "./Live.vue";
-import LiveAnalysisModal from "./LiveAnalysisModal.vue";
+import MicTranscriptModal from "./MicTranscriptModal.vue";
+import SystemTranscriptModal from "./SystemTranscriptModal.vue";
 import MeetingAnalysisModal from "./MeetingAnalysisModal.vue";
 const { setShrinkChat, canvasState } = useVideoDBChat();
 
 const isFloating = ref(true); // default open mode is floating
 const isMeetingAnalysisOpen = ref(false);
-const isLiveAnalysisOpen = ref(false);
+const isMicTranscriptOpen = ref(false);
+const isSystemTranscriptOpen = ref(false);
 const showMeetingAnalysisButton = ref(true);
 
 const props = defineProps({
@@ -68,12 +84,20 @@ function openMeetingAnalysis() {
   setShrinkChat(false);
 }
 
-function openLiveAnalysis() {
-  isLiveAnalysisOpen.value = true;
+function openMicTranscript() {
+  isMicTranscriptOpen.value = true;
 }
 
-function closeLiveAnalysis() {
-  isLiveAnalysisOpen.value = false;
+function closeMicTranscript() {
+  isMicTranscriptOpen.value = false;
+}
+
+function openSystemTranscript() {
+  isSystemTranscriptOpen.value = true;
+}
+
+function closeSystemTranscript() {
+  isSystemTranscriptOpen.value = false;
 }
 
 function handleClose() {

@@ -30,6 +30,7 @@
         :selected-collection="collectionId"
         :agents="agents"
         :sessions="sessions"
+        :live-sessions="liveSessions"
         :collections="collections"
         @create-new-session="createNewSession"
         @create-collection="showCreateCollectionModal = true"
@@ -40,6 +41,11 @@
           if (!chatLoading) {
             handleTagAgent($event, false);
             handleAddMessage({ text: `@${$event.name} ` });
+          }
+        "
+        @live-session-click="
+          if (!chatLoading) {
+            handleAddMessage({ text: `@meeting_recorder ${$event.id}` });
           }
         "
         @session-click="handleSessionClick"
@@ -492,6 +498,7 @@ const {
   collections,
   sessions,
   agents,
+  liveSessions,
   activeCollectionData,
   activeCollectionVideos,
   activeVideoData,

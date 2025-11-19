@@ -180,6 +180,59 @@
           </div>
         </div>
 
+        <!-- Live Sessions -->
+        <div
+          v-if="section === 'live-sessions'"
+          class="sidebar-section vdb-c-flex vdb-c-flex-col vdb-c-gap-4 vdb-c-rounded-lg vdb-c-border vdb-c-border-transparent"
+          :style="{
+            'max-height': `calc(100% / ${visibleSections.length})`,
+          }"
+        >
+          <button
+            @click="toggleLiveSessions()"
+            :class="[
+              'vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-6 vdb-c-font-medium vdb-c-text-pam vdb-c-transition-all vdb-c-duration-300 hover:vdb-c-bg-roy',
+            ]"
+          >
+            <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
+              <PlayIcon class="vdb-c-mr-8" />
+              <span class="vdb-c-font-semibold vdb-c-leading-5"
+                >Live Sessions</span
+              >
+            </div>
+            <div class="vdb-c-p-4">
+              <ChevronDown
+                :class="[
+                  'vdb-c-h-16 vdb-c-w-16 vdb-c-transition-transform vdb-c-duration-300',
+                  { 'vdb-c-rotate-180': showLiveSessions },
+                ]"
+                stroke-color="#464646"
+                :stroke-width="2"
+              />
+            </div>
+          </button>
+          <div
+            v-if="status !== 'inactive' && showLiveSessions"
+            class="vdb-c-overflow-y-scroll vdb-c-rounded-lg vdb-c-px-8 vdb-c-py-4"
+            style="scrollbar-gutter: stable"
+          >
+            <template v-for="(session, index) in liveSessions" :key="index">
+              <div
+                @click="
+                  $emit('live-session-click', session);
+                  closeSidebar();
+                "
+                :class="[
+                  'vdb-c-ml-18 vdb-c-cursor-pointer vdb-c-truncate vdb-c-rounded-lg vdb-c-border vdb-c-border-transparent vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm vdb-c-font-medium vdb-c-text-black vdb-c-transition-all vdb-c-duration-75 hover:vdb-c-bg-[#FFF5EC]',
+                ]"
+              >
+                <span class="vdb-c-text-orange"> • </span>
+                <span> {{ session.name || session.id }} </span>
+              </div>
+            </template>
+          </div>
+        </div>
+
         <!-- Sessions -->
         <div
           v-if="section === 'sessions'"
@@ -433,6 +486,7 @@ import CheckIcon from "../../icons/Check.vue";
 import DotVertical from "../../icons/DotVertical.vue";
 import EditIcon from "../../icons/Edit.vue";
 import ShareIcon from "../../icons/Share.vue";
+import PlayIcon from "../../icons/play.vue";
 import Popper from "vue3-popper";
 
 const props = defineProps({
@@ -447,6 +501,10 @@ const props = defineProps({
   agents: {
     type: Array,
     required: true,
+  },
+  liveSessions: {
+    type: Array,
+    default: () => [],
   },
   status: {
     type: String,
@@ -486,21 +544,23 @@ const props = defineProps({
   },
   sidebarSections: {
     type: Array,
-    default: () => ["collections", "agents", "sessions"],
+    default: () => ["collections", "agents", "live-sessions", "sessions"],
     validator: (value) => {
       return value.every((item) =>
-        ["collections", "agents", "sessions"].includes(item),
+        ["collections", "agents", "live-sessions", "sessions"].includes(item),
       );
     },
   },
 });
 
 const showExploreAgents = ref(true);
+const showLiveSessions = ref(true);
 const showSessions = ref(true);
 const showCollections = ref(true);
 const isExploreAgentsFocused = ref(false);
 const exploreAgentsTimeout = ref(null);
 const userClickedSessions = ref(false);
+const userClickedLiveSessions = ref(false);
 const userClickedExploreAgents = ref(false);
 const userClickedCollections = ref(false);
 const hoveredSession = ref(null);
@@ -526,6 +586,7 @@ const emit = defineEmits([
   "delete-collection",
   "update-session-name",
   "share-session",
+  "live-session-click",
 ]);
 
 const closeSidebar = () => {
@@ -538,6 +599,12 @@ const toggleExploreAgents = (value) => {
   userClickedExploreAgents.value = true;
   showExploreAgents.value =
     value !== undefined ? value : !showExploreAgents.value;
+};
+
+const toggleLiveSessions = (value) => {
+  userClickedLiveSessions.value = true;
+  showLiveSessions.value =
+    value !== undefined ? value : !showLiveSessions.value;
 };
 
 const toggleSessions = (value) => {
@@ -597,6 +664,7 @@ watch(showExploreAgents, (newValue) => {
 
 defineExpose({
   toggleExploreAgents,
+  toggleLiveSessions,
   toggleSessions,
   triggerExploreAgentsFocusAnimation,
   toggleSidebar,
