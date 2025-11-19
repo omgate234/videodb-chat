@@ -45,7 +45,7 @@
         "
         @live-session-click="
           if (!chatLoading) {
-            handleAddMessage({ text: `@meeting_recorder ${$event.id}` });
+            handleAddMessage({ text: `@relay ${$event.id}` });
           }
         "
         @session-click="handleSessionClick"
@@ -586,10 +586,10 @@ registerMessageHandler("text", TextResponse);
 registerMessageHandler("search_results", ChatSearchResults);
 registerMessageHandler("image", ImageHandler);
 registerMessageHandler("meeting_recorder", MeetingRecorder);
-registerMessageHandler("meeting_recorder_legacy", MeetingRecorder);
+registerMessageHandler("relay", MeetingRecorder);
 
 registerCanvasHandler("meeting_recorder", MeetingRecorderCanvas);
-registerCanvasHandler("meeting_recorder_legacy", MeetingRecorderCanvas);
+registerCanvasHandler("relay", MeetingRecorderCanvas);
 
 if (Array.isArray(props.customCanvasHandlers)) {
   for (const handler of props.customCanvasHandlers) {

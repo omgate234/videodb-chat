@@ -276,7 +276,8 @@ const { saveMeetingContext, fetchMeetingContext, openCanvas, canvasState } =
   useVideoDBChat();
 
 onMounted(async () => {
-  openCanvas && openCanvas("meeting_recorder", props.content);
+  const canvasType = props.content?.type || "meeting_recorder";
+  openCanvas && openCanvas(canvasType, props.content);
   if (props.content?.ui_id) {
     const res = await fetchMeetingContext(props.content.ui_id);
     if (res.status === "success" && res.data) {
@@ -297,7 +298,11 @@ onMounted(async () => {
 watch(
   () => props.content,
   (c) => {
-    if (canvasState.show && canvasState.type === "meeting_recorder") {
+    const canvasType = c?.type || "meeting_recorder";
+    if (
+      canvasState.show &&
+      (canvasState.type === "meeting_recorder" || canvasState.type === "relay")
+    ) {
       canvasState.content = c;
     }
   },
@@ -317,7 +322,8 @@ async function handleSave() {
 
   const targetMsgId = props.content?.msg_id || props.msgId;
   saveMeetingContext(targetMsgId, meetingContext);
-  openCanvas && openCanvas("meeting_recorder", props.content);
+  const canvasType = props.content?.type || "meeting_recorder";
+  openCanvas && openCanvas(canvasType, props.content);
 
   // 2) Auto-close the drawer
   isOpen.value = false;

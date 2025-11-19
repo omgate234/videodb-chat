@@ -10,21 +10,21 @@
 
   <!-- Live Analysis Modal (Legacy Support) -->
   <LiveAnalysisModal
-    v-if="isLiveAnalysisOpen && content.type === 'meeting_recorder_legacy'"
+    v-if="isLiveAnalysisOpen && content.type === 'meeting_recorder'"
     :content="content"
     @close="closeLiveAnalysis"
   />
 
   <!-- Mic Transcript Modal -->
   <MicTranscriptModal
-    v-if="isMicTranscriptOpen && content.type !== 'meeting_recorder_legacy'"
+    v-if="isMicTranscriptOpen && content.type === 'relay'"
     :content="content"
     @close="closeMicTranscript"
   />
 
   <!-- System Transcript Modal -->
   <SystemTranscriptModal
-    v-if="isSystemTranscriptOpen && content.type !== 'meeting_recorder_legacy'"
+    v-if="isSystemTranscriptOpen && content.type === 'relay'"
     :content="content"
     @close="closeSystemTranscript"
   />
@@ -35,7 +35,7 @@
     tag="div"
     class="meeting-recorder-canvas-buttons vdb-c-absolute vdb-c-bottom-0 vdb-c-left-0 vdb-c-z-[100] vdb-c-flex vdb-c-h-fit vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-gap-20 vdb-c-pb-6 vdb-c-pt-20"
   >
-    <template v-if="content.type === 'meeting_recorder_legacy'">
+    <template v-if="content.type === 'meeting_recorder'">
       <Button
         key="live-btn"
         :icon="Live"
@@ -44,7 +44,7 @@
         @click="openLiveAnalysis"
       />
     </template>
-    <template v-else>
+    <template v-else-if="content.type === 'relay'">
       <Button
         key="mic-btn"
         :icon="Live"
