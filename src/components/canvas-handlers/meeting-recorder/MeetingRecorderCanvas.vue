@@ -8,16 +8,23 @@
     @toggle-floating="makeFloating"
   />
 
+  <!-- Live Analysis Modal (Legacy Support) -->
+  <LiveAnalysisModal
+    v-if="isLiveAnalysisOpen && content.type === 'meeting_recorder_legacy'"
+    :content="content"
+    @close="closeLiveAnalysis"
+  />
+
   <!-- Mic Transcript Modal -->
   <MicTranscriptModal
-    v-if="isMicTranscriptOpen"
+    v-if="isMicTranscriptOpen && content.type !== 'meeting_recorder_legacy'"
     :content="content"
     @close="closeMicTranscript"
   />
 
   <!-- System Transcript Modal -->
   <SystemTranscriptModal
-    v-if="isSystemTranscriptOpen"
+    v-if="isSystemTranscriptOpen && content.type !== 'meeting_recorder_legacy'"
     :content="content"
     @close="closeSystemTranscript"
   />
@@ -28,20 +35,32 @@
     tag="div"
     class="meeting-recorder-canvas-buttons vdb-c-absolute vdb-c-bottom-0 vdb-c-left-0 vdb-c-z-[100] vdb-c-flex vdb-c-h-fit vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-gap-20 vdb-c-pb-6 vdb-c-pt-20"
   >
-    <Button
-      key="mic-btn"
-      :icon="Live"
-      label="Mic Transcript"
-      :isActive="isMicTranscriptOpen"
-      @click="openMicTranscript"
-    />
-    <Button
-      key="system-btn"
-      :icon="Live"
-      label="System Transcript"
-      :isActive="isSystemTranscriptOpen"
-      @click="openSystemTranscript"
-    />
+    <template v-if="content.type === 'meeting_recorder_legacy'">
+      <Button
+        key="live-btn"
+        :icon="Live"
+        label="See Live Analysis"
+        :isActive="isLiveAnalysisOpen"
+        @click="openLiveAnalysis"
+      />
+    </template>
+    <template v-else>
+      <Button
+        key="mic-btn"
+        :icon="Live"
+        label="Mic Transcript"
+        :isActive="isMicTranscriptOpen"
+        @click="openMicTranscript"
+      />
+      <Button
+        key="system-btn"
+        :icon="Live"
+        label="System Transcript"
+        :isActive="isSystemTranscriptOpen"
+        @click="openSystemTranscript"
+      />
+    </template>
+
     <Button
       v-if="showMeetingAnalysisButton"
       key="meeting-btn"
@@ -59,6 +78,7 @@ import { ref, computed } from "vue";
 import Button from "./Button.vue";
 import Robot from "./Robot.vue";
 import Live from "./Live.vue";
+import LiveAnalysisModal from "./LiveAnalysisModal.vue";
 import MicTranscriptModal from "./MicTranscriptModal.vue";
 import SystemTranscriptModal from "./SystemTranscriptModal.vue";
 import MeetingAnalysisModal from "./MeetingAnalysisModal.vue";
@@ -66,6 +86,7 @@ const { setShrinkChat, canvasState } = useVideoDBChat();
 
 const isFloating = ref(true); // default open mode is floating
 const isMeetingAnalysisOpen = ref(false);
+const isLiveAnalysisOpen = ref(false);
 const isMicTranscriptOpen = ref(false);
 const isSystemTranscriptOpen = ref(false);
 const showMeetingAnalysisButton = ref(true);
@@ -82,6 +103,14 @@ function openMeetingAnalysis() {
   isMeetingAnalysisOpen.value = true;
   isFloating.value = true; // start in floating mode
   setShrinkChat(false);
+}
+
+function openLiveAnalysis() {
+  isLiveAnalysisOpen.value = true;
+}
+
+function closeLiveAnalysis() {
+  isLiveAnalysisOpen.value = false;
 }
 
 function openMicTranscript() {

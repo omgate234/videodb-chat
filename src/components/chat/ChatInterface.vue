@@ -586,8 +586,10 @@ registerMessageHandler("text", TextResponse);
 registerMessageHandler("search_results", ChatSearchResults);
 registerMessageHandler("image", ImageHandler);
 registerMessageHandler("meeting_recorder", MeetingRecorder);
+registerMessageHandler("meeting_recorder_legacy", MeetingRecorder);
 
 registerCanvasHandler("meeting_recorder", MeetingRecorderCanvas);
+registerCanvasHandler("meeting_recorder_legacy", MeetingRecorderCanvas);
 
 if (Array.isArray(props.customCanvasHandlers)) {
   for (const handler of props.customCanvasHandlers) {
