@@ -11,18 +11,12 @@
       <Sidebar
         v-if="sidebarConfig.enabled"
         ref="sidebarRef"
-        :status="
-          configStatus !== null && isSetupComplete ? 'active' : 'inactive'
-        "
+        :status="configStatus !== null && isSetupComplete ? 'active' : 'inactive'"
         :new-session-button-status="
-          Object.keys(conversations).length === 0 && !showCollectionView
-            ? 'inactive'
-            : 'active'
+          Object.keys(conversations).length === 0 && !showCollectionView ? 'inactive' : 'active'
         "
         :config="sidebarConfig"
-        :show-selected-collection="
-          Object.keys(conversations).length === 0 && !showCollectionView
-        "
+        :show-selected-collection="Object.keys(conversations).length === 0 && !showCollectionView"
         :initial-sessions-open="!isFreshUser"
         :initial-explore-agents-open="!isFreshUser"
         :selected-session="sessionId"
@@ -35,6 +29,8 @@
         @create-collection="showCreateCollectionModal = true"
         @delete-session="showDeleteSessionDialog"
         @delete-collection="promptDeleteCollection"
+        @update-session-name="handleUpdateSessionName"
+        @share-session="handleShareSession"
         @agent-click="
           if (!chatLoading) {
             handleTagAgent($event, false);
@@ -46,9 +42,7 @@
       />
 
       <!-- Main Content -->
-      <div
-        class="vdb-c-flex vdb-c-h-screen vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col"
-      >
+      <div class="vdb-c-flex vdb-c-h-screen vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col">
         <div
           class="vdb-c-relative vdb-c-flex vdb-c-h-full vdb-c-flex-1 vdb-c-flex-col vdb-c-justify-between vdb-c-bg-white vdb-c-shadow-2 vdb-c-transition-all vdb-c-duration-300 vdb-c-ease-in-out md:vdb-c-w-full"
         >
@@ -67,7 +61,8 @@
             >
               <!-- Header -->
               <div
-                class="vdb-c-sticky vdb-c-top-0 vdb-c-z-40 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-bg-white vdb-c-px-12 md:vdb-c-px-[30px]"
+                v-if="showHeader"
+                class="vdb-c-sticky vdb-c-top-0 vdb-c-z-40 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-bg-white"
                 ref="headerRef"
               >
                 <template v-if="$slots.header">
@@ -85,8 +80,7 @@
                       'vdb-c-pl-16 vdb-c-pr-24 md:vdb-c-pl-32 md:vdb-c-pr-60 2xl:vdb-c-pl-60 2xl:vdb-c-pr-80':
                         isDefaultScreen,
                       'vdb-c-border-b-2 vdb-c-border-roy': isCollectionView,
-                      'header-shadow':
-                        isScrolled && !isCollectionView && !isDefaultScreen,
+                      'header-shadow': isScrolled && !isCollectionView && !isDefaultScreen,
                     }"
                     @toggle-sidebar="toggleSidebar"
                     @upload-button-click="showUploadDialog = true"
@@ -99,9 +93,7 @@
               <div
                 v-if="Object.keys(conversations).length === 0"
                 :class="
-                  showCollectionView
-                    ? 'vdb-c-w-[100%] vdb-c-py-16'
-                    : 'vdb-c-w-[90%] vdb-c-p-16'
+                  showCollectionView ? 'vdb-c-w-[100%] vdb-c-py-16' : 'vdb-c-w-[90%] vdb-c-p-16'
                 "
               >
                 <collection-view
@@ -183,8 +175,7 @@
                     :close-canvas="closeCanvas"
                     class="vdb-c-px-30 vdb-c-transition-all vdb-c-duration-300 vdb-c-ease-in-out md:vdb-c-px-60"
                     :class="{
-                      'last-conv-height':
-                        i === Object.keys(conversations).length - 1,
+                      'last-conv-height': i === Object.keys(conversations).length - 1,
                     }"
                   />
                   <div class="vdb-c-h-[90px]"></div>
@@ -203,6 +194,7 @@
 
           <!-- Chat Input -->
           <div
+            v-if="showChatInput"
             class="vdb-c-chat-input-container vdb-c-transition-all vdb-c-duration-300 vdb-c-ease-in-out"
             :class="{
               'vdb-c-pointer-events-none vdb-c-opacity-20': !(
@@ -297,14 +289,10 @@
       <template #description>
         <div>
           This collection contains
-          <span
-            v-if="
-              ['audios', 'images', 'videos'].includes(deleteCollectionErrorCode)
-            "
+          <span v-if="['audios', 'images', 'videos'].includes(deleteCollectionErrorCode)"
             >{{ deleteCollectionErrorCode }}
           </span>
-          <span v-else> media </span>. If you wish to delete this collection,
-          kindly
+          <span v-else> media </span>. If you wish to delete this collection, kindly
           <span v-if="deleteCollectionErrorCode === 'videos'">
             remove all the media individually or</span
           >
@@ -329,49 +317,60 @@
       @upload="handleUpload"
       @cancel-upload="showUploadDialog = false"
     />
+
+    <!-- Share Modal -->
+    <ShareModal
+      :show-dialog="showShareModal"
+      :session-id="sessionToShare?.session_id"
+      :is-public="sessionToShare?.is_public"
+      :on-make-public="makeSessionPublic"
+      @close="showShareModal = false"
+    />
   </section>
 </template>
 
 <script setup>
-import { computed, nextTick, onUnmounted, provide, ref, watch } from "vue";
+import { computed, nextTick, onUnmounted, provide, ref, watch } from 'vue';
 
-import { useChatInterface } from "../hooks/useChatInterface";
-import { useVideoDBAgent } from "../hooks/useVideoDBAgent";
+import { useChatInterface } from '../hooks/useChatInterface';
+import { useVideoDBAgent } from '../hooks/useVideoDBAgent';
 
-import ChatInput from "./ChatInput.vue";
-import ChatMessageContainer from "./ChatMessageContainer.vue";
-import CollectionView from "./CollectionView.vue";
-import DefaultScreen from "./elements/DefaultScreen.vue";
-import NotificationCenter from "./elements/NotificationCenter.vue";
-import SetupScreen from "./elements/SetupScreen.vue";
-import Sidebar from "./elements/Sidebar.vue";
-import UploadNotifications from "./elements/UploadNotifications.vue";
-import UploadVideoQueryCard from "./elements/UploadVideoQueryCard.vue";
+import ChatInput from './ChatInput.vue';
+import ChatMessageContainer from './ChatMessageContainer.vue';
+import CollectionView from './CollectionView.vue';
+import DefaultScreen from './elements/DefaultScreen.vue';
+import NotificationCenter from './elements/NotificationCenter.vue';
+import SetupScreen from './elements/SetupScreen.vue';
+import Sidebar from './elements/Sidebar.vue';
+import UploadNotifications from './elements/UploadNotifications.vue';
+import UploadVideoQueryCard from './elements/UploadVideoQueryCard.vue';
 
-import ConfirmModal from "../modals/ConfirmModal.vue";
-import CreateCollectionModal from "../modals/CreateCollectionModal.vue";
-import DeleteCollectionErrorModal from "../modals/DeleteCollectionErrorModal.vue";
-import UploadModal from "../modals/UploadModal.vue";
-import Header from "./elements/Header.vue";
+import ConfirmModal from '../modals/ConfirmModal.vue';
+import CreateCollectionModal from '../modals/CreateCollectionModal.vue';
+import DeleteCollectionErrorModal from '../modals/DeleteCollectionErrorModal.vue';
+import UploadModal from '../modals/UploadModal.vue';
+import ShareModal from '../modals/ShareModal.vue';
 
-import ChatSearchResults from "../message-handlers/ChatSearchResults.vue";
-import ChatVideo from "../message-handlers/ChatVideo.vue";
-import ChatVideos from "../message-handlers/ChatVideos.vue";
-import ImageHandler from "../message-handlers/ImageHandler.vue";
-import TextResponse from "../message-handlers/TextResponse.vue";
+import Header from './elements/Header.vue';
 
-import CheckIcon from "../icons/Check.vue";
-import CollectionIcon from "../icons/Collection.vue";
-import DeleteIcon from "../icons/Delete3.vue";
-import DirectorIcon from "../icons/Director.vue";
-import ExternalLink from "../icons/ExternalLink.vue";
-import QueryIcon from "../icons/Query.vue";
-import SearchIcon from "../icons/SearchIcon.vue";
+import ChatSearchResults from '../message-handlers/ChatSearchResults.vue';
+import ChatVideo from '../message-handlers/ChatVideo.vue';
+import ChatVideos from '../message-handlers/ChatVideos.vue';
+import ImageHandler from '../message-handlers/ImageHandler.vue';
+import TextResponse from '../message-handlers/TextResponse.vue';
+
+import CheckIcon from '../icons/Check.vue';
+import CollectionIcon from '../icons/Collection.vue';
+import DeleteIcon from '../icons/Delete3.vue';
+import DirectorIcon from '../icons/Director.vue';
+import ExternalLink from '../icons/ExternalLink.vue';
+import QueryIcon from '../icons/Query.vue';
+import SearchIcon from '../icons/SearchIcon.vue';
 
 const props = defineProps({
   chatInputPlaceholder: {
     type: String,
-    default: "Ask Director",
+    default: 'Ask Director',
   },
   customChatHook: {
     type: Function,
@@ -380,15 +379,15 @@ const props = defineProps({
   chatHookConfig: {
     type: Object,
     default: () => ({
-      socketUrl: "http://127.0.0.1:8000/chat",
-      httpUrl: "http://127.0.0.1:8000",
+      socketUrl: 'http://127.0.0.1:8000/chat',
+      httpUrl: 'http://127.0.0.1:8000',
       debug: false,
     }),
   },
   size: {
     type: String,
-    default: "full",
-    validator: (value) => ["full", "embedded"].includes(value),
+    default: 'full',
+    validator: (value) => ['full', 'embedded'].includes(value),
   },
   headerConfig: {
     type: Object,
@@ -403,16 +402,24 @@ const props = defineProps({
       icon: DirectorIcon,
       links: [
         {
-          href: "https://www.youtube.com/playlist?list=PLhxAMFLSSK039xl1UgcZmoFLnb-qNRYQw",
-          text: "Watch Demos",
+          href: 'https://www.youtube.com/playlist?list=PLhxAMFLSSK039xl1UgcZmoFLnb-qNRYQw',
+          text: 'Watch Demos',
           icon: ExternalLink,
         },
         {
-          href: "https://console.videodb.io",
-          text: "VideoDB Console",
+          href: 'https://console.videodb.io',
+          text: 'VideoDB Console',
         },
       ],
     }),
+  },
+  showHeader: {
+    type: Boolean,
+    default: true,
+  },
+  showChatInput: {
+    type: Boolean,
+    default: true,
   },
   defaultScreenConfig: {
     type: Object,
@@ -422,27 +429,27 @@ const props = defineProps({
       demoVideos: [
         {
           id: 1,
-          external_url: "https://www.youtube.com/watch?v=Dncn_0RWrro",
+          external_url: 'https://www.youtube.com/watch?v=Dncn_0RWrro',
           thumbnail_url:
-            "https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_automated.png",
+            'https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_automated.png',
         },
         {
           id: 2,
-          external_url: "https://www.youtube.com/watch?v=bct8Vvl2acU",
+          external_url: 'https://www.youtube.com/watch?v=bct8Vvl2acU',
           thumbnail_url:
-            "https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_gen_ai.png",
+            'https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_gen_ai.png',
         },
         {
           id: 3,
-          external_url: "https://www.youtube.com/watch?v=KcoA0eio1Zo",
+          external_url: 'https://www.youtube.com/watch?v=KcoA0eio1Zo',
           thumbnail_url:
-            "https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_profanity.png",
+            'https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_profanity.png',
         },
         {
           id: 4,
-          external_url: "https://www.youtube.com/watch?v=7J7oBIv4eOY",
+          external_url: 'https://www.youtube.com/watch?v=7J7oBIv4eOY',
           thumbnail_url:
-            "https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_keyword.png",
+            'https://raw.githubusercontent.com/video-db/videodb-cookbook-assets/main/images/thumbnail_keyword.png',
         },
       ],
     }),
@@ -497,7 +504,8 @@ const {
   deleteVideo,
   deleteAudio,
   deleteImage,
-  callApi,
+  renameSession,
+  makeSessionPublic,
 } = useChatHook(props.chatHookConfig);
 
 const {
@@ -516,13 +524,13 @@ const {
 // Watch chatAttachments for new uploads
 watch(chatAttachments, async (newAttachments) => {
   for (const attachment of newAttachments) {
-    if (attachment.upload && attachment.upload_status === "in_queue") {
-      attachment.upload_status = "uploading";
+    if (attachment.upload && attachment.upload_status === 'in_queue') {
+      attachment.upload_status = 'uploading';
 
       try {
         const uploadData = {
           source: attachment.image_data,
-          sourceType: "file",
+          sourceType: 'file',
           collectionId: activeCollectionData.value?.id,
         };
 
@@ -531,29 +539,29 @@ watch(chatAttachments, async (newAttachments) => {
           const uploadResData = await res.json();
           const generateUrlData = await generateImageUrl(
             uploadResData.collection_id,
-            uploadResData.id,
+            uploadResData.id
           );
 
           // Update attachment with image data
           attachment.image_id = uploadResData.id;
           attachment.url = generateUrlData.url;
-          attachment.upload_status = "complete";
+          attachment.upload_status = 'complete';
         } else {
-          throw Error("Upload failed");
+          throw Error('Upload failed');
         }
       } catch (e) {
-        console.log("something went wrong", e);
-        attachment.upload_status = "error";
+        console.log('something went wrong', e);
+        attachment.upload_status = 'error';
       }
     }
   }
 });
 
-registerMessageHandler("video", ChatVideo);
-registerMessageHandler("videos", ChatVideos);
-registerMessageHandler("text", TextResponse);
-registerMessageHandler("search_results", ChatSearchResults);
-registerMessageHandler("image", ImageHandler);
+registerMessageHandler('video', ChatVideo);
+registerMessageHandler('videos', ChatVideos);
+registerMessageHandler('text', TextResponse);
+registerMessageHandler('search_results', ChatSearchResults);
+registerMessageHandler('image', ImageHandler);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
@@ -563,7 +571,7 @@ if (Array.isArray(props.customMessageHandlers)) {
 
 if (Array.isArray(props.customCanvasHandlers)) {
   for (const handler of props.customCanvasHandlers) {
-    if (handler && typeof handler.type === "string" && handler.component) {
+    if (handler && typeof handler.type === 'string' && handler.component) {
       registerCanvasHandler(handler.type, handler.component);
     }
   }
@@ -587,7 +595,7 @@ const sessionToShare = ref(null);
 
 const isSetupComplete = computed(() => {
   return (
-    typeof configStatus.value === "object" &&
+    typeof configStatus.value === 'object' &&
     configStatus.value !== null &&
     Object.values(configStatus.value).every((value) => value === true)
   );
@@ -620,18 +628,16 @@ const isFreshUser = computed(() => {
 
 const chatLoading = computed(() =>
   Object.values(conversations).some((conv) =>
-    Object.values(conv).some(
-      (content) => content.status === "progress" || content.clientLoading,
-    ),
-  ),
+    Object.values(conv).some((content) => content.status === 'progress' || content.clientLoading)
+  )
 );
 
 const isDefaultScreen = computed(
-  () => Object.keys(conversations).length === 0 && !showCollectionView.value,
+  () => Object.keys(conversations).length === 0 && !showCollectionView.value
 );
 
 const isCollectionView = computed(
-  () => Object.keys(conversations).length === 0 && showCollectionView.value,
+  () => Object.keys(conversations).length === 0 && showCollectionView.value
 );
 
 const isScrolled = ref(false);
@@ -645,27 +651,25 @@ const handleScroll = () => {
 const dynamicActionCards = computed(() => {
   return (
     props.defaultScreenConfig.actionCardQueries ||
-    (!isFreshUser.value &&
-    activeCollectionData.value &&
-    activeCollectionVideos?.value?.length > 0
+    (!isFreshUser.value && activeCollectionData.value && activeCollectionVideos?.value?.length > 0
       ? [
           {
             component: UploadVideoQueryCard,
             content:
               "Upload <a href='https://www.youtube.com/watch?v=FgrO9ADPZSA' target='_blank'>https://youtu.be/FgrO9ADPZSA</a> and generate a bullet point summary.",
-            type: "primary",
-            action: "chat",
+            type: 'primary',
+            action: 'chat',
             icon: QueryIcon,
           },
           {
-            content: "What are the pre-built agents I can use right now?",
-            type: "primary",
-            action: "chat",
+            content: 'What are the pre-built agents I can use right now?',
+            type: 'primary',
+            action: 'chat',
           },
           {
-            content: "Categorize all videos in this collection",
-            type: "primary",
-            action: "chat",
+            content: 'Categorize all videos in this collection',
+            type: 'primary',
+            action: 'chat',
             icon: CollectionIcon,
           },
         ]
@@ -674,19 +678,19 @@ const dynamicActionCards = computed(() => {
             component: UploadVideoQueryCard,
             content:
               "Upload <a href='https://www.youtube.com/watch?v=FgrO9ADPZSA' target='_blank'>https://youtu.be/FgrO9ADPZSA</a> and generate a bullet point summary.",
-            type: "primary",
-            action: "chat",
+            type: 'primary',
+            action: 'chat',
             icon: QueryIcon,
           },
           {
-            content: "What are the pre-built agents I can use right now?",
-            type: "primary",
-            action: "chat",
+            content: 'What are the pre-built agents I can use right now?',
+            type: 'primary',
+            action: 'chat',
           },
           {
-            content: "Show me how the search agent works? ",
-            type: "primary",
-            action: "chat",
+            content: 'Show me how the search agent works? ',
+            type: 'primary',
+            action: 'chat',
             icon: SearchIcon,
           },
         ])
@@ -708,15 +712,15 @@ watch(
       headerObserver.value.observe(val);
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 watch(
   headerHeight,
   (val) => {
-    document.documentElement.style.setProperty("--header-height", `${val}px`);
+    document.documentElement.style.setProperty('--header-height', `${val}px`);
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 const scrollToLatestUserMessage = () => {
@@ -729,9 +733,9 @@ const scrollToLatestUserMessage = () => {
       const latestUserMessage = userMessages[userMessages.length - 1];
 
       latestUserMessage.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-        inline: "nearest",
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest',
       });
     }
   });
@@ -755,7 +759,7 @@ watch(
     if (oldLength > 0 && newLength === 0 && canvasState.show) {
       closeCanvas();
     }
-  },
+  }
 );
 
 // -- Header Click handlers --
@@ -800,12 +804,24 @@ const confirmDeleteSession = () => {
   sessionToDelete.value = null;
 };
 
+const handleUpdateSessionName = async ({ sessionId: _sessionId, name }) => {
+  try {
+    await renameSession(_sessionId, name);
+  } catch (error) {
+    console.error('Error renaming session:', error?.message || error);
+  }
+};
+const handleShareSession = (session) => {
+  sessionToShare.value = session;
+  showShareModal.value = true;
+};
+
 // --- Upload Dialog Handlers ---
 const showUploadDialog = ref(false);
 const handleUpload = async (uploadData) => {
   showUploadDialog.value = false;
-  let name = "Media";
-  if (uploadData.sourceType === "file") {
+  let name = 'Media';
+  if (uploadData.sourceType === 'file') {
     name = uploadData.source.name;
   } else {
     name = uploadData.source.url;
@@ -814,35 +830,35 @@ const handleUpload = async (uploadData) => {
   try {
     const res = await uploadMedia(uploadData);
     if (res.ok) {
-      uploadNotificationsRef.value.updateUploadStatus(uploadId, "success");
+      uploadNotificationsRef.value.updateUploadStatus(uploadId, 'success');
       refetchCollectionVideos();
       refetchCollectionAudios();
       refetchCollectionImages();
     } else {
-      uploadNotificationsRef.value.updateUploadStatus(uploadId, "error");
+      uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
     }
   } catch (e) {
-    uploadNotificationsRef.value.updateUploadStatus(uploadId, "error");
+    uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
   }
 };
 
 // --- Handle Default Screen Click Handlers ---
 const handleQueryCardClick = (query) => {
-  if (query.action === "show-collection") {
+  if (query.action === 'show-collection') {
     showCollectionView.value = true;
-    chatInput.value = "";
-  } else if (query.action === "chat") {
-    chatInput.value = "";
+    chatInput.value = '';
+  } else if (query.action === 'chat') {
+    chatInput.value = '';
     handleAddMessage({ text: query.content });
   }
 };
 
-const handleViewAllVideosClick = (redirectTo = "") => {
-  if (redirectTo.includes("youtube.com")) {
-    window.open(redirectTo, "_blank");
+const handleViewAllVideosClick = (redirectTo = '') => {
+  if (redirectTo.includes('youtube.com')) {
+    window.open(redirectTo, '_blank');
   } else {
     showCollectionView.value = true;
-    chatInput.value = "";
+    chatInput.value = '';
   }
 };
 
@@ -852,9 +868,7 @@ const handleTagAgent = (agent, addToInput = true) => {
     taggedAgent.value.push(agentName);
     if (addToInput) {
       chatInput.value =
-        chatInput.value.trim() === ""
-          ? `@${agentName}`
-          : `${chatInput.value} @${agentName}`;
+        chatInput.value.trim() === '' ? `@${agentName}` : `${chatInput.value} @${agentName}`;
       chatInputRef.value.focus();
     }
   }
@@ -863,7 +877,7 @@ const handleTagAgent = (agent, addToInput = true) => {
 // --- CollectionView/VideoView Click Handlers ---
 const handleVideoClick = (video) => {
   if (video.external_url) {
-    window.open(video.external_url, "_blank");
+    window.open(video.external_url, '_blank');
   } else {
     videoId.value = video.id;
     handleAddMessage({ text: `@stream_video ${video.name}` });
@@ -887,7 +901,7 @@ const promptDeleteImage = (image) => {
 
 const confirmDeleteVideo = async () => {
   if (!videoToDelete.value) {
-    console.error("No video to delete.");
+    console.error('No video to delete.');
     return;
   }
 
@@ -898,14 +912,14 @@ const confirmDeleteVideo = async () => {
 
   try {
     await deleteVideo(collection_id, id);
-    notificationCenterRef.value.addNotification("Video deleted successfully.", {
-      type: "error",
+    notificationCenterRef.value.addNotification('Video deleted successfully.', {
+      type: 'error',
       icon: DeleteIcon,
     });
   } catch (error) {
     console.error(`Error deleting video: ${error.message}`);
-    notificationCenterRef.value.addNotification("Error deleting video", {
-      type: "error",
+    notificationCenterRef.value.addNotification('Error deleting video', {
+      type: 'error',
       icon: DeleteIcon,
     });
   }
@@ -913,7 +927,7 @@ const confirmDeleteVideo = async () => {
 
 const confirmDeleteAudio = async () => {
   if (!audioToDelete.value) {
-    console.error("No video to delete.");
+    console.error('No video to delete.');
     return;
   }
 
@@ -924,14 +938,14 @@ const confirmDeleteAudio = async () => {
 
   try {
     await deleteAudio(collection_id, id);
-    notificationCenterRef.value.addNotification("Audio deleted successfully.", {
-      type: "error",
+    notificationCenterRef.value.addNotification('Audio deleted successfully.', {
+      type: 'error',
       icon: DeleteIcon,
     });
   } catch (error) {
     console.error(`Error deleting audio: ${error.message}`);
-    notificationCenterRef.value.addNotification("Error deleting audio", {
-      type: "error",
+    notificationCenterRef.value.addNotification('Error deleting audio', {
+      type: 'error',
       icon: DeleteIcon,
     });
   }
@@ -939,7 +953,7 @@ const confirmDeleteAudio = async () => {
 
 const confirmDeleteImage = async () => {
   if (!imageToDelete.value) {
-    console.error("No video to delete.");
+    console.error('No video to delete.');
     return;
   }
 
@@ -950,14 +964,14 @@ const confirmDeleteImage = async () => {
 
   try {
     await deleteImage(collection_id, id);
-    notificationCenterRef.value.addNotification("Image deleted successfully.", {
-      type: "error",
+    notificationCenterRef.value.addNotification('Image deleted successfully.', {
+      type: 'error',
       icon: DeleteIcon,
     });
   } catch (error) {
     console.error(`Error deleting image: ${error.message}`);
-    notificationCenterRef.value.addNotification("Error deleting image", {
-      type: "error",
+    notificationCenterRef.value.addNotification('Error deleting image', {
+      type: 'error',
       icon: DeleteIcon,
     });
   }
@@ -970,19 +984,16 @@ const promptCreateCollection = async (newCollection) => {
   try {
     const createdCollection = await createCollection(
       newCollection.name,
-      newCollection.description || " ",
+      newCollection.description || ' '
     );
-    notificationCenterRef.value.addNotification(
-      "Collection has been created successfully!",
-      {
-        type: "success",
-        icon: CheckIcon,
-      },
-    );
+    notificationCenterRef.value.addNotification('Collection has been created successfully!', {
+      type: 'success',
+      icon: CheckIcon,
+    });
   } catch (error) {
-    console.error("Error creating collection:", error.message);
-    notificationCenterRef.value.addNotification("Failed to create collection", {
-      type: "error",
+    console.error('Error creating collection:', error.message);
+    notificationCenterRef.value.addNotification('Failed to create collection', {
+      type: 'error',
     });
   }
 };
@@ -990,44 +1001,39 @@ const promptCreateCollection = async (newCollection) => {
 const promptDeleteCollection = async (collection) => {
   try {
     await deleteCollection(collection?.id);
-    notificationCenterRef.value.addNotification(
-      "Collection deleted successfully.",
-      {
-        type: "error",
-        icon: DeleteIcon,
-      },
-    );
+    notificationCenterRef.value.addNotification('Collection deleted successfully.', {
+      type: 'error',
+      icon: DeleteIcon,
+    });
   } catch (error) {
-    if (
-      error.message.includes("Invalid request: Your collection has non-zero")
-    ) {
-      if (error.message.includes("non-zero videos")) {
-        deleteCollectionErrorCode.value = "videos";
-      } else if (error.message.includes("non-zero audios")) {
-        deleteCollectionErrorCode.value = "audios";
-      } else if (error.message.includes("non-zero images")) {
-        deleteCollectionErrorCode.value = "images";
+    if (error.message.includes('Invalid request: Your collection has non-zero')) {
+      if (error.message.includes('non-zero videos')) {
+        deleteCollectionErrorCode.value = 'videos';
+      } else if (error.message.includes('non-zero audios')) {
+        deleteCollectionErrorCode.value = 'audios';
+      } else if (error.message.includes('non-zero images')) {
+        deleteCollectionErrorCode.value = 'images';
       }
       showDeleteCollectionErrorModal.value = true;
       return;
     }
-    console.error("Unexpected error deleting collection:", error);
+    console.error('Unexpected error deleting collection:', error);
   }
 };
 
-const handleAddMessage = async ({ text = "", images = [] }) => {
+const handleAddMessage = async ({ text = '', images = [] }) => {
   if (!sessionId.value) {
     loadSession();
   }
 
   const content = [];
   if (text) {
-    content.push({ type: "text", text: text });
+    content.push({ type: 'text', text: text });
   }
   if (images?.length > 0) {
     for (const image of images) {
       content.push({
-        type: "image",
+        type: 'image',
         image: {
           image_id: image.image_id,
           url: image.url,
@@ -1071,7 +1077,7 @@ defineExpose({
   closeCanvas,
 });
 
-provide("videodb-chat", {
+provide('videodb-chat', {
   chatInput,
   chatAttachments,
   chatLoading,
