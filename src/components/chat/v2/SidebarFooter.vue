@@ -2,7 +2,7 @@
   <div
     ref="footerRef"
     :class="[
-      'vdb-c-bg-vdb-lightgrey vdb-c-p-6 hover:vdb-c-bg-[#EFEFEF]',
+      `vdb-c-fixed vdb-c-bottom-0 vdb-c-left-0 vdb-c-w-[${width}px] vdb-c-bg-vdb-lightgrey vdb-c-p-6 hover:vdb-c-bg-[#EFEFEF]`,
       { '!vdb-c-bg-[#FFE9D3]': active },
     ]"
   >
@@ -16,7 +16,6 @@
         },
       ]"
     >
-      <!-- Avatar -->
       <div
         v-if="user.photoUrl"
         class="vdb-c-h-30 vdb-c-w-30 vdb-c-flex-shrink-0 vdb-c-overflow-hidden vdb-c-rounded-full"
@@ -34,7 +33,6 @@
         {{ userInitials }}
       </div>
 
-      <!-- User Name -->
       <div class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-overflow-hidden">
         <span
           class="vdb-c-truncate vdb-c-text-sm vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
@@ -43,7 +41,6 @@
         </span>
       </div>
 
-      <!-- Chevron Icon -->
       <ChevronRightIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
     </button>
 
@@ -54,7 +51,6 @@
         :class="['vdb-c-absolute vdb-c-inset-0 vdb-c-z-40']"
         @click="$emit('profile-click')"
       ></div>
-      <!-- Dropdown Menu -->
       <div
         v-if="active"
         :style="{
@@ -64,12 +60,10 @@
         class="vdb-c-fixed vdb-c-z-50 vdb-c-flex vdb-c-min-w-[254px] vdb-c-flex-col vdb-c-gap-[4px] vdb-c-rounded-12 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-shadow-[0px_23px_6px_0px_rgba(0,0,0,0),0px_15px_6px_0px_rgba(0,0,0,0.01),0px_8px_5px_0px_rgba(0,0,0,0.02),0px_4px_4px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.03)]"
         @click.stop
       >
-        <!-- User Info Section -->
         <div
           v-if="user"
           class="vdb-c-flex vdb-c-items-center vdb-c-gap-[8px] vdb-c-rounded-[10px] vdb-c-px-[10px] vdb-c-py-[6px]"
         >
-          <!-- Avatar -->
           <div
             v-if="user.photoUrl"
             class="vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-flex-shrink-0 vdb-c-overflow-hidden vdb-c-rounded-full"
@@ -87,7 +81,6 @@
             {{ userInitials }}
           </div>
 
-          <!-- User Name and Email -->
           <div class="vdb-c-flex vdb-c-flex-1 vdb-c-flex-col vdb-c-overflow-hidden">
             <span
               class="vdb-c-truncate vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
@@ -103,13 +96,11 @@
           </div>
         </div>
 
-        <!-- Divider after user info -->
         <div
           v-if="user && (section1Buttons.length > 0 || section2Buttons.length > 0)"
           class="vdb-c-h-0 vdb-c-w-full vdb-c-border-t vdb-c-border-[#EFEFEF]"
         ></div>
 
-        <!-- Section 1 Buttons -->
         <div v-if="section1Buttons.length > 0" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[1px]">
           <template v-for="(button, index) in section1Buttons" :key="index">
             <button
@@ -164,13 +155,11 @@
           </template>
         </div>
 
-        <!-- Divider between sections -->
         <div
           v-if="section1Buttons.length > 0 && section2Buttons.length > 0"
           class="vdb-c-h-0 vdb-c-w-full vdb-c-border-t vdb-c-border-[#EFEFEF]"
         ></div>
 
-        <!-- Section 2 Buttons -->
         <div v-if="section2Buttons.length > 0" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[1px]">
           <template v-for="(button, index) in section2Buttons" :key="index">
             <button
@@ -237,6 +226,10 @@ const props = defineProps({
   user: {
     type: Object,
     default: null,
+  },
+  width: {
+    type: Number,
+    default: 260,
   },
   buttons: {
     type: Array,

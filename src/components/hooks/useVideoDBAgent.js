@@ -784,5 +784,6 @@ export function useVideoDBAgent(config) {
     generateAudioUrl,
     makeSessionPublic,
     renameSession,
+    callApi
   };
 }

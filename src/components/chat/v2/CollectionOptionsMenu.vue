@@ -1,9 +1,6 @@
 <template>
   <Teleport to="body">
-    <!-- Backdrop to handle closing on click-outside -->
     <div v-if="isOpen" class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-40" @click="$emit('close')"></div>
-
-    <!-- Options Menu -->
     <div
       v-if="isOpen"
       ref="menuRef"
@@ -73,7 +70,7 @@ const updatePosition = () => {
       const gap = 14;
 
       position.value = {
-        top: rect.bottom + gap,
+        top: rect.bottom + 4,
         left: Math.max(rect.right - 34, 0),
       };
 

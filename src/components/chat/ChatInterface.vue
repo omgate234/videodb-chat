@@ -281,7 +281,6 @@
       @create="promptCreateCollection"
     />
 
-    <!-- Delete Collection Error Modal -->
     <DeleteCollectionErrorModal
       :isVisible="showDeleteCollectionErrorModal"
       @closeModal="showDeleteCollectionErrorModal = false"

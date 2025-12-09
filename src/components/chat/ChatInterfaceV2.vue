@@ -22,7 +22,9 @@
       @delete-session="showDeleteSessionDialog"
       @delete-collection="promptDeleteCollection"
       @update-session-name="handleUpdateSessionName"
-      @share-session="handleShareSession"
+      @update-collection-name="handleUpdateCollectionName"
+      :on-make-public="makeSessionPublic"
+      :fetch-collection-videos="fetchCollectionVideos"
       @agent-click="handleAgentClick"
       @session-click="handleSessionClick"
       @collection-click="handleCollectionClick"
@@ -38,22 +40,9 @@ import { computed, nextTick, onUnmounted, provide, ref, watch } from 'vue';
 import { useChatInterface } from '../hooks/useChatInterface';
 import { useVideoDBAgent } from '../hooks/useVideoDBAgent';
 
-import ChatInput from './ChatInput.vue';
-import ChatMessageContainer from './ChatMessageContainer.vue';
-import CollectionView from './CollectionView.vue';
-import DefaultScreen from './elements/DefaultScreen.vue';
-import NotificationCenter from './elements/NotificationCenter.vue';
-import SetupScreen from './elements/SetupScreen.vue';
 import Sidebar from './v2/Sidebar.vue';
-import UploadNotifications from './elements/UploadNotifications.vue';
 import UploadVideoQueryCard from './elements/UploadVideoQueryCard.vue';
 import PageDisplay from './PageDisplay.vue';
-
-import ConfirmModal from '../modals/ConfirmModal.vue';
-import CreateCollectionModal from '../modals/CreateCollectionModal.vue';
-import DeleteCollectionErrorModal from '../modals/DeleteCollectionErrorModal.vue';
-import UploadModal from '../modals/UploadModal.vue';
-import Header from './elements/Header.vue';
 
 import ChatSearchResults from '../message-handlers/ChatSearchResults.vue';
 import ChatVideo from '../message-handlers/ChatVideo.vue';
@@ -64,8 +53,6 @@ import TextResponse from '../message-handlers/TextResponse.vue';
 import CheckIcon from '../icons/Check.vue';
 import CollectionIcon from '../icons/Collection.vue';
 import DeleteIcon from '../icons/Delete3.vue';
-import DirectorIcon from '../icons/Director.vue';
-import ExternalLink from '../icons/ExternalLink.vue';
 import QueryIcon from '../icons/Query.vue';
 import SearchIcon from '../icons/SearchIcon.vue';
 
@@ -228,6 +215,9 @@ const {
   deleteVideo,
   deleteAudio,
   deleteImage,
+  renameSession,
+  makeSessionPublic,
+  updateCollection,
   callApi,
 } = agentHook;
 
@@ -329,7 +319,6 @@ watch(
   (newCollectionId) => {
     if (navState.currentPage === 'collection') {
       if (!newCollectionId) {
-        // If collectionId becomes empty, go to default
         actions.goToDefault();
       } else {
         navState.activeParams = { id: newCollectionId };
@@ -405,7 +394,6 @@ if (Array.isArray(props.customCanvasHandlers)) {
   }
 }
 
-const isStaticPage = ref(false);
 const chatWindowRef = ref(null);
 const headerRef = ref(null);
 const headerHeight = ref(0);
@@ -418,22 +406,12 @@ const showDeleteImageDialog = ref(false);
 const imageToDelete = ref(null);
 const showDeleteCollectionErrorModal = ref(false);
 const deleteCollectionErrorCode = ref(null);
-const showShareModal = ref(false);
-const sessionToShare = ref(null);
 
 const isSetupComplete = computed(() => {
   return (
     typeof configStatus.value === 'object' &&
     configStatus.value !== null &&
     Object.values(configStatus.value).every((value) => value === true)
-  );
-});
-
-const isContentLoading = computed(() => {
-  return !(
-    Array.isArray(activeCollectionVideos.value) &&
-    Array.isArray(activeCollectionImages.value) &&
-    Array.isArray(activeCollectionAudios.value)
   );
 });
 
@@ -462,70 +440,7 @@ const chatLoading = computed(() =>
   )
 );
 
-const isDefaultScreen = computed(
-  () => Object.keys(conversations).length === 0 && !showCollectionView.value
-);
-
-const isCollectionView = computed(
-  () => Object.keys(conversations).length === 0 && showCollectionView.value
-);
-
 const isScrolled = ref(false);
-
-const handleScroll = () => {
-  if (chatWindowRef.value) {
-    isScrolled.value = chatWindowRef.value.scrollTop > 0;
-  }
-};
-
-const dynamicActionCards = computed(() => {
-  return (
-    props.defaultScreenConfig.actionCardQueries ||
-    (!isFreshUser.value && activeCollectionData.value && activeCollectionVideos?.value?.length > 0
-      ? [
-          {
-            component: UploadVideoQueryCard,
-            content:
-              "Upload <a href='https://www.youtube.com/watch?v=FgrO9ADPZSA' target='_blank'>https://youtu.be/FgrO9ADPZSA</a> and generate a bullet point summary.",
-            type: 'primary',
-            action: 'chat',
-            icon: QueryIcon,
-          },
-          {
-            content: 'What are the pre-built agents I can use right now?',
-            type: 'primary',
-            action: 'chat',
-          },
-          {
-            content: 'Categorize all videos in this collection',
-            type: 'primary',
-            action: 'chat',
-            icon: CollectionIcon,
-          },
-        ]
-      : [
-          {
-            component: UploadVideoQueryCard,
-            content:
-              "Upload <a href='https://www.youtube.com/watch?v=FgrO9ADPZSA' target='_blank'>https://youtu.be/FgrO9ADPZSA</a> and generate a bullet point summary.",
-            type: 'primary',
-            action: 'chat',
-            icon: QueryIcon,
-          },
-          {
-            content: 'What are the pre-built agents I can use right now?',
-            type: 'primary',
-            action: 'chat',
-          },
-          {
-            content: 'Show me how the search agent works? ',
-            type: 'primary',
-            action: 'chat',
-            icon: SearchIcon,
-          },
-        ])
-  );
-});
 
 watch(
   headerRef,
@@ -593,12 +508,6 @@ watch(
   }
 );
 
-// -- Header Click handlers --
-const toggleSidebar = () => {
-  sidebarRef.value?.toggleSidebar();
-};
-
-// --- Sidebar Click Handlers ---
 const createNewSession = () => {
   videoId.value = null;
   showCollectionView.value = false;
@@ -634,77 +543,71 @@ const handleAgentClick = (agent) => {
   }
 };
 
-const handleUpdateSessionName = (data) => {
-  // TODO: Implement session name update
-  console.log('Update session name:', data);
+const handleUpdateSessionName = async ({ sessionId: _sessionId, name }) => {
+  const sessionIndex = sessions.value.findIndex((s) => s.session_id === _sessionId);
+  const previousName = sessionIndex !== -1 ? sessions.value[sessionIndex].name : null;
+
+  if (sessionIndex !== -1) {
+    sessions.value[sessionIndex] = { ...sessions.value[sessionIndex], name };
+  }
+
+  try {
+    await renameSession(_sessionId, name);
+  } catch (error) {
+    if (sessionIndex !== -1) {
+      sessions.value[sessionIndex] = { ...sessions.value[sessionIndex], name: previousName };
+    }
+    console.error('Error renaming session:', error?.message || error);
+  }
 };
 
-const handleShareSession = (session) => {
-  sessionToShare.value = session;
-  showShareModal.value = true;
+const fetchCollectionVideos = async (collectionId) => {
+  try {
+    const result = await callApi(`/videodb/collection/${collectionId}/video`, {
+      method: 'GET',
+    });
+    return { data: result.data || result || [] };
+  } catch (error) {
+    console.error('Error fetching collection videos:', error);
+    return { data: [] };
+  }
 };
 
-const showDeleteDialog = ref(false);
-const sessionToDelete = ref(null);
+const handleUpdateCollectionName = async ({ collectionId, name }) => {
+  const collectionIndex = collections.value.findIndex((c) => c.id === collectionId);
+  const previousName = collectionIndex !== -1 ? collections.value[collectionIndex].name : null;
+
+  if (collectionIndex !== -1) {
+    collections.value[collectionIndex] = { ...collections.value[collectionIndex], name };
+  }
+
+  try {
+    await callApi(`/videodb/collection/${collectionId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      payload: {
+        name,
+      },
+    });
+    await updateCollection();
+  } catch (error) {
+    if (collectionIndex !== -1) {
+      collections.value[collectionIndex] = {
+        ...collections.value[collectionIndex],
+        name: previousName,
+      };
+    }
+    console.error('Error renaming collection:', error?.message || error);
+  }
+};
 
 const showDeleteSessionDialog = (_sessionId) => {
-  sessionToDelete.value = _sessionId;
-  showDeleteDialog.value = true;
-};
-
-const confirmDeleteSession = () => {
-  if (sessionToDelete.value === sessionId.value) {
+  if (_sessionId === sessionId.value) {
     createNewSession();
   }
-  deleteSession(sessionToDelete.value);
-  showDeleteDialog.value = false;
-  sessionToDelete.value = null;
-};
-
-// --- Upload Dialog Handlers ---
-const showUploadDialog = ref(false);
-const handleUpload = async (uploadData) => {
-  showUploadDialog.value = false;
-  let name = 'Media';
-  if (uploadData.sourceType === 'file') {
-    name = uploadData.source.name;
-  } else {
-    name = uploadData.source.url;
-  }
-  const uploadId = uploadNotificationsRef.value.addUpload(name);
-  try {
-    const res = await uploadMedia(uploadData);
-    if (res.ok) {
-      uploadNotificationsRef.value.updateUploadStatus(uploadId, 'success');
-      refetchCollectionVideos();
-      refetchCollectionAudios();
-      refetchCollectionImages();
-    } else {
-      uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
-    }
-  } catch (e) {
-    uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
-  }
-};
-
-// --- Handle Default Screen Click Handlers ---
-const handleQueryCardClick = (query) => {
-  if (query.action === 'show-collection') {
-    showCollectionView.value = true;
-    chatInput.value = '';
-  } else if (query.action === 'chat') {
-    chatInput.value = '';
-    handleAddMessage({ text: query.content });
-  }
-};
-
-const handleViewAllVideosClick = (redirectTo = '') => {
-  if (redirectTo.includes('youtube.com')) {
-    window.open(redirectTo, '_blank');
-  } else {
-    showCollectionView.value = true;
-    chatInput.value = '';
-  }
+  deleteSession(_sessionId);
 };
 
 const handleTagAgent = (agent, addToInput = true) => {
@@ -729,119 +632,7 @@ const handleVideoClick = (video) => {
   }
 };
 
-const promptDeleteVideo = (video) => {
-  videoToDelete.value = video;
-  showDeleteVideoDialog.value = true;
-};
-
-const promptDeleteAudio = (audio) => {
-  audioToDelete.value = audio;
-  showDeleteAudioDialog.value = true;
-};
-
-const promptDeleteImage = (image) => {
-  imageToDelete.value = image;
-  showDeleteImageDialog.value = true;
-};
-
-const confirmDeleteVideo = async () => {
-  if (!videoToDelete.value) {
-    console.error('No video to delete.');
-    return;
-  }
-
-  showDeleteVideoDialog.value = false;
-
-  const { collection_id, id } = videoToDelete.value;
-  videoToDelete.value = null;
-
-  try {
-    await deleteVideo(collection_id, id);
-    notificationCenterRef.value.addNotification('Video deleted successfully.', {
-      type: 'error',
-      icon: DeleteIcon,
-    });
-  } catch (error) {
-    console.error(`Error deleting video: ${error.message}`);
-    notificationCenterRef.value.addNotification('Error deleting video', {
-      type: 'error',
-      icon: DeleteIcon,
-    });
-  }
-};
-
-const confirmDeleteAudio = async () => {
-  if (!audioToDelete.value) {
-    console.error('No video to delete.');
-    return;
-  }
-
-  showDeleteAudioDialog.value = false;
-
-  const { collection_id, id } = audioToDelete.value;
-  audioToDelete.value = null;
-
-  try {
-    await deleteAudio(collection_id, id);
-    notificationCenterRef.value.addNotification('Audio deleted successfully.', {
-      type: 'error',
-      icon: DeleteIcon,
-    });
-  } catch (error) {
-    console.error(`Error deleting audio: ${error.message}`);
-    notificationCenterRef.value.addNotification('Error deleting audio', {
-      type: 'error',
-      icon: DeleteIcon,
-    });
-  }
-};
-
-const confirmDeleteImage = async () => {
-  if (!imageToDelete.value) {
-    console.error('No video to delete.');
-    return;
-  }
-
-  showDeleteImageDialog.value = false;
-
-  const { collection_id, id } = imageToDelete.value;
-  imageToDelete.value = null;
-
-  try {
-    await deleteImage(collection_id, id);
-    notificationCenterRef.value.addNotification('Image deleted successfully.', {
-      type: 'error',
-      icon: DeleteIcon,
-    });
-  } catch (error) {
-    console.error(`Error deleting image: ${error.message}`);
-    notificationCenterRef.value.addNotification('Error deleting image', {
-      type: 'error',
-      icon: DeleteIcon,
-    });
-  }
-};
-
 const showCreateCollectionModal = ref(false);
-
-const promptCreateCollection = async (newCollection) => {
-  showCreateCollectionModal.value = false;
-  try {
-    const createdCollection = await createCollection(
-      newCollection.name,
-      newCollection.description || ' '
-    );
-    notificationCenterRef.value.addNotification('Collection has been created successfully!', {
-      type: 'success',
-      icon: CheckIcon,
-    });
-  } catch (error) {
-    console.error('Error creating collection:', error.message);
-    notificationCenterRef.value.addNotification('Failed to create collection', {
-      type: 'error',
-    });
-  }
-};
 
 const promptDeleteCollection = async (collection) => {
   try {

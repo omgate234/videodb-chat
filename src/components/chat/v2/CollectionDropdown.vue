@@ -5,9 +5,6 @@
       :class="['vdb-c-absolute vdb-c-inset-0 vdb-c-z-40']"
       @click="$emit('close')"
     ></div>
-
-    <h1 class="vdb-c-text-black">Hello</h1>
-    <!-- Dropdown Menu -->
     <div
       v-if="isOpen"
       ref="dropdownRef"
