@@ -1,36 +1,6 @@
 <template>
   <div class="vdb-c-flex vdb-c-h-full vdb-c-w-full">
-    <Sidebar
-      v-if="sidebarConfig.enabled"
-      ref="sidebarRef"
-      :status="configStatus !== null && isSetupComplete ? 'active' : 'inactive'"
-      :new-session-button-status="
-        Object.keys(conversations).length === 0 && !showCollectionView ? 'inactive' : 'active'
-      "
-      :config="sidebarConfig"
-      :show-selected-collection="Object.keys(conversations).length === 0 && !showCollectionView"
-      :initial-sessions-open="!isFreshUser"
-      :initial-explore-agents-open="!isFreshUser"
-      :selected-session="sessionId"
-      :add-dummy-session="Object.keys(conversations).length === 0"
-      :selected-collection="collectionId"
-      :agents="agents"
-      :sessions="sessions"
-      :collections="collections"
-      @create-new-session="handleCreateNewSession"
-      @create-collection="showCreateCollectionModal = true"
-      @delete-session="showDeleteSessionDialog"
-      @delete-collection="promptDeleteCollection"
-      @update-session-name="handleUpdateSessionName"
-      @update-collection-name="handleUpdateCollectionName"
-      :on-make-public="makeSessionPublic"
-      :fetch-collection-videos="fetchCollectionVideos"
-      @agent-click="handleAgentClick"
-      @session-click="handleSessionClick"
-      @collection-click="handleCollectionClick"
-      @navigate-to-assets="handleNavigateToAssets"
-      @navigate-to-agents="handleNavigateToAgents"
-    />
+    <Sidebar v-if="sidebarConfig.enabled" ref="sidebarRef" />
     <PageDisplay />
   </div>
 </template>
@@ -398,12 +368,6 @@ const chatWindowRef = ref(null);
 const headerRef = ref(null);
 const headerHeight = ref(0);
 const headerObserver = ref(null);
-const showDeleteVideoDialog = ref(false);
-const videoToDelete = ref(null);
-const showDeleteAudioDialog = ref(false);
-const audioToDelete = ref(null);
-const showDeleteImageDialog = ref(false);
-const imageToDelete = ref(null);
 const showDeleteCollectionErrorModal = ref(false);
 const deleteCollectionErrorCode = ref(null);
 
@@ -610,30 +574,6 @@ const showDeleteSessionDialog = (_sessionId) => {
   deleteSession(_sessionId);
 };
 
-const handleTagAgent = (agent, addToInput = true) => {
-  const agentName = agent.name || agent;
-  if (agentName) {
-    taggedAgent.value.push(agentName);
-    if (addToInput) {
-      chatInput.value =
-        chatInput.value.trim() === '' ? `@${agentName}` : `${chatInput.value} @${agentName}`;
-      chatInputRef.value.focus();
-    }
-  }
-};
-
-// --- CollectionView/VideoView Click Handlers ---
-const handleVideoClick = (video) => {
-  if (video.external_url) {
-    window.open(video.external_url, '_blank');
-  } else {
-    videoId.value = video.id;
-    handleAddMessage({ text: `@stream_video ${video.name}` });
-  }
-};
-
-const showCreateCollectionModal = ref(false);
-
 const promptDeleteCollection = async (collection) => {
   try {
     await deleteCollection(collection?.id);
@@ -757,6 +697,22 @@ const chatContext = {
   deleteAudio,
   deleteImage,
   callApi,
+  makeSessionPublic,
+  fetchCollectionVideos,
+  handleCreateNewSession,
+  handleSessionClick,
+  handleCollectionClick,
+  handleAgentClick,
+  handleNavigateToAssets,
+  handleNavigateToAgents,
+  handleUpdateSessionName,
+  handleUpdateCollectionName,
+  showDeleteSessionDialog,
+  promptDeleteCollection,
+  showCollectionView,
+  isSetupComplete,
+  isFreshUser,
+  sidebarConfig: props.sidebarConfig,
 };
 
 provide('videodb-chat', chatContext);

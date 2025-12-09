@@ -6,7 +6,7 @@
           <component
             v-if="config.icon"
             :is="config.icon"
-            @click="$emit('create-new-session')"
+            @click="context.handleCreateNewSession()"
             class="vdb-c-h-24"
           />
         </div>
@@ -25,7 +25,7 @@
               newSessionButtonStatus === 'active',
           }"
           @click="
-            $emit('create-new-session');
+            context.handleCreateNewSession();
             closeSidebar();
           "
         >
@@ -43,7 +43,7 @@
 
         <button
           @click="
-            $emit('navigate-to-assets');
+            context.handleNavigateToAssets();
             closeSidebar();
           "
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3]"
@@ -60,7 +60,7 @@
 
         <button
           @click="
-            $emit('navigate-to-agents');
+            context.handleNavigateToAgents();
             closeSidebar();
           "
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3]"
@@ -110,7 +110,7 @@
               <button
                 class="cursor-pointer vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center"
                 aria-label="Create Collection"
-                @click="$emit('create-collection')"
+                @click="openCreateCollectionModal"
               >
                 <AddIcon stroke-color="#1E1E1E" />
               </button>
@@ -127,7 +127,7 @@
                   :is-options-menu-open="
                     showCollectionOptions && selectedCollectionForOptions?.id === collection.id
                   "
-                  :fetch-collection-videos="fetchCollectionVideos"
+                  :fetch-collection-videos="context.fetchCollectionVideos"
                   @click="handleCollectionClick"
                   @options-click="handleCollectionOptionsClick"
                   @start-editing="handleStartEditingCollection"
@@ -205,7 +205,7 @@
                   :session="session"
                   :is-selected="session.session_id === selectedSession"
                   :editing-session-id="editingSessionId"
-                  :on-make-public="onMakePublic"
+                  :on-make-public="context.makeSessionPublic"
                   @click="handleSessionClick"
                   @start-editing="handleStartEditing"
                   @save-editing="handleSaveEditing"
@@ -227,12 +227,16 @@
     :buttons="config.footerConfig?.buttons || []"
     @profile-click="handleProfileClick"
   />
+  <CreateCollectionModal
+    :showDialog="showCreateCollectionModal"
+    @cancel="showCreateCollectionModal = false"
+    @create="handleCreateCollection"
+  />
 </template>
 
 <script setup>
 import { computed, nextTick, ref, watch, inject } from 'vue';
 
-import Button from '../../buttons/Button.vue';
 import SidebarFooter from './SidebarFooter.vue';
 
 import ComposeAltIcon from './icons/ComposeAltIcon.vue';
@@ -245,75 +249,30 @@ import CollectionDropdown from './CollectionDropdown.vue';
 import CollectionOptionsMenu from './CollectionOptionsMenu.vue';
 import CollectionPill from './CollectionPill.vue';
 import SessionPill from './SessionPill.vue';
+import CreateCollectionModal from '../../modals/CreateCollectionModal.vue';
 
 const context = inject('videodb-chat-context');
 const currentPage = computed(() => context?.navState?.currentPage || 'default');
 
-const props = defineProps({
-  sessions: {
-    type: Array,
-    required: true,
-  },
-  collections: {
-    type: Array,
-    required: true,
-  },
-  agents: {
-    type: Array,
-    required: true,
-  },
-  status: {
-    type: String,
-    default: 'active',
-  },
-  newSessionButtonStatus: {
-    type: String,
-    default: 'active',
-  },
-  config: {
-    type: Object,
-    required: true,
-  },
-  selectedCollection: {
-    type: String,
-    default: 'default',
-  },
-  selectedSession: {
-    type: String,
-    default: '',
-  },
-  addDummySession: {
-    type: Boolean,
-    default: false,
-  },
-  showSelectedCollection: {
-    type: Boolean,
-    default: false,
-  },
-  initialExploreAgentsOpen: {
-    type: Boolean,
-    default: true,
-  },
-  initialSessionsOpen: {
-    type: Boolean,
-    default: true,
-  },
-  sidebarSections: {
-    type: Array,
-    default: () => ['collections', 'agents', 'sessions'],
-    validator: (value) => {
-      return value.every((item) => ['collections', 'agents', 'sessions'].includes(item));
-    },
-  },
-  onMakePublic: {
-    type: Function,
-    required: true,
-  },
-  fetchCollectionVideos: {
-    type: Function,
-    required: true,
-  },
-});
+const config = computed(() => context?.sidebarConfig || {});
+const collections = computed(() => context?.collections?.value || []);
+const sessions = computed(() => context?.sessions?.value || []);
+const status = computed(() =>
+  context?.configStatus?.value !== null && context?.isSetupComplete?.value ? 'active' : 'inactive'
+);
+const conversationCount = computed(() => Object.keys(context?.conversations?.value || {}).length);
+const newSessionButtonStatus = computed(() =>
+  conversationCount.value === 0 && !context?.showCollectionView?.value ? 'inactive' : 'active'
+);
+const selectedSession = computed(() => context?.sessionId?.value);
+const selectedCollection = computed(() => context?.collectionId?.value);
+const addDummySession = computed(() => conversationCount.value === 0);
+const showSelectedCollection = computed(
+  () => conversationCount.value === 0 && !context?.showCollectionView?.value
+);
+const initialExploreAgentsOpen = computed(() => !context?.isFreshUser?.value);
+const initialSessionsOpen = computed(() => !context?.isFreshUser?.value);
+const sidebarSections = ['collections', 'agents', 'sessions'];
 
 const MAX_VISIBLE_COLLECTIONS = 4;
 
@@ -324,7 +283,6 @@ const isExploreAgentsFocused = ref(false);
 const exploreAgentsTimeout = ref(null);
 const userClickedSessions = ref(false);
 const userClickedExploreAgents = ref(false);
-const userClickedCollections = ref(false);
 const isMobile = ref(window?.innerWidth < 1024);
 const isOpen = ref(false);
 const showSeeMoreDropdown = ref(false);
@@ -338,55 +296,34 @@ const editingSessionId = ref(null);
 const editingCollectionId = ref(null);
 const collectionPillRefs = ref({});
 const floatingHeaderRef = ref(null);
+const showCreateCollectionModal = ref(false);
 
-const visibleSections = computed(() => {
-  return props.sidebarSections;
-});
+const visibleSections = computed(() => sidebarSections);
 
 const visibleCollections = computed(() => {
+  const list = collections.value;
   // If we have more than MAX_VISIBLE_COLLECTIONS, show first 3 and maintain the 4th spot for selected
-  if (props.collections.length > MAX_VISIBLE_COLLECTIONS) {
+  if (list.length > MAX_VISIBLE_COLLECTIONS) {
     if (visibleCollectionIds.value.length === 0) {
       // Initialize with first 4 collections
-      visibleCollectionIds.value = props.collections
-        .slice(0, MAX_VISIBLE_COLLECTIONS)
-        .map((c) => c.id);
+      visibleCollectionIds.value = list.slice(0, MAX_VISIBLE_COLLECTIONS).map((c) => c.id);
     }
 
     // Get collections by the tracked IDs
-    return visibleCollectionIds.value
-      .map((id) => props.collections.find((c) => c.id === id))
-      .filter(Boolean);
+    return visibleCollectionIds.value.map((id) => list.find((c) => c.id === id)).filter(Boolean);
   }
 
-  return props.collections.slice(0, MAX_VISIBLE_COLLECTIONS);
+  return list.slice(0, MAX_VISIBLE_COLLECTIONS);
 });
 
 const hiddenCollections = computed(() => {
-  if (props.collections.length <= MAX_VISIBLE_COLLECTIONS) {
+  const list = collections.value;
+  if (list.length <= MAX_VISIBLE_COLLECTIONS) {
     return [];
   }
 
-  return props.collections.filter(
-    (collection) => !visibleCollectionIds.value.includes(collection.id)
-  );
+  return list.filter((collection) => !visibleCollectionIds.value.includes(collection.id));
 });
-
-const emit = defineEmits([
-  'create-new-session',
-  'session-click',
-  'delete-session',
-  'collection-click',
-  'agent-click',
-  'create-collection',
-  'delete-collection',
-  'navigate-to-assets',
-  'navigate-to-agents',
-  'see-more-collections',
-  'rename-collection',
-  'update-session-name',
-  'update-collection-name',
-]);
 
 const closeSidebar = () => {
   if (isMobile.value) {
@@ -422,8 +359,8 @@ const triggerExploreAgentsFocusAnimation = () => {
 };
 
 const computedSelectedCollection = computed(() => {
-  if (props.selectedCollection !== 'default') {
-    return props.selectedCollection;
+  if (selectedCollection.value !== 'default') {
+    return selectedCollection.value;
   }
   return null;
 });
@@ -433,8 +370,21 @@ const toggleSeeMoreDropdown = () => {
   showCollectionOptions.value = false;
 };
 
+const openCreateCollectionModal = () => {
+  showCreateCollectionModal.value = true;
+};
+
+const handleCreateCollection = async (newCollection) => {
+  showCreateCollectionModal.value = false;
+  try {
+    await context?.createCollection(newCollection.name, newCollection.description || ' ');
+  } catch (error) {
+    console.error('Error creating collection:', error?.message || error);
+  }
+};
+
 const handleCollectionClick = (collectionId) => {
-  emit('collection-click', collectionId);
+  context?.handleCollectionClick(collectionId);
   closeSidebar();
 };
 
@@ -453,7 +403,7 @@ const handleCollectionFromSeeMore = (collectionId) => {
     visibleCollectionIds.value.push(collectionId);
   }
 
-  emit('collection-click', collectionId);
+  context?.handleCollectionClick(collectionId);
   closeSidebar();
 };
 
@@ -468,7 +418,7 @@ const handleStartEditingCollection = (collection) => {
 };
 
 const handleSaveEditingCollection = ({ collectionId, name }) => {
-  emit('update-collection-name', { collectionId, name });
+  context?.handleUpdateCollectionName({ collectionId, name });
   editingCollectionId.value = null;
 };
 
@@ -489,7 +439,7 @@ const handleDeleteCollectionFromOptions = (collection) => {
 };
 
 const handleDeleteCollection = (collection) => {
-  emit('delete-collection', collection);
+  context?.promptDeleteCollection(collection);
 
   const index = visibleCollectionIds.value.indexOf(collection.id);
   if (index !== -1) {
@@ -510,7 +460,7 @@ const handleSidebarClick = () => {
 };
 
 const handleSessionClick = (sessionId) => {
-  emit('session-click', sessionId);
+  context?.handleSessionClick(sessionId);
   closeSidebar();
 };
 
@@ -519,7 +469,7 @@ const handleStartEditing = (session) => {
 };
 
 const handleSaveEditing = ({ sessionId, name }) => {
-  emit('update-session-name', { sessionId, name });
+  context?.handleUpdateSessionName({ sessionId, name });
   editingSessionId.value = null;
 };
 
@@ -528,12 +478,12 @@ const handleCancelEditing = () => {
 };
 
 const handleDeleteSession = (sessionId) => {
-  emit('delete-session', sessionId);
+  context?.showDeleteSessionDialog(sessionId);
   closeSidebar();
 };
 
 watch(
-  () => props.initialSessionsOpen,
+  initialSessionsOpen,
   (newValue) => {
     if (!userClickedSessions.value) {
       showSessions.value = newValue;
@@ -543,7 +493,7 @@ watch(
 );
 
 watch(
-  () => props.initialExploreAgentsOpen,
+  initialExploreAgentsOpen,
   (newValue) => {
     if (!userClickedExploreAgents.value) {
       showExploreAgents.value = newValue;
@@ -560,7 +510,7 @@ watch(showExploreAgents, (newValue) => {
 
 // Initialize visible collections when collections change
 watch(
-  () => props.collections,
+  () => collections.value,
   (newCollections) => {
     if (newCollections.length > 0 && visibleCollectionIds.value.length === 0) {
       visibleCollectionIds.value = newCollections
