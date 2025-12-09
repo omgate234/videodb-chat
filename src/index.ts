@@ -1,5 +1,6 @@
 import type { App } from "vue";
 import ChatInterface from "./components/chat/ChatInterface.vue";
+import ChatInterfaceV2 from "./components/chat/ChatInterfaceV2.vue";
 import DefaultScreen from "./components/chat/elements/DefaultScreen.vue";
 import ChatMessageContainer from "./components/chat/ChatMessageContainer.vue";
 import Sidebar from "./components/chat/elements/Sidebar.vue";
@@ -18,6 +19,7 @@ function install(app: App) {
 
 export {
   ChatInterface,
+  ChatInterfaceV2,
   DefaultScreen,
   ChatMessageContainer,
   Sidebar,

@@ -34,6 +34,7 @@
     "dev-types": "vue-tsc  --noEmit -p tsconfig.app.json --watch",
     "build": "npm run build-lib && npm run build-types",
     "build-lib": "vite build",
+    "build-watch": "vite build --watch",
     "build-types": "vue-tsc --emitDeclarationOnly --declaration -p tsconfig.app.json",
     "lint": "eslint 'src/**/*.{ts,vue}'",
     "test": "vitest",

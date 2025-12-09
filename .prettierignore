@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+types
+*.d.ts
+
+# Package files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Config files
+.github
+*.config.js
+*.config.ts
+
+# Misc
+.DS_Store
+*.log
+coverage

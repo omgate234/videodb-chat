@@ -1,6 +1,6 @@
 import { ref, reactive } from "vue";
 
-export function useChatInterface() {
+export function useChatInterface(initialPage = "default", initialParams = null) {
   const messageHandlers = {};
   const chatInput = ref("");
   const chatAttachments = reactive([]);
@@ -10,6 +10,11 @@ export function useChatInterface() {
     show: false,
     type: null,
     content: null,
+  });
+
+  const navState = reactive({
+    currentPage: initialPage,
+    activeParams: initialParams,
   });
 
   const registerMessageHandler = (contentType, handler) => {
@@ -36,6 +41,33 @@ export function useChatInterface() {
     canvasState.content = null;
   };
 
+  const actions = {
+    goToDefault: () => {
+      navState.currentPage = "default";
+      navState.activeParams = null;
+    },
+
+    goToChat: (sessionId) => {
+      navState.currentPage = "chat";
+      navState.activeParams = sessionId ? { sessionId } : null;
+    },
+
+    goToCollection: (collectionId) => {
+      navState.currentPage = "collection";
+      navState.activeParams = { id: collectionId };
+    },
+
+    goToAssets: () => {
+      navState.currentPage = "assets";
+      navState.activeParams = null;
+    },
+
+    goToAgents: () => {
+      navState.currentPage = "agents";
+      navState.activeParams = null;
+    },
+  };
+
   return {
     chatInput,
     chatAttachments,
@@ -47,5 +79,7 @@ export function useChatInterface() {
     canvasState,
     openCanvas,
     closeCanvas,
+    navState,
+    actions,
   };
 }
