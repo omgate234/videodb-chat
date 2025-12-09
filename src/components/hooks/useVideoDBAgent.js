@@ -782,11 +782,7 @@ export function useVideoDBAgent(config) {
     uploadMedia,
     generateImageUrl,
     generateAudioUrl,
-<<<<<<< HEAD
-    callApi,
-=======
     makeSessionPublic,
     renameSession,
->>>>>>> origin/feat/session-options-handling
   };
 }
