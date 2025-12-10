@@ -10,8 +10,9 @@
       :class="[
         'vdb-c-flex vdb-c-h-[36px] vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-6 vdb-c-truncate vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200',
         {
-          'vdb-c-bg-[#FFE9D3]': isActive || shouldShowHoverState,
-          'hover:vdb-c-bg-[#FFE9D3]': !isActive,
+          'vdb-c-bg-[#FFE9D3]': isActive,
+          'hover:vdb-c-bg-[#EFEFEF]': !isActive,
+          'vdb-c-bg-[#EFEFEF] vdb-c-text-black': shouldShowHoverState,
         },
       ]"
     >
@@ -38,8 +39,9 @@
           <span
             class="vdb-c-inline-block vdb-c-w-full vdb-c-truncate vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5"
             :class="{
-              'vdb-c-text-[#821F0C]': isActive || (!isActive && shouldShowHoverState),
+              'vdb-c-text-[#821F0C]': isActive,
               'vdb-c-text-vdb-darkishgrey': !isActive && !shouldShowHoverState,
+              'vdb-c-text-black': shouldShowHoverState,
             }"
             @dblclick.stop="handleStartEditing"
             title="Double-click to rename"
