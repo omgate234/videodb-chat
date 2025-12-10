@@ -144,6 +144,9 @@ const props = defineProps({
   },
 });
 
+const selectedSessionId = ref(props.sessionId || null);
+const selectedCollectionId = ref(props.collectionId || null);
+
 const emit = defineEmits([]);
 const sidebarRef = ref(null);
 const chatInputRef = ref(null);
@@ -273,6 +276,8 @@ watch(
 watch(
   () => props.sessionId,
   (newSessionId) => {
+    selectedSessionId.value = newSessionId || null;
+
     if (navState.currentPage === 'chat') {
       if (!newSessionId) {
         // If sessionId becomes empty, go to default
@@ -287,6 +292,8 @@ watch(
 watch(
   () => props.collectionId,
   (newCollectionId) => {
+    selectedCollectionId.value = newCollectionId || null;
+
     if (navState.currentPage === 'collection') {
       if (!newCollectionId) {
         actions.goToDefault();
@@ -300,10 +307,16 @@ watch(
 watch(
   () => navState.activeParams,
   (newParams) => {
+    if (navState.currentPage === 'chat') {
+      selectedSessionId.value = newParams?.sessionId || null;
+    }
+
     if (navState.currentPage === 'collection' && newParams?.id) {
       collectionId.value = newParams.id;
+      selectedCollectionId.value = newParams.id;
     } else if (navState.currentPage !== 'collection') {
       collectionId.value = 'default';
+      selectedCollectionId.value = 'default';
     }
   },
   { deep: true }
@@ -484,11 +497,13 @@ const handleCreateNewSession = () => {
 };
 
 const handleSessionClick = (sessionId) => {
+  selectedSessionId.value = sessionId || null;
   showCollectionView.value = false;
   actions.goToChat(sessionId);
 };
 
 const handleCollectionClick = (_collectionId) => {
+  selectedCollectionId.value = _collectionId || null;
   actions.goToCollection(_collectionId);
 };
 
@@ -685,6 +700,8 @@ const chatContext = {
   activeVideoData,
   activeAudioData,
   activeImageData,
+  selectedSessionId,
+  selectedCollectionId,
   deleteSession,
   generateImageUrl,
   generateAudioUrl,
@@ -712,6 +729,8 @@ const chatContext = {
   showCollectionView,
   isSetupComplete,
   isFreshUser,
+  selectedSessionId,
+  selectedCollectionId,
   sidebarConfig: props.sidebarConfig,
 };
 

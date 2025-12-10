@@ -186,18 +186,6 @@
               >
             </div>
             <div v-if="status !== 'inactive' && showSessions" class="vdb-c-overflow-y-auto">
-              <transition name="fade" mode="out-in">
-                <button
-                  v-if="addDummySession"
-                  class="vdb-c-flex vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-6 vdb-c-truncate vdb-c-rounded-10 vdb-c-bg-[#FFE9D3] vdb-c-px-10 vdb-c-py-8 vdb-c-text-left"
-                >
-                  <span
-                    class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-                  >
-                    (new chat)
-                  </span>
-                </button>
-              </transition>
               <transition-group name="fade" tag="div">
                 <SessionPill
                   v-for="session in sessions"
@@ -242,14 +230,13 @@ import SidebarFooter from './SidebarFooter.vue';
 import ComposeAltIcon from './icons/ComposeAltIcon.vue';
 import LibraryIcon from './icons/LibraryIcon.vue';
 import AgentsIcon from './icons/AgentsIcon.vue';
-import HoveredAddIcon from './icons/HoveredAddIcon.vue';
 import AddIcon from './icons/AddIcon.vue';
 import MoreHorizontalIcon from './icons/MoreHorizontalIcon.vue';
 import CollectionDropdown from './CollectionDropdown.vue';
 import CollectionOptionsMenu from './CollectionOptionsMenu.vue';
 import CollectionPill from './CollectionPill.vue';
 import SessionPill from './SessionPill.vue';
-import CreateCollectionModal from '../../modals/CreateCollectionModal.vue';
+import CreateCollectionModal from './CreateCollectionModal.vue';
 
 const context = inject('videodb-chat-context');
 const currentPage = computed(() => context?.navState?.currentPage || 'default');
@@ -264,9 +251,12 @@ const conversationCount = computed(() => Object.keys(context?.conversations?.val
 const newSessionButtonStatus = computed(() =>
   conversationCount.value === 0 && !context?.showCollectionView?.value ? 'inactive' : 'active'
 );
-const selectedSession = computed(() => context?.sessionId?.value);
-const selectedCollection = computed(() => context?.collectionId?.value);
-const addDummySession = computed(() => conversationCount.value === 0);
+const selectedSession = computed(
+  () => context?.selectedSessionId?.value ?? context?.sessionId?.value
+);
+const selectedCollection = computed(
+  () => context?.selectedCollectionId?.value ?? context?.collectionId?.value
+);
 const showSelectedCollection = computed(
   () => conversationCount.value === 0 && !context?.showCollectionView?.value
 );
@@ -384,6 +374,11 @@ const handleCreateCollection = async (newCollection) => {
 };
 
 const handleCollectionClick = (collectionId) => {
+  // Keep the shared selection refs in sync when user picks a collection.
+  if (context?.selectedCollectionId) {
+    context.selectedCollectionId.value = collectionId || null;
+  }
+
   context?.handleCollectionClick(collectionId);
   closeSidebar();
 };
@@ -460,7 +455,13 @@ const handleSidebarClick = () => {
 };
 
 const handleSessionClick = (sessionId) => {
+  // Keep the shared selection refs in sync when user picks a session.
+  if (context?.selectedSessionId) {
+    context.selectedSessionId.value = sessionId || null;
+  }
+
   context?.handleSessionClick(sessionId);
+  context?.loadSession(sessionId);
   closeSidebar();
 };
 
