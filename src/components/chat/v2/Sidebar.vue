@@ -40,16 +40,13 @@
             context.handleNavigateToAssets();
             closeSidebar();
           "
-          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3]"
+          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-text-vdb-darkishgrey vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-text-orange-900"
           :class="{
             'vdb-c-bg-[#FFE9D3]': currentPage === 'assets',
           }"
         >
-          <LibraryIcon stroke-color="#1E1E1E" />
-          <span
-            class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-            >Asset Library</span
-          >
+          <LibraryIcon />
+          <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Asset Library</span>
         </button>
 
         <button
@@ -57,16 +54,13 @@
             context.handleNavigateToAgents();
             closeSidebar();
           "
-          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3]"
+          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-text-vdb-darkishgrey vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-text-orange-900"
           :class="{
             'vdb-c-bg-[#FFE9D3]': currentPage === 'agents',
           }"
         >
-          <AgentsIcon stroke-color="#1E1E1E" />
-          <span
-            class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-            >Agents</span
-          >
+          <AgentsIcon />
+          <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Agents</span>
         </button>
       </div>
     </div>
