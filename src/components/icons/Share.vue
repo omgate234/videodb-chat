@@ -16,19 +16,15 @@
   </svg>
 </template>
 
-<script>
-import { defineProps } from "vue";
-export default {
-  name: "Share",
-};
+<script setup>
 defineProps({
   className: {
     type: String,
-    default: "",
+    default: '',
   },
   fill: {
     type: String,
-    default: "#FFF5EC",
+    default: '#FFF5EC',
   },
 });
 </script>

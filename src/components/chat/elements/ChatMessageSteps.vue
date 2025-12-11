@@ -23,22 +23,14 @@
         v-if="isExpanded"
         class="vdb-c-shadow-sm vdb-c-overflow-hidden vdb-c-rounded-md vdb-c-bg-white"
       >
-        <div
-          class="vdb-c-flex vdb-c-flex-col vdb-c-gap-12 vdb-c-overflow-y-auto"
-        >
+        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-12 vdb-c-overflow-y-auto">
           <div
             v-for="(step, index) in displaySteps"
             :key="index"
             class="vdb-c-flex vdb-c-items-center vdb-c-gap-8"
           >
-            <span
-              class="vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center"
-            >
-              <span
-                v-if="index !== displaySteps.length - 1"
-                class="vdb-c-text-[#D9D9D9]"
-                >|</span
-              >
+            <span class="vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center">
+              <span v-if="index !== displaySteps.length - 1" class="vdb-c-text-[#D9D9D9]">|</span>
               <div
                 v-else
                 class="vdb-c-block vdb-c-h-1/2 vdb-c-w-10 vdb-c-rounded-full"
@@ -53,21 +45,16 @@
             </span>
             <span
               class="vdb-c-flex-grow"
-              :class="{
-                'vdb-c-font-semibold vdb-c-text-[#0075FF]':
-                  status !== 'success' && index === displaySteps.length - 1,
-                'vdb-c-font-semibold vdb-c-text-green':
-                  status === 'success' && index === displaySteps.length - 1,
-                'vdb-c-font-medium vdb-c-text-kilvish-800': !(
-                  status === 'success' && index === displaySteps.length - 1
-                ),
-              }"
-              v-html="
-                step.replace(
-                  /@(\w+)/g,
-                  '<span class=\'vdb-c-text-orange-500\'>@$1</span>',
-                )
+              :class="
+                status !== 'success' && status !== 'progress' && index === displaySteps.length - 1
+                  ? 'vdb-c-font-semibold vdb-c-text-[#0075FF]'
+                  : status === 'success' &&
+                      index === displaySteps.length - 1 &&
+                      has_text_content !== -1
+                    ? 'vdb-c-font-semibold vdb-c-text-green'
+                    : 'vdb-c-font-medium vdb-c-text-kilvish-800'
               "
+              v-html="step.replace(/@(\w+)/g, '<span class=\'vdb-c-text-orange-500\'>@$1</span>')"
             >
             </span>
           </div>
@@ -78,17 +65,21 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import ChevronDown from "../../icons/ChevronDown.vue";
+import { ref, computed, watch } from 'vue';
+import ChevronDown from '../../icons/ChevronDown.vue';
 
 const props = defineProps({
+  has_text_content: {
+    type: Number,
+    default: -1,
+  },
   steps: {
     type: Array,
     default: () => [],
   },
   status: {
     type: String,
-    default: "progress",
+    default: 'progress',
   },
   expanded: {
     type: Boolean,
@@ -104,7 +95,7 @@ watch(
     if (!newValue) {
       isExpanded.value = false;
     }
-  },
+  }
 );
 
 const toggleExpand = () => {
@@ -113,10 +104,10 @@ const toggleExpand = () => {
 
 const displaySteps = computed(() => {
   if (props.steps.length === 0) {
-    return ["Thinking"];
+    return ['Thinking'];
   }
-  if (props.status === "success") {
-    return [...props.steps, "Final cut ready!"];
+  if (props.status === 'success' && props.has_text_content !== -1) {
+    return [...props.steps, 'Final cut ready!'];
   }
   return props.steps;
 });

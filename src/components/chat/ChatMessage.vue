@@ -9,10 +9,7 @@
     ]"
   >
     <div class="message-width">
-      <div
-        v-if="isUser"
-        class="vdb-c-w-full vdb-c-transform vdb-c-transition-all"
-      >
+      <div v-if="isUser" class="vdb-c-w-full vdb-c-transform vdb-c-transition-all">
         <image-handler
           v-if="message.content.find((c) => c.type === 'image')"
           :content="message.content.find((c) => c.type === 'image')"
@@ -32,6 +29,11 @@
         <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-8">
           <div class="vdb-c-py-14">
             <ChatMessageSteps
+              :has_text_content="
+                Array.isArray(message?.content)
+                  ? message?.content?.findIndex((c) => c.type === 'text')
+                  : -1
+              "
               :steps="message.actions"
               :status="finalStatus"
               :expanded="isLastConv && message.status !== 'success'"
@@ -62,12 +64,12 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import TextResponse from "../message-handlers/TextResponse.vue";
-import ImageHandler from "../message-handlers/ImageHandler.vue";
-import ChatMessageSteps from "./elements/ChatMessageSteps.vue";
+import { computed } from 'vue';
+import TextResponse from '../message-handlers/TextResponse.vue';
+import ImageHandler from '../message-handlers/ImageHandler.vue';
+import ChatMessageSteps from './elements/ChatMessageSteps.vue';
 
-import { useVideoDBChat } from "../../context.js";
+import { useVideoDBChat } from '../../context.js';
 
 const props = defineProps({
   message: {
@@ -104,7 +106,7 @@ const props = defineProps({
   },
   searchTerm: {
     type: String,
-    default: "",
+    default: '',
   },
   isLastConv: {
     type: Boolean,
@@ -126,17 +128,15 @@ const props = defineProps({
 
 const { messageHandlers } = useVideoDBChat();
 
-const isUser = computed(() => props.message.msg_type === "input");
-const isAssistant = computed(() => props.message.msg_type === "output");
-const isSystem = computed(() => props.message.msg_type === "system");
+const isUser = computed(() => props.message.msg_type === 'input');
+const isAssistant = computed(() => props.message.msg_type === 'output');
+const isSystem = computed(() => props.message.msg_type === 'system');
 
 const finalStatus = computed(() => {
-  if (props.message.status === "error") {
-    return "error";
+  if (props.message.status === 'error') {
+    return 'error';
   }
-  const assistantContent = props.message?.content?.find(
-    (c) => c.agent_name === "assistant",
-  );
+  const assistantContent = props.message?.content?.find((c) => c.agent_name === 'assistant');
   return assistantContent?.status || props.message.status;
 });
 </script>

@@ -1,5 +1,4 @@
 import io from "socket.io-client";
-import { v4 as uuidv4 } from "uuid";
 import { computed, onBeforeMount, reactive, ref, toRefs, watch } from "vue";
 
 const fetchData = async (rootUrl, endpoint) => {
@@ -221,7 +220,6 @@ export function useVideoDBAgent(config) {
       Promise.all([
         fetchCollections().then((res) => {
           const defaultCollection = res.data[0];
-          defaultCollection.name = "VideoDB Default Collection";
           activeCollectionData.value = defaultCollection;
           session.collectionId = defaultCollection.id;
           collections.value = [defaultCollection, ...res.data.slice(1)];
@@ -320,7 +318,7 @@ export function useVideoDBAgent(config) {
   const loadSession = (sessionId) => {
     let fetchPastMessages = true;
     if (!sessionId) {
-      sessionId = uuidv4();
+      sessionId = crypto.randomUUID();
       fetchPastMessages = false;
     }
     if (debug) console.log("debug :videodb-chat session loading", sessionId);
@@ -447,7 +445,6 @@ export function useVideoDBAgent(config) {
       const res = await fetchCollections();
       if (res.status === "success") {
         const defaultCollection = res.data[0];
-        defaultCollection.name = "VideoDB Default Collection";
         collections.value = [defaultCollection, ...res.data.slice(1)];
 
         if (!collections.value.find((c) => c.id === session.collectionId)) {

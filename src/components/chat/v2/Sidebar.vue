@@ -1,6 +1,10 @@
 <template>
-  <div class="vdb-c-relative vdb-c-overflow-auto">
-    <div ref="floatingHeaderRef" class="vdb-c-sticky vdb-c-top-0 vdb-c-z-10 vdb-c-bg-white">
+  <div
+    ref="sidebarRef"
+    id="sidebar-container"
+    class="vdb-c-border-r-1 vdb-c-border-r-solid vdb-c-relative vdb-c-overflow-auto vdb-c-border-r vdb-c-border-r-[#E5E7EB] vdb-c-pl-6 vdb-c-pr-16"
+  >
+    <div class="vdb-c-sticky vdb-c-top-0 vdb-c-z-10 vdb-c-bg-white">
       <div class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-px-10 vdb-c-pt-20">
         <div class="vdb-c-cursor-pointer">
           <component
@@ -16,27 +20,17 @@
       </div>
 
       <!-- Action Panel -->
-      <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-1 vdb-c-px-6">
+      <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-1">
         <button
-          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
-          :class="{
-            'vdb-c-pointer-events-none vdb-c-bg-[#b9b9b9]': newSessionButtonStatus !== 'active',
-            'vdb-c-bg-vdb-darkorange hover:vdb-c-bg-vdb-darkorange':
-              newSessionButtonStatus === 'active',
-          }"
+          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-bg-black vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-pam disabled:vdb-c-bg-[#B9B9B9]"
+          :disabled="newSessionButtonDisabled"
           @click="
             context.handleCreateNewSession();
             closeSidebar();
           "
         >
-          <ComposeAltIcon
-            :stroke-color="newSessionButtonStatus === 'active' ? '#FFFFFF' : '#FFFFFF'"
-          />
-          <span
-            class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5"
-            :class="{
-              'vdb-c-text-white': true,
-            }"
+          <ComposeAltIcon :stroke-color="'white'" />
+          <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-white"
             >New chat</span
           >
         </button>
@@ -207,23 +201,23 @@
         </template>
       </div>
     </div>
+    <SidebarFooter
+      :width="sidebarWidth"
+      :active="footerActive"
+      :user="config.footerConfig?.user"
+      :buttons="config.footerConfig?.buttons || []"
+      @profile-click="handleProfileClick"
+    />
+    <CreateCollectionModal
+      :showDialog="showCreateCollectionModal"
+      @cancel="showCreateCollectionModal = false"
+      @create="handleCreateCollection"
+    />
   </div>
-  <SidebarFooter
-    :width="floatingHeaderRef?.clientWidth || 260"
-    :active="footerActive"
-    :user="config.footerConfig?.user"
-    :buttons="config.footerConfig?.buttons || []"
-    @profile-click="handleProfileClick"
-  />
-  <CreateCollectionModal
-    :showDialog="showCreateCollectionModal"
-    @cancel="showCreateCollectionModal = false"
-    @create="handleCreateCollection"
-  />
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch, inject } from 'vue';
+import { computed, nextTick, ref, watch, inject, onMounted, onBeforeUnmount } from 'vue';
 
 import SidebarFooter from './SidebarFooter.vue';
 
@@ -247,9 +241,8 @@ const sessions = computed(() => context?.sessions?.value || []);
 const status = computed(() =>
   context?.configStatus?.value !== null && context?.isSetupComplete?.value ? 'active' : 'inactive'
 );
-const conversationCount = computed(() => Object.keys(context?.conversations?.value || {}).length);
-const newSessionButtonStatus = computed(() =>
-  conversationCount.value === 0 && !context?.showCollectionView?.value ? 'inactive' : 'active'
+const newSessionButtonDisabled = computed(() =>
+  currentPage.value === 'collection' ? true : false
 );
 const selectedSession = computed(
   () => context?.selectedSessionId?.value ?? context?.sessionId?.value
@@ -257,9 +250,7 @@ const selectedSession = computed(
 const selectedCollection = computed(
   () => context?.selectedCollectionId?.value ?? context?.collectionId?.value
 );
-const showSelectedCollection = computed(
-  () => conversationCount.value === 0 && !context?.showCollectionView?.value
-);
+const showSelectedCollection = computed(() => Boolean(computedSelectedCollection.value));
 const initialExploreAgentsOpen = computed(() => !context?.isFreshUser?.value);
 const initialSessionsOpen = computed(() => !context?.isFreshUser?.value);
 const sidebarSections = ['collections', 'agents', 'sessions'];
@@ -285,8 +276,10 @@ const footerActive = ref(false);
 const editingSessionId = ref(null);
 const editingCollectionId = ref(null);
 const collectionPillRefs = ref({});
-const floatingHeaderRef = ref(null);
+const sidebarRef = ref(null);
 const showCreateCollectionModal = ref(false);
+const sidebarWidth = ref(260);
+let resizeObserver = null;
 
 const visibleSections = computed(() => sidebarSections);
 
@@ -355,6 +348,9 @@ const computedSelectedCollection = computed(() => {
   return null;
 });
 
+const updateSidebarWidth = () => {
+  sidebarWidth.value = sidebarRef.value?.clientWidth || 260;
+};
 const toggleSeeMoreDropdown = () => {
   showSeeMoreDropdown.value = !showSeeMoreDropdown.value;
   showCollectionOptions.value = false;
@@ -374,11 +370,6 @@ const handleCreateCollection = async (newCollection) => {
 };
 
 const handleCollectionClick = (collectionId) => {
-  // Keep the shared selection refs in sync when user picks a collection.
-  if (context?.selectedCollectionId) {
-    context.selectedCollectionId.value = collectionId || null;
-  }
-
   context?.handleCollectionClick(collectionId);
   closeSidebar();
 };
@@ -455,13 +446,7 @@ const handleSidebarClick = () => {
 };
 
 const handleSessionClick = (sessionId) => {
-  // Keep the shared selection refs in sync when user picks a session.
-  if (context?.selectedSessionId) {
-    context.selectedSessionId.value = sessionId || null;
-  }
-
   context?.handleSessionClick(sessionId);
-  context?.loadSession(sessionId);
   closeSidebar();
 };
 
@@ -521,6 +506,25 @@ watch(
   },
   { immediate: true }
 );
+
+onMounted(() => {
+  updateSidebarWidth();
+
+  resizeObserver = new ResizeObserver(updateSidebarWidth);
+  if (sidebarRef.value) {
+    resizeObserver.observe(sidebarRef.value);
+  }
+
+  window.addEventListener('resize', updateSidebarWidth);
+});
+
+onBeforeUnmount(() => {
+  if (resizeObserver && sidebarRef.value) {
+    resizeObserver.unobserve(sidebarRef.value);
+  }
+  resizeObserver?.disconnect?.();
+  window.removeEventListener('resize', updateSidebarWidth);
+});
 
 defineExpose({
   toggleExploreAgents,

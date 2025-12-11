@@ -1,7 +1,7 @@
 <template>
-  <div class="vdb-c-flex vdb-c-h-full vdb-c-w-full">
-    <Sidebar v-if="sidebarConfig.enabled" ref="sidebarRef" />
-    <PageDisplay />
+  <div class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-overflow-hidden">
+    <Sidebar v-if="sidebarConfig.enabled" ref="sidebarRef" class="vdb-c-flex-shrink-0" />
+    <PageDisplay class="vdb-c-flex-1 vdb-c-overflow-auto" />
   </div>
 </template>
 <script setup>
@@ -11,7 +11,6 @@ import { useChatInterface } from '../hooks/useChatInterface';
 import { useVideoDBAgent } from '../hooks/useVideoDBAgent';
 
 import Sidebar from './v2/Sidebar.vue';
-import UploadVideoQueryCard from './elements/UploadVideoQueryCard.vue';
 import PageDisplay from './PageDisplay.vue';
 
 import ChatSearchResults from '../message-handlers/ChatSearchResults.vue';
@@ -19,12 +18,8 @@ import ChatVideo from '../message-handlers/ChatVideo.vue';
 import ChatVideos from '../message-handlers/ChatVideos.vue';
 import ImageHandler from '../message-handlers/ImageHandler.vue';
 import TextResponse from '../message-handlers/TextResponse.vue';
-
-import CheckIcon from '../icons/Check.vue';
-import CollectionIcon from '../icons/Collection.vue';
+import SuggestedQuestionsContent from '../message-handlers/SuggestedQuestionsContent.vue';
 import DeleteIcon from '../icons/Delete3.vue';
-import QueryIcon from '../icons/Query.vue';
-import SearchIcon from '../icons/SearchIcon.vue';
 
 const props = defineProps({
   currentPage: {
@@ -144,13 +139,8 @@ const props = defineProps({
   },
 });
 
-const selectedSessionId = ref(props.sessionId || null);
-const selectedCollectionId = ref(props.collectionId || null);
-
 const emit = defineEmits([]);
-const sidebarRef = ref(null);
 const chatInputRef = ref(null);
-const uploadNotificationsRef = ref(null);
 const notificationCenterRef = ref(null);
 
 const showCollectionView = ref(false);
@@ -235,6 +225,25 @@ const {
   actions,
 } = useChatInterface(getInitialPage(), getInitialParams());
 
+const selectedSessionId = computed(() =>
+  navState.currentPage === 'chat' ? navState.activeParams?.sessionId || null : null
+);
+
+const selectedCollectionId = computed(() => {
+  if (navState.currentPage === 'collection' && navState.activeParams?.id) {
+    return navState.activeParams.id;
+  }
+
+  if (navState.currentPage === 'chat' && selectedSessionId.value) {
+    const activeSession = sessions.value?.find((s) => s.session_id === selectedSessionId.value);
+    if (activeSession?.collection_id) {
+      return activeSession.collection_id;
+    }
+  }
+
+  return collectionId.value || 'default';
+});
+
 watch(
   () => ({ currentPage: navState.currentPage, activeParams: navState.activeParams }),
   (newNavState) => {
@@ -276,8 +285,6 @@ watch(
 watch(
   () => props.sessionId,
   (newSessionId) => {
-    selectedSessionId.value = newSessionId || null;
-
     if (navState.currentPage === 'chat') {
       if (!newSessionId) {
         // If sessionId becomes empty, go to default
@@ -292,8 +299,6 @@ watch(
 watch(
   () => props.collectionId,
   (newCollectionId) => {
-    selectedCollectionId.value = newCollectionId || null;
-
     if (navState.currentPage === 'collection') {
       if (!newCollectionId) {
         actions.goToDefault();
@@ -308,18 +313,32 @@ watch(
   () => navState.activeParams,
   (newParams) => {
     if (navState.currentPage === 'chat') {
-      selectedSessionId.value = newParams?.sessionId || null;
+      if (newParams?.sessionId) {
+        if (sessionId.value !== newParams.sessionId) {
+          sessionId.value = newParams.sessionId;
+          loadSession(newParams.sessionId);
+        }
+      } else {
+        sessionId.value = null;
+      }
     }
 
     if (navState.currentPage === 'collection' && newParams?.id) {
       collectionId.value = newParams.id;
-      selectedCollectionId.value = newParams.id;
-    } else if (navState.currentPage !== 'collection') {
+    } else if (navState.currentPage !== 'collection' && navState.currentPage !== 'chat') {
       collectionId.value = 'default';
-      selectedCollectionId.value = 'default';
     }
   },
-  { deep: true }
+  { deep: true, immediate: true }
+);
+
+watch(
+  () => navState.currentPage,
+  (newPage) => {
+    if (newPage !== 'chat' && sessionId.value) {
+      sessionId.value = null;
+    }
+  }
 );
 
 watch(chatAttachments, async (newAttachments) => {
@@ -362,6 +381,7 @@ registerMessageHandler('videos', ChatVideos);
 registerMessageHandler('text', TextResponse);
 registerMessageHandler('search_results', ChatSearchResults);
 registerMessageHandler('image', ImageHandler);
+registerMessageHandler('suggested_questions', SuggestedQuestionsContent);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
@@ -377,7 +397,6 @@ if (Array.isArray(props.customCanvasHandlers)) {
   }
 }
 
-const chatWindowRef = ref(null);
 const headerRef = ref(null);
 const headerHeight = ref(0);
 const headerObserver = ref(null);
@@ -447,10 +466,8 @@ watch(
 );
 
 const scrollToLatestUserMessage = () => {
-  const chatWindow = chatWindowRef.value;
-  if (!chatWindow) return;
   nextTick(() => {
-    const userMessages = chatWindow.querySelectorAll('[data-msg-type="input"]');
+    const userMessages = document.querySelectorAll('[data-msg-type="input"]');
 
     if (userMessages.length > 0) {
       const latestUserMessage = userMessages[userMessages.length - 1];
@@ -465,6 +482,7 @@ const scrollToLatestUserMessage = () => {
 };
 
 watch(chatLoading, (val) => {
+  console.log('chatLoading', val);
   if (val) {
     scrollToLatestUserMessage();
   }
@@ -489,7 +507,12 @@ const createNewSession = () => {
   videoId.value = null;
   showCollectionView.value = false;
   taggedAgent.value = [];
-  actions.goToChat();
+  const targetCollectionId =
+    (selectedCollectionId.value && selectedCollectionId.value !== 'default'
+      ? selectedCollectionId.value
+      : collections.value?.[0]?.id) || 'default';
+
+  actions.goToCollection(targetCollectionId);
 };
 
 const handleCreateNewSession = () => {
@@ -497,13 +520,11 @@ const handleCreateNewSession = () => {
 };
 
 const handleSessionClick = (sessionId) => {
-  selectedSessionId.value = sessionId || null;
   showCollectionView.value = false;
   actions.goToChat(sessionId);
 };
 
 const handleCollectionClick = (_collectionId) => {
-  selectedCollectionId.value = _collectionId || null;
   actions.goToCollection(_collectionId);
 };
 
@@ -513,6 +534,18 @@ const handleNavigateToAssets = () => {
 
 const handleNavigateToAgents = () => {
   actions.goToAgents();
+};
+
+const handleTagAgent = (agent, addToInput = true) => {
+  const agentName = agent.name || agent;
+  if (agentName) {
+    taggedAgent.value.push(agentName);
+    if (addToInput) {
+      chatInput.value =
+        chatInput.value.trim() === '' ? `@${agentName}` : `${chatInput.value} @${agentName}`;
+      chatInputRef.value.focus();
+    }
+  }
 };
 
 const handleAgentClick = (agent) => {
@@ -613,8 +646,17 @@ const promptDeleteCollection = async (collection) => {
 };
 
 const handleAddMessage = async ({ text = '', images = [] }) => {
+  const isCollectionPage = navState.currentPage === 'collection';
+  const activeCollectionId =
+    selectedCollectionId?.value || navState.activeParams?.id || collectionId.value || null;
+
   if (!sessionId.value) {
+    if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
+      collectionId.value = activeCollectionId;
+    }
     loadSession();
+  } else if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
+    collectionId.value = activeCollectionId;
   }
 
   const content = [];
@@ -638,6 +680,13 @@ const handleAddMessage = async ({ text = '', images = [] }) => {
     agents: taggedAgent.value,
   });
   taggedAgent.value = [];
+
+  if (isCollectionPage && actions?.goToChat && sessionId.value) {
+    actions.goToChat(sessionId.value);
+  }
+
+  console.log('Message added', content);
+  scrollToLatestUserMessage();
 };
 
 onUnmounted(() => {
@@ -732,6 +781,10 @@ const chatContext = {
   selectedSessionId,
   selectedCollectionId,
   sidebarConfig: props.sidebarConfig,
+  showChatInput: props.showChatInput,
+  chatInputPlaceholder: props.chatInputPlaceholder,
+  handleAddMessage,
+  handleTagAgent,
 };
 
 provide('videodb-chat', chatContext);

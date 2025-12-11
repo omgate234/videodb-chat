@@ -1,8 +1,9 @@
 <template>
   <div
     ref="footerRef"
+    :style="{ width: `${width}px` }"
     :class="[
-      `vdb-c-fixed vdb-c-bottom-0 vdb-c-left-0 vdb-c-w-[${width}px] vdb-c-bg-vdb-lightgrey vdb-c-p-6 hover:vdb-c-bg-[#EFEFEF]`,
+      'vdb-c-fixed vdb-c-bottom-0 vdb-c-left-0 vdb-c-flex vdb-c-h-[73px] vdb-c-items-center vdb-c-justify-center vdb-c-bg-vdb-lightgrey vdb-c-p-6 hover:vdb-c-bg-[#EFEFEF]',
       { '!vdb-c-bg-[#FFE9D3]': active },
     ]"
   >

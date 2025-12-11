@@ -10,17 +10,17 @@
 </template>
 
 <script setup>
-import { inject, computed } from "vue";
-import DefaultPage from "../pages/default/index.vue";
-import ChatPage from "../pages/chat/index.vue";
-import CollectionPage from "../pages/collection/index.vue";
-import AssetsPage from "../pages/assets/index.vue";
-import AgentsPage from "../pages/agents/index.vue";
+import { inject, computed } from 'vue';
+import DefaultPage from '../pages/default/index.vue';
+import ChatPage from '../pages/chat/index.vue';
+import CollectionPage from '../pages/collection/index.vue';
+import AssetsPage from '../pages/assets/index.vue';
+import AgentsPage from '../pages/agents/index.vue';
 
-const context = inject("videodb-chat-context");
+const context = inject('videodb-chat-context');
 const navState = computed(() => {
   if (!context?.navState) {
-    return { currentPage: "default", activeParams: null };
+    return { currentPage: 'default', activeParams: null };
   }
   return context.navState;
 });

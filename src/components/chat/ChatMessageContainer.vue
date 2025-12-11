@@ -26,8 +26,8 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import ChatMessage from "./ChatMessage.vue";
+import { computed } from 'vue';
+import ChatMessage from './ChatMessage.vue';
 
 const props = defineProps({
   conversation: {
@@ -52,7 +52,7 @@ const props = defineProps({
   },
   searchTerm: {
     type: String,
-    default: "",
+    default: '',
   },
   openCanvas: {
     type: Function,
@@ -70,12 +70,12 @@ const props = defineProps({
 
 const messages = computed(() => {
   const vals = Object.values(props.conversation);
-  return vals.filter((val) => val.sender !== "system");
+  return vals.filter((val) => val.sender !== 'system');
 });
 
 const messageLoading = computed(() => {
   return messages.value.some((msg) => {
-    return msg.status === "progress" || msg.loading;
+    return msg.status === 'progress' || msg.loading;
   });
 });
 </script>
@@ -106,8 +106,8 @@ const messageLoading = computed(() => {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
-    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
@@ -127,7 +127,7 @@ const messageLoading = computed(() => {
 .markdown-body h6:hover .anchor .octicon-link:before {
   width: 16px;
   height: 16px;
-  content: " ";
+  content: ' ';
   display: inline-block;
   background-color: currentColor;
   -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' aria-hidden='true'><path fill-rule='evenodd' d='M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z'></path></svg>");
@@ -241,26 +241,26 @@ const messageLoading = computed(() => {
   line-height: inherit;
 }
 
-.markdown-body [type="button"],
-.markdown-body [type="reset"],
-.markdown-body [type="submit"] {
+.markdown-body [type='button'],
+.markdown-body [type='reset'],
+.markdown-body [type='submit'] {
   -webkit-appearance: button;
   appearance: button;
 }
 
-.markdown-body [type="checkbox"],
-.markdown-body [type="radio"] {
+.markdown-body [type='checkbox'],
+.markdown-body [type='radio'] {
   box-sizing: border-box;
   padding: 0;
 }
 
-.markdown-body [type="number"]::-webkit-inner-spin-button,
-.markdown-body [type="number"]::-webkit-outer-spin-button {
+.markdown-body [type='number']::-webkit-inner-spin-button,
+.markdown-body [type='number']::-webkit-outer-spin-button {
   height: auto;
 }
 
-.markdown-body [type="search"]::-webkit-search-cancel-button,
-.markdown-body [type="search"]::-webkit-search-decoration {
+.markdown-body [type='search']::-webkit-search-cancel-button,
+.markdown-body [type='search']::-webkit-search-decoration {
   -webkit-appearance: none;
   appearance: none;
 }
@@ -287,13 +287,13 @@ const messageLoading = computed(() => {
 
 .markdown-body hr::before {
   display: table;
-  content: "";
+  content: '';
 }
 
 .markdown-body hr::after {
   display: table;
   clear: both;
-  content: "";
+  content: '';
 }
 
 .markdown-body table {
@@ -319,25 +319,25 @@ const messageLoading = computed(() => {
 }
 
 .markdown-body a:focus,
-.markdown-body [role="button"]:focus,
-.markdown-body input[type="radio"]:focus,
-.markdown-body input[type="checkbox"]:focus {
+.markdown-body [role='button']:focus,
+.markdown-body input[type='radio']:focus,
+.markdown-body input[type='checkbox']:focus {
   outline: 2px solid #0969da;
   outline-offset: -2px;
   box-shadow: none;
 }
 
 .markdown-body a:focus:not(:focus-visible),
-.markdown-body [role="button"]:focus:not(:focus-visible),
-.markdown-body input[type="radio"]:focus:not(:focus-visible),
-.markdown-body input[type="checkbox"]:focus:not(:focus-visible) {
+.markdown-body [role='button']:focus:not(:focus-visible),
+.markdown-body input[type='radio']:focus:not(:focus-visible),
+.markdown-body input[type='checkbox']:focus:not(:focus-visible) {
   outline: solid 1px transparent;
 }
 
 .markdown-body a:focus-visible,
-.markdown-body [role="button"]:focus-visible,
-.markdown-body input[type="radio"]:focus-visible,
-.markdown-body input[type="checkbox"]:focus-visible {
+.markdown-body [role='button']:focus-visible,
+.markdown-body input[type='radio']:focus-visible,
+.markdown-body input[type='checkbox']:focus-visible {
   outline: 2px solid #0969da;
   outline-offset: -2px;
   box-shadow: none;
@@ -345,10 +345,10 @@ const messageLoading = computed(() => {
 
 .markdown-body a:not([class]):focus,
 .markdown-body a:not([class]):focus-visible,
-.markdown-body input[type="radio"]:focus,
-.markdown-body input[type="radio"]:focus-visible,
-.markdown-body input[type="checkbox"]:focus,
-.markdown-body input[type="checkbox"]:focus-visible {
+.markdown-body input[type='radio']:focus,
+.markdown-body input[type='radio']:focus-visible,
+.markdown-body input[type='checkbox']:focus,
+.markdown-body input[type='checkbox']:focus-visible {
   outline-offset: 0;
 }
 
@@ -493,13 +493,13 @@ const messageLoading = computed(() => {
 
 .markdown-body::before {
   display: table;
-  content: "";
+  content: '';
 }
 
 .markdown-body::after {
   display: table;
   clear: both;
-  content: "";
+  content: '';
 }
 
 .markdown-body > *:first-child {
@@ -625,23 +625,23 @@ const messageLoading = computed(() => {
   list-style-type: none;
 }
 
-.markdown-body ol[type="a"] {
+.markdown-body ol[type='a'] {
   list-style-type: lower-alpha;
 }
 
-.markdown-body ol[type="A"] {
+.markdown-body ol[type='A'] {
   list-style-type: upper-alpha;
 }
 
-.markdown-body ol[type="i"] {
+.markdown-body ol[type='i'] {
   list-style-type: lower-roman;
 }
 
-.markdown-body ol[type="I"] {
+.markdown-body ol[type='I'] {
   list-style-type: upper-roman;
 }
 
-.markdown-body ol[type="1"] {
+.markdown-body ol[type='1'] {
   list-style-type: decimal;
 }
 
@@ -705,11 +705,11 @@ const messageLoading = computed(() => {
   background-color: transparent;
 }
 
-.markdown-body img[align="right"] {
+.markdown-body img[align='right'] {
   padding-left: 20px;
 }
 
-.markdown-body img[align="left"] {
+.markdown-body img[align='left'] {
   padding-right: 20px;
 }
 
@@ -903,11 +903,11 @@ const messageLoading = computed(() => {
 }
 
 .markdown-body [data-footnote-ref]::before {
-  content: "[";
+  content: '[';
 }
 
 .markdown-body [data-footnote-ref]::after {
-  content: "]";
+  content: ']';
 }
 
 .markdown-body .footnotes {
@@ -937,7 +937,7 @@ const messageLoading = computed(() => {
   bottom: -8px;
   left: -24px;
   pointer-events: none;
-  content: "";
+  content: '';
   border: 2px solid #0969da;
   border-radius: 6px;
 }
@@ -1073,7 +1073,7 @@ const messageLoading = computed(() => {
 .markdown-body g-emoji {
   display: inline-block;
   min-width: 1ch;
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
   font-size: 1em;
   font-style: normal !important;
   font-weight: 400;
@@ -1120,9 +1120,7 @@ const messageLoading = computed(() => {
 }
 
 .markdown-body .contains-task-list:hover .task-list-item-convert-container,
-.markdown-body
-  .contains-task-list:focus-within
-  .task-list-item-convert-container {
+.markdown-body .contains-task-list:focus-within .task-list-item-convert-container {
   display: block;
   width: auto;
   height: 24px;
