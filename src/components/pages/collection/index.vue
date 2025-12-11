@@ -3,16 +3,10 @@
     <header
       class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-end vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
     >
-      <button
-        type="button"
-        class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-8 vdb-c-bg-vdb-orange vdb-c-p-8 vdb-c-pr-12 vdb-c-text-sm vdb-c-font-medium vdb-c-text-white vdb-c-transition-colors vdb-c-duration-200 hover:vdb-c-bg-vdb-darkorange"
-        :class="['disabled:vdb-c-cursor-not-allowed disabled:vdb-c-bg-[#B9B9B9]']"
-        :disabled="uploadDisabled"
-        @click="handleUploadClick"
-      >
+      <PrimaryButton :disabled="uploadDisabled" @click="handleUploadClick">
         <UploadIcon class="vdb-c-h-16 vdb-c-w-16" :class="uploadIconClass" />
         <span>Upload</span>
-      </button>
+      </PrimaryButton>
     </header>
     <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-1 vdb-c-items-start vdb-c-justify-start">
       <h1 class="vdb-c-text-lg vdb-c-font-semibold vdb-c-text-black">Collection</h1>
@@ -41,6 +35,7 @@
 import { inject, computed } from 'vue';
 import ChatInput from '../../chat/ChatInput.vue';
 import UploadIcon from '../../chat/v2/icons/UploadIcon.vue';
+import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 
 const props = defineProps({
   context: {

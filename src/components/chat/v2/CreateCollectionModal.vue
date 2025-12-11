@@ -47,6 +47,7 @@
             placeholder="Collection name (required)"
             wrapper-class="vdb-c-h-[52px]"
             :error="isNameAtLimit"
+            :show-character-count="false"
           />
           <div
             class="vdb-c-mt-[4px] vdb-c-text-right vdb-c-text-[14px] vdb-c-leading-[14px] vdb-c-tracking-[-0.24px]"
@@ -104,7 +105,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import Input from './elements/Input.vue';
+import Input from './elements/BigInput.vue';
 import TextArea from './elements/TextArea.vue';
 
 const NAME_LIMIT = 50;

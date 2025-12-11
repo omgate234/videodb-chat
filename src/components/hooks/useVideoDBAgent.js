@@ -217,23 +217,12 @@ export function useVideoDBAgent(config) {
       val !== null &&
       Object.values(val).every((value) => value === true)
     ) {
-      Promise.all([
-        fetchCollections().then((res) => {
-          const defaultCollection = res.data[0];
-          activeCollectionData.value = defaultCollection;
-          session.collectionId = defaultCollection.id;
-          collections.value = [defaultCollection, ...res.data.slice(1)];
-        }),
-        fetchCollectionVideos(session.collectionId).then((res) => {
-          activeCollectionVideos.value = res.data;
-        }),
-        fetchCollectionAudios(session.collectionId).then((res) => {
-          activeCollectionAudios.value = res.data;
-        }),
-        fetchCollectionImages(session.collectionId).then((res) => {
-          activeCollectionImages.value = res.data;
-        }),
-      ]);
+      fetchCollections().then((res) => {
+        const defaultCollection = res.data[0];
+        activeCollectionData.value = defaultCollection;
+        session.collectionId = defaultCollection.id;
+        collections.value = [defaultCollection, ...res.data.slice(1)];
+      });
       fetchSessions().then((res) => {
         sessions.value = res.data;
       });

@@ -10,10 +10,14 @@
     </label>
 
     <div
-      class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-[12px] vdb-c-px-10 vdb-c-outline vdb-c-outline-1 vdb-c-transition-colors vdb-c-duration-200"
+      class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-rounded-[8px] vdb-c-border vdb-c-transition-colors vdb-c-duration-200"
       :class="wrapperClasses"
     >
-      <div v-if="$slots.icon" class="vdb-c-flex vdb-c-items-center" :class="iconClass">
+      <div
+        v-if="$slots.icon"
+        class="vdb-c-flex vdb-c-items-center vdb-c-pl-[16px]"
+        :class="iconClass"
+      >
         <slot name="icon" />
       </div>
 
@@ -25,7 +29,7 @@
         :placeholder="placeholder"
         :maxlength="maxlength"
         :disabled="disabled"
-        class="vdb-c-w-full vdb-c-border-none vdb-c-bg-transparent vdb-c-py-[9px] vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-outline-none vdb-c-transition-colors vdb-c-duration-200 disabled:vdb-c-cursor-not-allowed"
+        class="vdb-c-w-full vdb-c-border-none vdb-c-bg-transparent vdb-c-py-[14px] vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-outline-none vdb-c-transition-colors vdb-c-duration-200 disabled:vdb-c-cursor-not-allowed"
         :class="inputClasses"
         @input="onInput"
         @focus="isFocused = true"
@@ -104,22 +108,23 @@ const showClearButton = computed(
 const wrapperClasses = computed(() => [
   props.wrapperClass,
   // Error state
-  props.error && 'vdb-c-outline-[#E02424] vdb-c-bg-[#FDF2F2]',
+  props.error && 'vdb-c-border-[#E02424] vdb-c-bg-[#FDF2F2]',
   // Disabled state
   props.disabled &&
-    'vdb-c-cursor-not-allowed vdb-c-outline-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-opacity-60',
+    'vdb-c-cursor-not-allowed vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-opacity-60',
   // Non-error, non-disabled states
   !props.disabled &&
     !props.error && [
       isFocused.value
-        ? 'vdb-c-outline-vdb-orange vdb-c-bg-white'
+        ? 'vdb-c-border-vdb-orange vdb-c-bg-white'
         : hasValue.value
-          ? 'vdb-c-outline-[#1E1E1E] vdb-c-bg-white'
-          : 'vdb-c-outline-[#E1E1E1] vdb-c-bg-[#EFEFEF] hover:vdb-c-outline-[#E1E1E1] hover:vdb-c-bg-white',
+          ? 'vdb-c-border-[#1E1E1E] vdb-c-bg-white'
+          : 'vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] hover:vdb-c-border-[#1E1E1E] hover:vdb-c-bg-white',
     ],
 ]);
 
 const inputClasses = computed(() => [
+  props.$slots?.icon ? 'vdb-c-pl-[8px]' : 'vdb-c-pl-[16px]',
   showClearButton.value ? 'vdb-c-pr-[8px]' : 'vdb-c-pr-[16px]',
   props.error && 'vdb-c-placeholder:text-[#C81E1E] vdb-c-text-[#C81E1E]',
   props.disabled && 'vdb-c-text-[#969696]',
