@@ -16,6 +16,7 @@ import PageDisplay from './PageDisplay.vue';
 import ChatSearchResults from '../message-handlers/ChatSearchResults.vue';
 import ChatVideo from '../message-handlers/ChatVideo.vue';
 import ChatVideos from '../message-handlers/ChatVideos.vue';
+import DeepSearchContent from '../message-handlers/deepsearch/DeepSearchContent.vue';
 import ImageHandler from '../message-handlers/ImageHandler.vue';
 import TextResponse from '../message-handlers/TextResponse.vue';
 import SuggestedQuestionsContent from '../message-handlers/SuggestedQuestionsContent.vue';
@@ -382,6 +383,7 @@ watch(chatAttachments, async (newAttachments) => {
 
 registerMessageHandler('video', ChatVideo);
 registerMessageHandler('videos', ChatVideos);
+registerMessageHandler('deepsearch', DeepSearchContent);
 registerMessageHandler('text', TextResponse);
 registerMessageHandler('search_results', ChatSearchResults);
 registerMessageHandler('image', ImageHandler);
@@ -682,6 +684,31 @@ const handleAddMessage = async ({ text = '', images = [], video_id = null }) => 
   scrollToLatestUserMessage();
 };
 
+const chatAddMessage = async (messageData) => {
+  const isCollectionPage = navState.currentPage === 'collection';
+  const activeCollectionId =
+    selectedCollectionId?.value || navState.activeParams?.id || collectionId.value || null;
+
+  if (!sessionId.value) {
+    if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
+      collectionId.value = activeCollectionId;
+    }
+    loadSession();
+  } else if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
+    collectionId.value = activeCollectionId;
+  }
+
+  addMessage(messageData);
+  taggedAgent.value = [];
+
+  if (actions?.goToChat && sessionId.value) {
+    actions.goToChat(sessionId.value);
+  }
+
+  console.log('Message added via chatAddMessage', messageData);
+  scrollToLatestUserMessage();
+};
+
 onUnmounted(() => {
   if (headerObserver.value) {
     headerObserver.value.disconnect();
@@ -717,6 +744,7 @@ const chatContext = {
   conversations,
   messageHandlers,
   addMessage,
+  chatAddMessage,
   loadSession,
   activeCollectionData,
   activeCollectionVideos,

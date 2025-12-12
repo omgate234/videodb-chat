@@ -84,7 +84,7 @@
                 :conversation="conversations[key]"
                 :search-term="chatInput"
                 :call-api="callApi"
-                :add-message="handleAddMessage"
+                :add-message="chatAddMessage"
                 :is-static-page="false"
                 :is-last-conv="i === Object.keys(conversations || {}).length - 1"
                 :open-canvas="openCanvas"
@@ -176,6 +176,7 @@ const {
   activeVideoData,
   activeCollectionData,
   handleAddMessage,
+  chatAddMessage,
   handleTagAgent,
   callApi,
   sessionId: sessionIdRef,
