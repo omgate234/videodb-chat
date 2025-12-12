@@ -93,12 +93,6 @@ const isExpanded = ref(props.expanded);
 const expandedProcesses = ref(new Set());
 const lastStepsLength = ref(0);
 
-const displaySteps = computed(() => {
-  if (props.steps.length === 0) return ['Thinking..'];
-  if (props.status === 'success') return [...props.steps, 'Final cut ready!'];
-  return props.steps;
-});
-
 const activeIndex = computed(() => displaySteps.value.length - 1);
 
 // ---- timeline rail measurement ----
@@ -200,12 +194,6 @@ const toggleExpand = () => {
   isExpanded.value = !isExpanded.value;
   if (isExpanded.value) measureRail();
 };
-const toggleProcess = (i) => {
-  const next = new Set(expandedProcesses.value);
-  next.has(i) ? next.delete(i) : next.add(i);
-  expandedProcesses.value = next;
-};
-const isProcessExpanded = (i) => expandedProcesses.value.has(i);
 
 const displaySteps = computed(() => {
   if (props.steps.length === 0) {
