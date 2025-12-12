@@ -51,7 +51,8 @@
           <div ref="filterRef">
             <FilterDropdown
               :is-open="activeDropdown === 'filter'"
-              v-model="filterState"
+              :model-value="filterState"
+              @update:model-value="handleFilterUpdate"
               @toggle="toggleDropdown('filter')"
             />
           </div>
@@ -222,6 +223,10 @@ const { filteredAssets } = useAssetFilters(
   sortState,
   filterState
 );
+
+const handleFilterUpdate = (updatedFilterState) => {
+  Object.assign(filterState, updatedFilterState);
+};
 
 const handleVideoClick = (video) => {
   console.log('Video clicked:', video);

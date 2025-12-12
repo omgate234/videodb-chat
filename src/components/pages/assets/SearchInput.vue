@@ -34,11 +34,11 @@
     <ul
       ref="autocompleteContainer"
       v-if="showAutocomplete"
-      class="autocomplete-drop-shadow vdb-c-absolute vdb-c-top-full vdb-c-z-10 vdb-c-mt-8 vdb-c-max-h-[60vh] vdb-c-w-[90%] vdb-c-max-w-[400px] vdb-c-cursor-pointer vdb-c-overflow-hidden vdb-c-overflow-y-scroll vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm md:vdb-c-w-[60%]"
+      class="autocomplete-drop-shadow vdb-c-absolute vdb-c-top-full vdb-c-z-10 vdb-c-mt-8 vdb-c-max-h-[240px] vdb-c-w-full vdb-c-cursor-pointer vdb-c-overflow-hidden vdb-c-overflow-y-scroll vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
     >
       <li
         class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-10 vdb-c-overflow-x-hidden vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-10 vdb-c-py-8 vdb-c-text-sm vdb-c-text-black hover:vdb-c-bg-roy"
-        v-for="item in filteredAssets.slice(0, 5)"
+        v-for="item in filteredAssets"
         :key="item.id"
         @click="selectItem(item)"
       >

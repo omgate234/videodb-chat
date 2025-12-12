@@ -19,7 +19,7 @@
 
     <div
       v-if="isOpen"
-      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-20 vdb-c-mt-8 vdb-c-max-h-[288px] vdb-c-w-[238px] vdb-c-overflow-y-auto vdb-c-rounded-12 vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-lg vdb-c-ring-1 vdb-c-ring-black-4"
+      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-20 vdb-c-mt-8 vdb-c-max-h-[232px] vdb-c-w-[238px] vdb-c-overflow-y-auto vdb-c-rounded-12 vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-lg vdb-c-ring-1 vdb-c-ring-black-4"
     >
       <ul class="vdb-c-flex vdb-c-flex-col">
         <!-- Default Option -->

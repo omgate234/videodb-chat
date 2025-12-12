@@ -102,7 +102,7 @@ const props = defineProps({
 const emit = defineEmits(['toggle', 'update:modelValue']);
 
 const updateFilter = (key, value) => {
-  const updated = { ...props.modelValue, [key]: value };
-  emit('update:modelValue', updated);
+  props.modelValue[key] = value;
+  emit('update:modelValue', props.modelValue);
 };
 </script>
