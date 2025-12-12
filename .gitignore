@@ -11,3 +11,5 @@ packages/*/types
 *.tsbuildinfo
 
 TODO.md
+
+*.tgz

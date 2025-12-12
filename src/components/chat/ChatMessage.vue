@@ -57,6 +57,45 @@
               :add-message="addMessage"
             />
           </div>
+
+          <div
+            v-if="finalStatus === 'success'"
+            class="vdb-c-mt-2 vdb-c-flex vdb-c-items-center vdb-c-gap-12"
+          >
+            <WithPopper
+              popper-text="Not helpful"
+              tooltip-css="vdb-c-bg-[#3F3F3F] vdb-c-text-white vdb-c-rounded-full vdb-c-px-12 vdb-c-py-8"
+            >
+              <template #button>
+                <button
+                  class="vdb-c-flex vdb-c-h-28 vdb-c-w-28 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full hover:vdb-c-bg-[#EFEFEF]"
+                  @click="selectFeedback('down')"
+                >
+                  <component
+                    :is="selectedFeedback === 'down' ? ThumbsDownClicked : ThumbsDown"
+                    class="vdb-c-h-24 vdb-c-w-24 vdb-c-text-black"
+                  />
+                </button>
+              </template>
+            </WithPopper>
+
+            <WithPopper
+              popper-text="Helpful"
+              tooltip-css="vdb-c-bg-[#3F3F3F] vdb-c-text-white vdb-c-rounded-full vdb-c-px-12 vdb-c-py-8"
+            >
+              <template #button>
+                <button
+                  class="vdb-c-flex vdb-c-h-28 vdb-c-w-28 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full hover:vdb-c-bg-[#EFEFEF]"
+                  @click="selectFeedback('up')"
+                >
+                  <component
+                    :is="selectedFeedback === 'up' ? ThumbsUpClicked : ThumbsUp"
+                    class="vdb-c-h-24 vdb-c-w-24 vdb-c-text-black"
+                  />
+                </button>
+              </template>
+            </WithPopper>
+          </div>
         </div>
       </div>
     </div>
@@ -64,12 +103,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import TextResponse from '../message-handlers/TextResponse.vue';
 import ImageHandler from '../message-handlers/ImageHandler.vue';
 import ChatMessageSteps from './elements/ChatMessageSteps.vue';
 
 import { useVideoDBChat } from '../../context.js';
+import WithPopper from '../atoms/WithPopper.vue';
+import ThumbsDown from '../icons/ThumbsDown.vue';
+import ThumbsDownClicked from '../icons/ThumbsDownClicked.vue';
+import ThumbsUp from '../icons/ThumbsUp.vue';
+import ThumbsUpClicked from '../icons/ThumbsUpClicked.vue';
 
 const props = defineProps({
   message: {
@@ -126,7 +170,7 @@ const props = defineProps({
   },
 });
 
-const { messageHandlers } = useVideoDBChat();
+const { messageHandlers, updateMessageReaction } = useVideoDBChat();
 
 const isUser = computed(() => props.message.msg_type === 'input');
 const isAssistant = computed(() => props.message.msg_type === 'output');
@@ -139,6 +183,44 @@ const finalStatus = computed(() => {
   const assistantContent = props.message?.content?.find((c) => c.agent_name === 'assistant');
   return assistantContent?.status || props.message.status;
 });
+
+const ReactionMap = Object.freeze({
+  UP: 'like',
+  DOWN: 'dislike',
+  NONE: null,
+});
+
+const selectedFeedback = ref('');
+
+// initialize from message.reaction if present
+watch(
+  () => props.message?.reaction,
+  (val) => {
+    if (val === ReactionMap.UP) selectedFeedback.value = 'up';
+    else if (val === ReactionMap.DOWN) selectedFeedback.value = 'down';
+    else selectedFeedback.value = '';
+  },
+  { immediate: true }
+);
+
+const selectFeedback = async (val) => {
+  const previous = selectedFeedback.value;
+  const toggled = previous === val ? '' : val;
+  // optimistic update
+  selectedFeedback.value = toggled;
+
+  // map to API value
+  const reaction =
+    toggled === 'up' ? ReactionMap.UP : toggled === 'down' ? ReactionMap.DOWN : ReactionMap.NONE;
+
+  try {
+    await updateMessageReaction?.(props.message.msg_id, reaction);
+  } catch (e) {
+    // rollback on failure
+    selectedFeedback.value = previous;
+    console.error('Failed to update reaction:', e?.message || e);
+  }
+};
 </script>
 
 <style>

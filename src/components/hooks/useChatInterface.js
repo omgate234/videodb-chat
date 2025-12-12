@@ -2,6 +2,7 @@ import { ref, reactive } from "vue";
 
 export function useChatInterface(initialPage = "default", initialParams = null) {
   const messageHandlers = {};
+  const stepActionHandlers = {};
   const chatInput = ref("");
   const chatAttachments = reactive([]);
 
@@ -23,6 +24,10 @@ export function useChatInterface(initialPage = "default", initialParams = null) 
 
   const registerCanvasHandler = (canvasType, handler) => {
     canvasHandlers[canvasType] = handler;
+  };
+
+  const registerStepActionHandler = (typeKey, renderer) => {
+    stepActionHandlers[typeKey] = renderer;
   };
 
   const setChatInput = (input) => {
@@ -81,5 +86,7 @@ export function useChatInterface(initialPage = "default", initialParams = null) 
     closeCanvas,
     navState,
     actions,
+    stepActionHandlers,
+    registerStepActionHandler,
   };
 }

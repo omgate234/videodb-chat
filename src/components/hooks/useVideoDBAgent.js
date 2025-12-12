@@ -189,6 +189,37 @@ export function useVideoDBAgent(config) {
     return res;
   };
 
+  const generateVideoStream = async (
+    collectionId,
+    videoId,
+    startTime,
+    endTime,
+  ) => {
+    const res = {};
+    try {
+      const startSec = Math.floor(Number(startTime));
+      const endSec = Math.floor(Number(endTime));
+      const params = new URLSearchParams({
+        start_time: String(startSec),
+        end_time: String(endSec),
+      });
+      const response = await fetch(
+        `${httpUrl}/videodb/collection/${collectionId}/video/${videoId}/generate_stream?${params.toString()}`,
+      );
+      const data = await response.json();
+      if (!response.ok || data?.success !== true) {
+        const message = data?.message || "Failed to generate video stream URL";
+        throw new Error(message);
+      }
+      res.status = "success";
+      res.data = data;
+    } catch (error) {
+      res.status = "error";
+      res.error = error;
+    }
+    return res;
+  };
+
   const refetchCollectionVideos = async () => {
     fetchCollectionVideos(session.collectionId).then((res) => {
       activeCollectionVideos.value = res.data;
@@ -625,6 +656,50 @@ export function useVideoDBAgent(config) {
     }
   };
 
+  const updateMessageReaction = async (msgId, reaction) => {
+    if (!session.sessionId) {
+      throw new Error("No active session.");
+    }
+    if (!msgId) {
+      throw new Error("Message ID is required.");
+    }
+
+    try {
+      const response = await fetch(
+        `${httpUrl}/session/${session.sessionId}/message/${msgId}/reaction`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reaction }),
+        },
+      );
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (e) {
+        // Some servers may return empty body on success
+      }
+
+      if (!response.ok) {
+        const message = (data && data.message) || "Failed to update reaction.";
+        throw new Error(message);
+      }
+
+      return data || { success: true };
+    } catch (error) {
+      if (debug)
+        console.error(
+          "debug :videodb-chat error updating message reaction",
+          error,
+        );
+      throw error;
+    }
+  };
+
   const addClientLoadingMessage = (convId) => {
     const messages = Object.values(conversations[convId]);
     const lastMessage = messages[messages.length - 1];
@@ -765,6 +840,7 @@ export function useVideoDBAgent(config) {
     addMessage,
     loadSession,
     deleteSession,
+    renameSession,
     updateCollection,
     createCollection,
     deleteCollection,
@@ -777,6 +853,8 @@ export function useVideoDBAgent(config) {
     generateAudioUrl,
     makeSessionPublic,
     renameSession,
-    callApi
+    callApi,
+    generateVideoStream,
+    updateMessageReaction,
   };
 }

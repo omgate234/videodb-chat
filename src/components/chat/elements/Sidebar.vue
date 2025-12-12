@@ -12,17 +12,9 @@
   >
     <div class="vdb-c-flex vdb-c-items-center vdb-c-justify-between">
       <div class="vdb-c-cursor-pointer vdb-c-text-2xl vdb-c-font-bold">
-        <component
-          v-if="config.icon"
-          :is="config.icon"
-          @click="$emit('create-new-session')"
-        />
+        <component v-if="config.icon" :is="config.icon" @click="$emit('create-new-session')" />
       </div>
-      <button
-        v-if="isMobile"
-        @click="closeSidebar"
-        class="vdb-c-text-2xl vdb-c-font-bold"
-      >
+      <button v-if="isMobile" @click="closeSidebar" class="vdb-c-text-2xl vdb-c-font-bold">
         &times;
       </button>
     </div>
@@ -30,8 +22,7 @@
       variant="primary"
       class="vdb-c-px-10 vdb-c-py-12"
       :class="{
-        'vdb-c-pointer-events-none vdb-c-opacity-20':
-          newSessionButtonStatus !== 'active',
+        'vdb-c-pointer-events-none vdb-c-opacity-20': newSessionButtonStatus !== 'active',
       }"
       @click="
         $emit('create-new-session');
@@ -40,9 +31,7 @@
     >
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-6">
         <ComposeIcon />
-        <span class="vdb-c-block vdb-c-text-sm vdb-c-font-medium"
-          >New Chat</span
-        >
+        <span class="vdb-c-block vdb-c-text-sm vdb-c-font-medium">New Chat</span>
       </div>
     </Button>
     <div
@@ -65,9 +54,7 @@
           >
             <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
               <CollectionIcon class="vdb-c-mr-8" fill="#464646" />
-              <span class="vdb-c-font-semibold vdb-c-leading-5"
-                >Collections</span
-              >
+              <span class="vdb-c-font-semibold vdb-c-leading-5">Collections</span>
             </div>
             <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-4">
               <button
@@ -98,10 +85,8 @@
                     'vdb-c-ml-24 vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-between vdb-c-truncate vdb-c-rounded-lg vdb-c-p-8 vdb-c-px-16 vdb-c-text-sm vdb-c-font-medium vdb-c-text-vdb-darkishgrey',
                     {
                       'vdb-c-bg-[#FFF5EC]':
-                        showSelectedCollection &&
-                        collection.id === computedSelectedCollection,
-                      'hover:vdb-c-bg-[#FFF5EC]':
-                        collection.id !== computedSelectedCollection,
+                        showSelectedCollection && collection.id === computedSelectedCollection,
+                      'hover:vdb-c-bg-[#FFF5EC]': collection.id !== computedSelectedCollection,
                     },
                   ]"
                 >
@@ -113,13 +98,7 @@
                     @click.stop="$emit('delete-collection', collection)"
                     class="vdb-c-transition-all vdb-c-duration-300 hover:vdb-c-scale-110"
                   >
-                    <DeleteIcon
-                      :fill="
-                        hoveredCollection === collection.id
-                          ? 'black'
-                          : '#CCCCCC'
-                      "
-                    />
+                    <DeleteIcon :fill="hoveredCollection === collection.id ? 'black' : '#CCCCCC'" />
                   </span>
                 </div>
               </div>
@@ -143,9 +122,7 @@
           >
             <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
               <AgentIcon class="vdb-c-mr-8" />
-              <span class="vdb-c-font-semibold vdb-c-leading-5"
-                >Explore Agents</span
-              >
+              <span class="vdb-c-font-semibold vdb-c-leading-5">Explore Agents</span>
             </div>
             <div class="vdb-c-p-4">
               <ChevronDown
@@ -233,10 +210,8 @@
                 :class="[
                   'vdb-c-ml-24 vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-between vdb-c-truncate vdb-c-rounded-lg vdb-c-p-8 vdb-c-px-12 vdb-c-text-sm vdb-c-font-medium vdb-c-text-vdb-darkishgrey',
                   {
-                    'vdb-c-bg-[#FFF5EC]':
-                      session.session_id === selectedSession,
-                    'hover:vdb-c-bg-[#FFF5EC]':
-                      session.session_id !== selectedSession,
+                    'vdb-c-bg-[#FFF5EC]': session.session_id === selectedSession,
+                    'hover:vdb-c-bg-[#FFF5EC]': session.session_id !== selectedSession,
                   },
                 ]"
               >
@@ -263,17 +238,17 @@
                         session.name ||
                         session?.metadata?.name ||
                         new Date(session.created_at * 1000)
-                          .toLocaleString("en-US", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
+                          .toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
                             hour12: false,
                           })
-                          .replace(/\//g, ".")
-                          .replace(",", " -")
+                          .replace(/\//g, '.')
+                          .replace(',', ' -')
                       }}
                     </span>
                   </template>
@@ -292,8 +267,7 @@
                       '--popper-theme-border-width': '1px',
                       '--popper-theme-border-radius': '12px',
                       '--popper-theme-padding': '6px 0px',
-                      '--popper-theme-box-shadow':
-                        '0 6px 18px rgba(0, 0, 0, 0.08)',
+                      '--popper-theme-box-shadow': '0 6px 18px rgba(0, 0, 0, 0.08)',
                     }"
                   >
                     <template #content>
@@ -302,8 +276,7 @@
                         :class="[
                           'vdb-c-mb-6 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy',
                           {
-                            'vdb-c-text-[#53B745]':
-                              copiedSessionId === session.session_id,
+                            'vdb-c-text-[#53B745]': copiedSessionId === session.session_id,
                           },
                         ]"
                       >
@@ -313,9 +286,7 @@
                         </template>
                         <template v-else>
                           <CopyIcon />
-                          <span class="vdb-c-text-sm vdb-c-text-black">
-                            Copy ID
-                          </span>
+                          <span class="vdb-c-text-sm vdb-c-text-black"> Copy ID </span>
                         </template>
                       </button>
                       <button
@@ -323,22 +294,16 @@
                         class="vdb-c-mb-[2.5px] vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy"
                       >
                         <EditIcon />
-                        <span class="vdb-c-text-sm vdb-c-text-black"
-                          >Rename</span
-                        >
+                        <span class="vdb-c-text-sm vdb-c-text-black">Rename</span>
                       </button>
                       <button
                         @click.stop="shareSession(session)"
                         class="vdb-c-mb-[2.5px] vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-lg vdb-c-px-12 vdb-c-py-8 hover:vdb-c-bg-roy"
                       >
                         <ShareIcon />
-                        <span class="vdb-c-text-sm vdb-c-text-black"
-                          >Share</span
-                        >
+                        <span class="vdb-c-text-sm vdb-c-text-black">Share</span>
                       </button>
-                      <div
-                        class="vdb-c-my-2 vdb-c-mb-[2.5px] vdb-c-h-px vdb-c-bg-[#EDEDED]"
-                      ></div>
+                      <div class="vdb-c-my-2 vdb-c-mb-[2.5px] vdb-c-h-px vdb-c-bg-[#EDEDED]"></div>
                       <button
                         @click.stop="
                           $emit('delete-session', session.session_id);
@@ -386,9 +351,7 @@
           'vdb-c-pointer-events-none vdb-c-opacity-20': status === 'inactive',
         }"
       >
-        <div
-          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-gap-6"
-        >
+        <div class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-gap-6">
           <a
             :href="config.primaryLink.href"
             :target="config.primaryLink.target || '_blank'"
@@ -417,23 +380,23 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from 'vue';
 
-import Button from "../../buttons/Button.vue";
+import Button from '../../buttons/Button.vue';
 
-import AgentIcon from "../../icons/Agent.vue";
-import ChatIcon from "../../icons/Chat.vue";
-import ChevronDown from "../../icons/ChevronDown.vue";
-import CollectionIcon from "../../icons/Collection.vue";
-import ComposeIcon from "../../icons/Compose.vue";
-import DeleteIcon from "../../icons/Delete.vue";
-import PlusIcon from "../../icons/Plus.vue";
-import CopyIcon from "../../icons/CopyIcon.vue";
-import CheckIcon from "../../icons/Check.vue";
-import DotVertical from "../../icons/DotVertical.vue";
-import EditIcon from "../../icons/Edit.vue";
-import ShareIcon from "../../icons/Share.vue";
-import Popper from "vue3-popper";
+import AgentIcon from '../../icons/Agent.vue';
+import ChatIcon from '../../icons/Chat.vue';
+import ChevronDown from '../../icons/ChevronDown.vue';
+import CollectionIcon from '../../icons/Collection.vue';
+import ComposeIcon from '../../icons/Compose.vue';
+import DeleteIcon from '../../icons/Delete.vue';
+import PlusIcon from '../../icons/Plus.vue';
+import CopyIcon from '../../icons/CopyIcon.vue';
+import CheckIcon from '../../icons/Check.vue';
+import DotVertical from '../../icons/DotVertical.vue';
+import EditIcon from '../../icons/Edit.vue';
+import ShareIcon from '../../icons/Share.vue';
+import Popper from 'vue3-popper';
 
 const props = defineProps({
   sessions: {
@@ -450,11 +413,11 @@ const props = defineProps({
   },
   status: {
     type: String,
-    default: "active",
+    default: 'active',
   },
   newSessionButtonStatus: {
     type: String,
-    default: "active",
+    default: 'active',
   },
   config: {
     type: Object,
@@ -462,11 +425,11 @@ const props = defineProps({
   },
   selectedCollection: {
     type: String,
-    default: "default",
+    default: 'default',
   },
   selectedSession: {
     type: String,
-    default: "",
+    default: '',
   },
   addDummySession: {
     type: Boolean,
@@ -486,11 +449,9 @@ const props = defineProps({
   },
   sidebarSections: {
     type: Array,
-    default: () => ["collections", "agents", "sessions"],
+    default: () => ['collections', 'agents', 'sessions'],
     validator: (value) => {
-      return value.every((item) =>
-        ["collections", "agents", "sessions"].includes(item),
-      );
+      return value.every((item) => ['collections', 'agents', 'sessions'].includes(item));
     },
   },
 });
@@ -508,7 +469,7 @@ const isMobile = ref(window?.innerWidth < 1024);
 const isOpen = ref(false);
 const hoveredCollection = ref(null);
 const editingSessionId = ref(null);
-const editingName = ref("");
+const editingName = ref('');
 const copiedSessionId = ref(null);
 const copyFeedbackTimeout = ref(null);
 
@@ -517,15 +478,15 @@ const visibleSections = computed(() => {
 });
 
 const emit = defineEmits([
-  "create-new-session",
-  "session-click",
-  "delete-session",
-  "collection-click",
-  "agent-click",
-  "create-collection",
-  "delete-collection",
-  "update-session-name",
-  "share-session",
+  'create-new-session',
+  'session-click',
+  'delete-session',
+  'collection-click',
+  'agent-click',
+  'create-collection',
+  'delete-collection',
+  'update-session-name',
+  'share-session',
 ]);
 
 const closeSidebar = () => {
@@ -536,8 +497,7 @@ const closeSidebar = () => {
 
 const toggleExploreAgents = (value) => {
   userClickedExploreAgents.value = true;
-  showExploreAgents.value =
-    value !== undefined ? value : !showExploreAgents.value;
+  showExploreAgents.value = value !== undefined ? value : !showExploreAgents.value;
 };
 
 const toggleSessions = (value) => {
@@ -563,7 +523,7 @@ const triggerExploreAgentsFocusAnimation = () => {
 };
 
 const computedSelectedCollection = computed(() => {
-  if (props.selectedCollection !== "default") {
+  if (props.selectedCollection !== 'default') {
     return props.selectedCollection;
   }
   return props.collections.length > 0 ? props.collections[0].id : null;
@@ -576,7 +536,7 @@ watch(
       showSessions.value = newValue;
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 watch(
@@ -586,7 +546,7 @@ watch(
       showExploreAgents.value = newValue;
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 watch(showExploreAgents, (newValue) => {
@@ -604,7 +564,7 @@ defineExpose({
 
 const startEditing = (session) => {
   editingSessionId.value = session.session_id;
-  editingName.value = session.name || "";
+  editingName.value = session.name || '';
   nextTick(() => {
     const input = document.getElementById(`edit-input-${session.session_id}`);
     if (input) {
@@ -616,13 +576,13 @@ const startEditing = (session) => {
 
 const cancelEditing = () => {
   editingSessionId.value = null;
-  editingName.value = "";
+  editingName.value = '';
 };
 
 const saveSessionName = (session) => {
   if (editingSessionId.value !== session.session_id) return;
-  const trimmed = (editingName.value || "").trim();
-  emit("update-session-name", { sessionId: session.session_id, name: trimmed });
+  const trimmed = (editingName.value || '').trim();
+  emit('update-session-name', { sessionId: session.session_id, name: trimmed });
   cancelEditing();
 };
 
@@ -638,12 +598,12 @@ const copySessionId = async (sessionId) => {
       copyFeedbackTimeout.value = null;
     }, 2000);
   } catch (error) {
-    console.error("Failed to copy session ID", error);
+    console.error('Failed to copy session ID', error);
   }
 };
 
 const shareSession = (session) => {
-  emit("share-session", session);
+  emit('share-session', session);
 };
 </script>
 
