@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import ChevronDown from '../../icons/ChevronDown.vue';
 
 const props = defineProps({
@@ -92,6 +92,16 @@ const props = defineProps({
 const isExpanded = ref(props.expanded);
 const expandedProcesses = ref(new Set());
 const lastStepsLength = ref(0);
+
+const displaySteps = computed(() => {
+  if (props.steps.length === 0) {
+    return ['Thinking'];
+  }
+  if (props.status === 'success' && props.has_text_content !== -1) {
+    return [...props.steps, 'Final cut ready!'];
+  }
+  return props.steps;
+});
 
 const activeIndex = computed(() => displaySteps.value.length - 1);
 
@@ -194,16 +204,6 @@ const toggleExpand = () => {
   isExpanded.value = !isExpanded.value;
   if (isExpanded.value) measureRail();
 };
-
-const displaySteps = computed(() => {
-  if (props.steps.length === 0) {
-    return ['Thinking'];
-  }
-  if (props.status === 'success' && props.has_text_content !== -1) {
-    return [...props.steps, 'Final cut ready!'];
-  }
-  return props.steps;
-});
 </script>
 
 <style scoped>
