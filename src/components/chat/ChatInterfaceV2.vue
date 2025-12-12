@@ -168,16 +168,20 @@ const {
   uploadMedia,
   createCollection,
   deleteCollection,
+  fetchCollectionVideos,
   refetchCollectionVideos,
   activeCollectionAudios,
   activeAudioData,
+  fetchCollectionAudios,
   refetchCollectionAudios,
   activeCollectionImages,
   activeImageData,
+  fetchCollectionImages,
   refetchCollectionImages,
   deleteVideo,
   deleteAudio,
   deleteImage,
+  getVideoDownloadUrl,
   renameSession,
   makeSessionPublic,
   updateCollection,
@@ -573,18 +577,6 @@ const handleUpdateSessionName = async ({ sessionId: _sessionId, name }) => {
   }
 };
 
-const fetchCollectionVideos = async (collectionId) => {
-  try {
-    const result = await callApi(`/videodb/collection/${collectionId}/video`, {
-      method: 'GET',
-    });
-    return { data: result.data || result || [] };
-  } catch (error) {
-    console.error('Error fetching collection videos:', error);
-    return { data: [] };
-  }
-};
-
 const handleUpdateCollectionName = async ({ collectionId, name }) => {
   const collectionIndex = collections.value.findIndex((c) => c.id === collectionId);
   const previousName = collectionIndex !== -1 ? collections.value[collectionIndex].name : null;
@@ -645,7 +637,7 @@ const promptDeleteCollection = async (collection) => {
   }
 };
 
-const handleAddMessage = async ({ text = '', images = [] }) => {
+const handleAddMessage = async ({ text = '', images = [], video_id = null }) => {
   const isCollectionPage = navState.currentPage === 'collection';
   const activeCollectionId =
     selectedCollectionId?.value || navState.activeParams?.id || collectionId.value || null;
@@ -678,14 +670,15 @@ const handleAddMessage = async ({ text = '', images = [] }) => {
   addMessage({
     content: content,
     agents: taggedAgent.value,
+    video_id: video_id,
   });
   taggedAgent.value = [];
 
-  if (isCollectionPage && actions?.goToChat && sessionId.value) {
+  if (actions?.goToChat && sessionId.value) {
     actions.goToChat(sessionId.value);
   }
 
-  console.log('Message added', content);
+  console.log('Message added', content, video_id);
   scrollToLatestUserMessage();
 };
 
@@ -762,9 +755,12 @@ const chatContext = {
   deleteVideo,
   deleteAudio,
   deleteImage,
+  getVideoDownloadUrl,
   callApi,
   makeSessionPublic,
   fetchCollectionVideos,
+  fetchCollectionAudios,
+  fetchCollectionImages,
   handleCreateNewSession,
   handleSessionClick,
   handleCollectionClick,

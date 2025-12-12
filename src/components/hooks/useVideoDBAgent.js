@@ -113,6 +113,9 @@ export function useVideoDBAgent(config) {
   const fetchCollectionVideos = async (collectionId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/video`);
 
+  const getVideoDownloadUrl = async (collectionId, videoId) =>
+    fetchData(httpUrl, `/videodb/collection/${collectionId}/video/${videoId}/download`);
+
   const fetchCollectionAudio = async (collectionId, audioId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/audio/${audioId}`);
   const fetchCollectionAudios = async (collectionId) =>
@@ -748,12 +751,15 @@ export function useVideoDBAgent(config) {
     activeCollectionData,
     activeCollectionVideos,
     activeVideoData,
+    fetchCollectionVideos,
     refetchCollectionVideos,
     activeCollectionAudios,
     activeAudioData,
+    fetchCollectionAudios,
     refetchCollectionAudios,
     activeCollectionImages,
     activeImageData,
+    fetchCollectionImages,
     refetchCollectionImages,
     conversations,
     addMessage,
@@ -765,6 +771,7 @@ export function useVideoDBAgent(config) {
     deleteVideo,
     deleteAudio,
     deleteImage,
+    getVideoDownloadUrl,
     uploadMedia,
     generateImageUrl,
     generateAudioUrl,
