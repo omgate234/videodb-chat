@@ -18,76 +18,68 @@
 
     <div
       v-if="isOpen"
-      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-20 vdb-c-mt-8 vdb-c-w-256 vdb-c-rounded-12 vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-lg vdb-c-ring-1 vdb-c-ring-black-4"
+      @click.stop
+      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-50 vdb-c-mt-8 vdb-c-flex vdb-c-w-[250px] vdb-c-cursor-default vdb-c-flex-col vdb-c-gap-[8px] vdb-c-rounded-[12px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-[0px_0px_4px_0px_rgba(0,0,0,0.04),0px_0px_1px_0px_rgba(0,0,0,0.6)]"
     >
-      <div class="vdb-c-flex vdb-c-flex-col">
-        <!-- Alphabetical -->
-        <div class="vdb-c-flex vdb-c-flex-col">
-          <p
-            class="vdb-c-mb-4 vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-          >
-            Alphabetical
-          </p>
-          <RadioButton
-            class="ml-12"
+      <!-- Alphabetical -->
+      <div class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]">
+        <TitleWithTooltip title="Alphabetical" tooltip-text="" />
+        <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
+          <RadioInput
             name="alphabetical"
-            label="A to Z"
             value="az"
-            :current-value="modelValue.alphabetical"
-            @change="(val) => updateCategory('alphabetical', val)"
+            label="A to Z"
+            :model-value="modelValue.alphabetical"
+            @update:model-value="(val) => updateCategory('alphabetical', val)"
           />
-          <RadioButton
+          <RadioInput
             name="alphabetical"
-            label="Z to A"
             value="za"
-            :current-value="modelValue.alphabetical"
-            @change="(val) => updateCategory('alphabetical', val)"
+            label="Z to A"
+            :model-value="modelValue.alphabetical"
+            @update:model-value="(val) => updateCategory('alphabetical', val)"
           />
         </div>
+      </div>
 
-        <!-- Duration -->
-        <div class="vdb-c-mt-8 vdb-c-flex vdb-c-flex-col">
-          <p
-            class="vdb-c-mb-4 vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-          >
-            Duration
-          </p>
-          <RadioButton
+      <!-- Duration -->
+      <div class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]">
+        <TitleWithTooltip title="Duration" tooltip-text="" />
+        <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
+          <RadioInput
             name="duration"
-            label="Short to Long"
             value="short_long"
-            :current-value="modelValue.duration"
-            @change="(val) => updateCategory('duration', val)"
+            label="Short to Long"
+            :model-value="modelValue.duration"
+            @update:model-value="(val) => updateCategory('duration', val)"
           />
-          <RadioButton
+          <RadioInput
             name="duration"
-            label="Long to Short"
             value="long_short"
-            :current-value="modelValue.duration"
-            @change="(val) => updateCategory('duration', val)"
+            label="Long to Short"
+            :model-value="modelValue.duration"
+            @update:model-value="(val) => updateCategory('duration', val)"
           />
         </div>
+      </div>
 
-        <!-- File size -->
-        <div class="vdb-c-mt-8 vdb-c-flex vdb-c-flex-col">
-          <p
-            class="vdb-c-mb-4 vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-          >
-            File size
-          </p>
-          <RadioButton
+      <!-- File size -->
+      <div class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]">
+        <TitleWithTooltip title="File size" tooltip-text="" />
+        <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
+          <RadioInput
             name="file_size"
-            label="Small to Large"
             value="small_large"
-            :current-value="modelValue.fileSize"
-            @change="(val) => updateCategory('fileSize', val)"
+            label="Small to Large"
+            :model-value="modelValue.fileSize"
+            @update:model-value="(val) => updateCategory('fileSize', val)"
           />
-          <RadioButton
+          <RadioInput
             name="file_size"
-            label="Large to Small"
             value="large_small"
-            :current-value="modelValue.fileSize"
-            @change="(val) => updateCategory('fileSize', val)"
+            label="Large to Small"
+            :model-value="modelValue.fileSize"
+            @update:model-value="(val) => updateCategory('fileSize', val)"
           />
         </div>
       </div>
@@ -96,8 +88,9 @@
 </template>
 
 <script setup>
-import { h } from 'vue';
 import ChevronDownIcon from '../../chat/v2/icons/ChevronDownIcon.vue';
+import TitleWithTooltip from '../collection/components/TitleWithTooltip.vue';
+import RadioInput from '../../chat/v2/elements/RadioInput.vue';
 
 const props = defineProps({
   isOpen: Boolean,
@@ -115,72 +108,4 @@ const updateCategory = (category, value) => {
     [category]: value,
   });
 };
-
-// Internal Helper
-const RadioButton = (props, { emit }) => {
-  return h(
-    'label',
-    {
-      class:
-        'vdb-c-flex vdb-c-cursor-pointer vdb-c-ml-12 vdb-c-items-center vdb-c-gap-8 vdb-c-px-10 vdb-c-py-6',
-    },
-    [
-      h('input', {
-        type: 'radio',
-        name: props.name,
-        value: props.value,
-        checked: props.currentValue === props.value,
-        onChange: () => emit('change', props.value),
-        class:
-          'vdb-c-h-16 vdb-c-w-16 vdb-c-text-orange focus:vdb-c-ring-orange vdb-c-accent-orange',
-      }),
-      h(
-        'span',
-        {
-          class:
-            'vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-none vdb-c-tracking-[0.065px] vdb-c-text-vdb-darkishgrey',
-        },
-        props.label
-      ),
-    ]
-  );
-};
 </script>
-
-<style scoped>
-/* Custom radio button styling to match Figma design */
-:deep(input[type='radio']) {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 50%;
-  outline: none;
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;
-}
-
-:deep(input[type='radio']:checked) {
-  border-color: #ec5b16;
-  background-color: #ffffff;
-}
-
-:deep(input[type='radio']:checked::before) {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #ec5b16;
-}
-
-:deep(input[type='radio']:focus) {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(236, 91, 22, 0.2);
-}
-</style>

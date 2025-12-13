@@ -14,9 +14,6 @@
             class="vdb-c-h-24"
           />
         </div>
-        <button v-if="isMobile" @click="closeSidebar" class="vdb-c-text-2xl vdb-c-font-bold">
-          &times;
-        </button>
       </div>
 
       <!-- Action Panel -->
@@ -24,10 +21,7 @@
         <button
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-bg-black vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-pam disabled:vdb-c-bg-[#B9B9B9]"
           :disabled="newSessionButtonDisabled"
-          @click="
-            context.handleCreateNewSession();
-            closeSidebar();
-          "
+          @click="context.handleCreateNewSession()"
         >
           <ComposeAltIcon :stroke-color="'white'" />
           <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-white"
@@ -36,10 +30,7 @@
         </button>
 
         <button
-          @click="
-            context.handleNavigateToAssets();
-            closeSidebar();
-          "
+          @click="context.handleNavigateToAssets()"
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-text-vdb-darkishgrey vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-text-orange-900"
           :class="{
             'vdb-c-bg-[#FFE9D3]': currentPage === 'assets',
@@ -50,10 +41,7 @@
         </button>
 
         <button
-          @click="
-            context.handleNavigateToAgents();
-            closeSidebar();
-          "
+          @click="context.handleNavigateToAgents()"
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-text-vdb-darkishgrey vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-text-orange-900"
           :class="{
             'vdb-c-bg-[#FFE9D3]': currentPage === 'agents',
@@ -66,15 +54,7 @@
     </div>
     <div
       @click="handleSidebarClick"
-      :class="[
-        'vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-gap-24 vdb-c-bg-white vdb-c-text-black',
-        {
-          'vdb-c-w-[260px]': !isMobile,
-          'vdb-c-fixed vdb-c-left-0 vdb-c-top-0 vdb-c-z-50 vdb-c-h-full vdb-c-w-4/5 vdb-c-transform vdb-c-transition-transform vdb-c-duration-300 vdb-c-ease-in-out md:vdb-c-w-2/5':
-            isMobile,
-          'vdb-c--translate-x-full': isMobile && !isOpen,
-        },
-      ]"
+      class="vdb-c-flex vdb-c-h-full vdb-c-w-[260px] vdb-c-flex-col vdb-c-gap-24 vdb-c-bg-white vdb-c-text-black"
     >
       <div
         class="vdb-c-mt-24 vdb-c-flex vdb-c-flex-grow vdb-c-flex-col vdb-c-gap-24 vdb-c-px-6"
@@ -258,8 +238,6 @@ const isExploreAgentsFocused = ref(false);
 const exploreAgentsTimeout = ref(null);
 const userClickedSessions = ref(false);
 const userClickedExploreAgents = ref(false);
-const isMobile = ref(window?.innerWidth < 1024);
-const isOpen = ref(false);
 const showSeeMoreDropdown = ref(false);
 const showCollectionOptions = ref(false);
 const selectedCollectionForOptions = ref(null);
@@ -302,12 +280,6 @@ const hiddenCollections = computed(() => {
   return list.filter((collection) => !visibleCollectionIds.value.includes(collection.id));
 });
 
-const closeSidebar = () => {
-  if (isMobile.value) {
-    isOpen.value = false;
-  }
-};
-
 const toggleExploreAgents = (value) => {
   userClickedExploreAgents.value = true;
   showExploreAgents.value = value !== undefined ? value : !showExploreAgents.value;
@@ -316,10 +288,6 @@ const toggleExploreAgents = (value) => {
 const toggleSessions = (value) => {
   userClickedSessions.value = true;
   showSessions.value = value !== undefined ? value : !showSessions.value;
-};
-
-const toggleSidebar = () => {
-  isOpen.value = !isOpen.value;
 };
 
 const triggerExploreAgentsFocusAnimation = () => {
@@ -365,7 +333,6 @@ const handleCreateCollection = async (newCollection) => {
 
 const handleCollectionClick = (collectionId) => {
   context?.handleCollectionClick(collectionId);
-  closeSidebar();
 };
 
 const handleCollectionOptionsClick = (collection, event) => {
@@ -384,7 +351,6 @@ const handleCollectionFromSeeMore = (collectionId) => {
   }
 
   context?.handleCollectionClick(collectionId);
-  closeSidebar();
 };
 
 const setCollectionPillRef = (collectionId, el) => {
@@ -441,7 +407,6 @@ const handleSidebarClick = () => {
 
 const handleSessionClick = (sessionId) => {
   context?.handleSessionClick(sessionId);
-  closeSidebar();
 };
 
 const handleStartEditing = (session) => {
@@ -459,7 +424,6 @@ const handleCancelEditing = () => {
 
 const handleDeleteSession = (sessionId) => {
   context?.showDeleteSessionDialog(sessionId);
-  closeSidebar();
 };
 
 watch(
@@ -524,7 +488,6 @@ defineExpose({
   toggleExploreAgents,
   toggleSessions,
   triggerExploreAgentsFocusAnimation,
-  toggleSidebar,
 });
 </script>
 

@@ -639,7 +639,16 @@ const promptDeleteCollection = async (collection) => {
   }
 };
 
-const handleAddMessage = async ({ text = '', images = [], video_id = null }) => {
+const handleAddMessage = async ({
+  text = '',
+  images = [],
+  videos = [],
+  audios = [],
+  video_id = null,
+  files = [],
+  agents = [],
+  additionalInfo = null,
+}) => {
   const isCollectionPage = navState.currentPage === 'collection';
   const activeCollectionId =
     selectedCollectionId?.value || navState.activeParams?.id || collectionId.value || null;
@@ -668,11 +677,42 @@ const handleAddMessage = async ({ text = '', images = [], video_id = null }) => 
       });
     }
   }
+  if (videos?.length > 0) {
+    for (const video of videos) {
+      content.push({
+        type: 'video',
+        video: {
+          video_id: video.id,
+        },
+      });
+    }
+  }
+  if (audios?.length > 0) {
+    for (const audio of audios) {
+      content.push({
+        type: 'audio',
+        audio: {
+          audio_id: audio.id,
+        },
+      });
+    }
+  }
+
+  // Handle file uploads if files are provided
+  // TODO: Implement file upload logic here
+  if (files?.length > 0) {
+    console.log('Files to upload:', files);
+    // Files will be handled here in future implementation
+  }
+
+  // Use first video_id if videos array is provided and video_id is not set
+  const finalVideoId = video_id || (videos?.length > 0 ? videos[0].id : null);
 
   addMessage({
     content: content,
-    agents: taggedAgent.value,
-    video_id: video_id,
+    agents: agents,
+    video_id: finalVideoId,
+    additional_data: additionalInfo,
   });
   taggedAgent.value = [];
 
@@ -680,7 +720,6 @@ const handleAddMessage = async ({ text = '', images = [], video_id = null }) => 
     actions.goToChat(sessionId.value);
   }
 
-  console.log('Message added', content, video_id);
   scrollToLatestUserMessage();
 };
 

@@ -9,6 +9,19 @@
   >
     <!-- Video Player Component -->
     <div class="vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12">
+      <!-- Selection Checkbox -->
+      <div
+        v-if="enabledSelection"
+        class="selection-checkbox vdb-c-absolute vdb-c-left-4 vdb-c-top-4 vdb-c-z-20 vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-4 vdb-c-border-2 vdb-c-transition-all"
+        :class="
+          isSelected
+            ? 'vdb-c-border-[#EC5B16] vdb-c-bg-[#EC5B16]'
+            : 'vdb-c-border-white vdb-c-bg-white/80'
+        "
+        @click.stop="handleSelect"
+      >
+        <CheckIcon v-if="isSelected" class="vdb-c-h-12 vdb-c-w-12" style="stroke: white" />
+      </div>
       <div
         v-if="item.stream_url"
         class="video-player-wrapper vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
@@ -119,6 +132,7 @@
         </template>
       </div>
       <div
+        v-if="!disableOptions"
         ref="menuButtonRef"
         class="vdb-c-relative vdb-c-z-[1000] vdb-c-flex-shrink-0 vdb-c-cursor-pointer vdb-c-p-4 vdb-c-transition-opacity vdb-c-duration-300"
         :class="[isHovered || isActive ? 'vdb-c-opacity-100' : 'vdb-c-opacity-0']"
@@ -212,6 +226,7 @@ import ComposeAltIcon from '../icons/ComposeAltIcon.vue';
 import EditIcon from '../icons/EditIcon.vue';
 import UploadIcon from '../icons/UploadIcon.vue';
 import TrashIcon from '../icons/TrashIcon.vue';
+import CheckIcon from '../icons/CheckIcon.vue';
 import VideoModal from './VideoModal.vue';
 
 const props = defineProps({
@@ -230,6 +245,18 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  enabledSelection: {
+    type: Boolean,
+    default: false,
+  },
+  isSelected: {
+    type: Boolean,
+    default: false,
+  },
+  disableOptions: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([
@@ -239,6 +266,7 @@ const emit = defineEmits([
   'start-editing',
   'save-editing',
   'cancel-editing',
+  'select',
 ]);
 
 const isHovered = ref(false);
@@ -401,6 +429,12 @@ function handleDelete() {
 function handleConfirmDelete() {
   showDeleteModal.value = false;
   emit('delete-video', props.item);
+}
+
+function handleSelect() {
+  if (props.enabledSelection) {
+    emit('select', props.item);
+  }
 }
 </script>
 

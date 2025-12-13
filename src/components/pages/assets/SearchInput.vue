@@ -1,6 +1,6 @@
 <template>
   <div
-    class="vdb-c-relative vdb-c-box-border vdb-c-flex vdb-c-w-full vdb-c-justify-between vdb-c-pl-2 vdb-c-text-sm"
+    class="vdb-c-relative vdb-c-z-[1000] vdb-c-box-border vdb-c-flex vdb-c-justify-between vdb-c-pl-2 vdb-c-text-sm"
   >
     <div
       ref="inputContainer"
@@ -19,7 +19,7 @@
         @blur="isFocused = false"
         class="vdb-c-block vdb-c-h-full vdb-c-w-[100%] vdb-c-bg-gray-50 vdb-c-px-8 vdb-c-text-sm vdb-c-text-black vdb-c-placeholder-gray-700 vdb-c-outline-none"
         type="text"
-        placeholder="Search"
+        :placeholder="placeholder"
       />
       <button
         class="vdb-c-flex vdb-c-size-[20px] vdb-c-items-center vdb-c-justify-center vdb-c-opacity-20 hover:vdb-c-opacity-100"
@@ -34,7 +34,7 @@
     <ul
       ref="autocompleteContainer"
       v-if="showAutocomplete"
-      class="autocomplete-drop-shadow vdb-c-absolute vdb-c-top-full vdb-c-z-10 vdb-c-mt-8 vdb-c-max-h-[240px] vdb-c-w-full vdb-c-cursor-pointer vdb-c-overflow-hidden vdb-c-overflow-y-scroll vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
+      class="autocomplete-drop-shadow vdb-c-absolute vdb-c-top-full vdb-c-z-[1000] vdb-c-mt-8 vdb-c-max-h-[240px] vdb-c-w-[354px] vdb-c-max-w-[400px] vdb-c-cursor-pointer vdb-c-overflow-hidden vdb-c-overflow-y-scroll vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
     >
       <li
         class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-10 vdb-c-overflow-x-hidden vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-10 vdb-c-py-8 vdb-c-text-sm vdb-c-text-black hover:vdb-c-bg-roy"
@@ -63,6 +63,10 @@ const props = defineProps({
   items: {
     type: Array,
     default: () => [],
+  },
+  placeholder: {
+    type: String,
+    default: 'Search',
   },
 });
 
