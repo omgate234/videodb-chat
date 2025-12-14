@@ -16,7 +16,8 @@
         },
       ]"
     >
-      <span class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-truncate">
+      <span class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-gap-6 vdb-c-truncate">
+        <SpinnerIcon v-if="session.isUploading" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
         <template v-if="isEditing">
           <input
             :id="`edit-input-${session.session_id}`"
@@ -100,6 +101,7 @@
 <script setup>
 import { ref, watch, nextTick, computed } from 'vue';
 import ThreeDotsIcon from './icons/ThreeDotsIcon.vue';
+import SpinnerIcon from './icons/SpinnerIcon.vue';
 import DeleteSessionModal from './DeleteSessionModal.vue';
 import ShareSessionModal from './ShareSessionModal.vue';
 import SessionOptionsMenu from './SessionOptionsMenu.vue';

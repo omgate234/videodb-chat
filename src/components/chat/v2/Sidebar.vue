@@ -30,6 +30,17 @@
         </button>
 
         <button
+          @click="context.handleNavigateToDefault()"
+          class="vdb-c-mt-8 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-text-vdb-darkishgrey vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-text-orange-900"
+          :class="{
+            'vdb-c-bg-[#FFE9D3]': currentPage === 'default',
+          }"
+        >
+          <HomeIcon />
+          <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Home</span>
+        </button>
+
+        <button
           @click="context.handleNavigateToAssets()"
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-text-vdb-darkishgrey vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-text-orange-900"
           :class="{
@@ -76,6 +87,7 @@
                 >Collections</span
               >
               <button
+                v-if="collections.length > 0"
                 class="cursor-pointer vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center"
                 aria-label="Create Collection"
                 @click="openCreateCollectionModal"
@@ -84,59 +96,73 @@
               </button>
             </div>
             <div v-if="status !== 'inactive' && showCollections" class="vdb-c-overflow-y-auto">
-              <template v-for="collection in visibleCollections" :key="collection.id">
-                <CollectionPill
-                  :ref="(el) => setCollectionPillRef(collection.id, el)"
-                  :collection="collection"
-                  :is-selected="
-                    showSelectedCollection && collection.id === computedSelectedCollection
-                  "
-                  :editing-collection-id="editingCollectionId"
-                  :is-options-menu-open="
-                    showCollectionOptions && selectedCollectionForOptions?.id === collection.id
-                  "
-                  :fetch-collection-videos="context.fetchCollectionVideos"
-                  @click="handleCollectionClick"
-                  @options-click="handleCollectionOptionsClick"
-                  @start-editing="handleStartEditingCollection"
-                  @save-editing="handleSaveEditingCollection"
-                  @cancel-editing="handleCancelEditingCollection"
-                  @delete-collection="handleDeleteCollection"
-                />
-              </template>
-              <div class="vdb-c-relative">
+              <template v-if="collections.length === 0">
                 <button
-                  v-if="collections.length > MAX_VISIBLE_COLLECTIONS"
-                  ref="seeMoreButton"
-                  data-compid="see-more-button"
-                  class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-roy"
-                  @click="toggleSeeMoreDropdown"
+                  class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]"
+                  @click="openCreateCollectionModal"
                 >
-                  <MoreHorizontalIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
+                  <FolderIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
                   <span
-                    class="vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-                    >See more</span
+                    class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+                    >Create New Collection</span
                   >
                 </button>
-                <CollectionDropdown
-                  v-if="seeMoreButton"
-                  :is-open="showSeeMoreDropdown"
-                  :collections="hiddenCollections"
-                  :trigger-element="seeMoreButton"
-                  @close="showSeeMoreDropdown = false"
-                  @collection-select="handleCollectionFromSeeMore"
-                />
+              </template>
+              <template v-else>
+                <template v-for="collection in visibleCollections" :key="collection.id">
+                  <CollectionPill
+                    :ref="(el) => setCollectionPillRef(collection.id, el)"
+                    :collection="collection"
+                    :is-selected="
+                      showSelectedCollection && collection.id === computedSelectedCollection
+                    "
+                    :editing-collection-id="editingCollectionId"
+                    :is-options-menu-open="
+                      showCollectionOptions && selectedCollectionForOptions?.id === collection.id
+                    "
+                    :fetch-collection-videos="context.fetchCollectionVideos"
+                    @click="handleCollectionClick"
+                    @options-click="handleCollectionOptionsClick"
+                    @start-editing="handleStartEditingCollection"
+                    @save-editing="handleSaveEditingCollection"
+                    @cancel-editing="handleCancelEditingCollection"
+                    @delete-collection="handleDeleteCollection"
+                  />
+                </template>
+                <div class="vdb-c-relative">
+                  <button
+                    v-if="collections.length > MAX_VISIBLE_COLLECTIONS"
+                    ref="seeMoreButton"
+                    data-compid="see-more-button"
+                    class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-roy"
+                    @click="toggleSeeMoreDropdown"
+                  >
+                    <MoreHorizontalIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
+                    <span
+                      class="vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+                      >See more</span
+                    >
+                  </button>
+                  <CollectionDropdown
+                    v-if="seeMoreButton"
+                    :is-open="showSeeMoreDropdown"
+                    :collections="hiddenCollections"
+                    :trigger-element="seeMoreButton"
+                    @close="showSeeMoreDropdown = false"
+                    @collection-select="handleCollectionFromSeeMore"
+                  />
 
-                <CollectionOptionsMenu
-                  v-if="collectionOptionsButton"
-                  :is-open="showCollectionOptions"
-                  :collection="selectedCollectionForOptions"
-                  :trigger-element="collectionOptionsButton"
-                  @close="showCollectionOptions = false"
-                  @rename="handleRenameCollection"
-                  @delete="handleDeleteCollectionFromOptions"
-                />
-              </div>
+                  <CollectionOptionsMenu
+                    v-if="collectionOptionsButton"
+                    :is-open="showCollectionOptions"
+                    :collection="selectedCollectionForOptions"
+                    :trigger-element="collectionOptionsButton"
+                    @close="showCollectionOptions = false"
+                    @rename="handleRenameCollection"
+                    @delete="handleDeleteCollectionFromOptions"
+                  />
+                </div>
+              </template>
             </div>
           </div>
 
@@ -196,10 +222,12 @@ import { computed, nextTick, ref, watch, inject, onMounted, onBeforeUnmount } fr
 import SidebarFooter from './SidebarFooter.vue';
 
 import ComposeAltIcon from './icons/ComposeAltIcon.vue';
+import HomeIcon from './icons/HomeIcon.vue';
 import LibraryIcon from './icons/LibraryIcon.vue';
 import AgentsIcon from './icons/AgentsIcon.vue';
 import AddIcon from './icons/AddIcon.vue';
 import MoreHorizontalIcon from './icons/MoreHorizontalIcon.vue';
+import FolderIcon from './icons/FolderIcon.vue';
 import CollectionDropdown from './CollectionDropdown.vue';
 import CollectionOptionsMenu from './CollectionOptionsMenu.vue';
 import CollectionPill from './CollectionPill.vue';
@@ -224,7 +252,10 @@ const selectedSession = computed(
 const selectedCollection = computed(
   () => context?.selectedCollectionId?.value ?? context?.collectionId?.value
 );
-const showSelectedCollection = computed(() => Boolean(computedSelectedCollection.value));
+const showSelectedCollection = computed(() => {
+  const isRelevantPage = currentPage.value === 'chat' || currentPage.value === 'collection';
+  return isRelevantPage && Boolean(computedSelectedCollection.value);
+});
 const initialExploreAgentsOpen = computed(() => !context?.isFreshUser?.value);
 const initialSessionsOpen = computed(() => !context?.isFreshUser?.value);
 const sidebarSections = ['collections', 'agents', 'sessions'];

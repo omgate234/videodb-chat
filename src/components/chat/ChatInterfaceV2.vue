@@ -1,7 +1,8 @@
 <template>
-  <div class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-overflow-hidden">
+  <div class="vdb-c-relative vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-overflow-hidden">
     <Sidebar v-if="sidebarConfig.enabled" ref="sidebarRef" class="vdb-c-flex-shrink-0" />
     <PageDisplay class="vdb-c-flex-1 vdb-c-overflow-auto" />
+    <UploadNotifications ref="uploadNotificationsRef" />
   </div>
 </template>
 <script setup>
@@ -9,9 +10,11 @@ import { computed, nextTick, onUnmounted, provide, ref, watch } from 'vue';
 
 import { useChatInterface } from '../hooks/useChatInterface';
 import { useVideoDBAgent } from '../hooks/useVideoDBAgent';
+import { useUploadChatSimulator } from '../hooks/useUploadChatSimulator';
 
 import Sidebar from './v2/Sidebar.vue';
 import PageDisplay from './PageDisplay.vue';
+import UploadNotifications from './elements/UploadNotifications.vue';
 
 import ChatSearchResults from '../message-handlers/ChatSearchResults.vue';
 import ChatVideo from '../message-handlers/ChatVideo.vue';
@@ -20,6 +23,7 @@ import DeepSearchContent from '../message-handlers/deepsearch/DeepSearchContent.
 import ImageHandler from '../message-handlers/ImageHandler.vue';
 import TextResponse from '../message-handlers/TextResponse.vue';
 import SuggestedQuestionsContent from '../message-handlers/SuggestedQuestionsContent.vue';
+import UploadHandler from '../message-handlers/UploadHandler.vue';
 import DeleteIcon from '../icons/Delete3.vue';
 
 const props = defineProps({
@@ -143,6 +147,7 @@ const props = defineProps({
 const emit = defineEmits([]);
 const chatInputRef = ref(null);
 const notificationCenterRef = ref(null);
+const uploadNotificationsRef = ref(null);
 
 const showCollectionView = ref(false);
 const taggedAgent = ref([]);
@@ -188,6 +193,8 @@ const {
   updateCollection,
   callApi,
 } = agentHook;
+
+const uploadSimulator = useUploadChatSimulator();
 
 const getInitialParams = () => {
   if (props.currentPage === 'chat') {
@@ -246,7 +253,7 @@ const selectedCollectionId = computed(() => {
     }
   }
 
-  return collectionId.value || 'default';
+  return null;
 });
 
 watch(
@@ -331,7 +338,7 @@ watch(
     if (navState.currentPage === 'collection' && newParams?.id) {
       collectionId.value = newParams.id;
     } else if (navState.currentPage !== 'collection' && navState.currentPage !== 'chat') {
-      collectionId.value = 'default';
+      collectionId.value = null;
     }
   },
   { deep: true, immediate: true }
@@ -388,6 +395,7 @@ registerMessageHandler('text', TextResponse);
 registerMessageHandler('search_results', ChatSearchResults);
 registerMessageHandler('image', ImageHandler);
 registerMessageHandler('suggested_questions', SuggestedQuestionsContent);
+registerMessageHandler('upload', UploadHandler);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
@@ -534,6 +542,10 @@ const handleCollectionClick = (_collectionId) => {
   actions.goToCollection(_collectionId);
 };
 
+const handleNavigateToDefault = () => {
+  actions.goToDefault();
+};
+
 const handleNavigateToAssets = () => {
   actions.goToAssets();
 };
@@ -649,6 +661,34 @@ const handleAddMessage = async ({
   agents = [],
   additionalInfo = null,
 }) => {
+  if (files?.length > 0) {
+    const mockSessionId = await uploadSimulator.startUploadSession({
+      text,
+      images,
+      videos,
+      audios,
+      files,
+      agents,
+      additionalInfo,
+      uploadMedia,
+      handleAddMessage: async (params) => {
+        await handleAddMessage({
+          ...params,
+          files: [], // Don't pass files again
+        });
+      },
+      activeCollectionData,
+      generateImageUrl,
+      generateAudioUrl,
+    });
+
+    if (actions?.goToChat) {
+      actions.goToChat(mockSessionId);
+    }
+
+    return;
+  }
+
   const isCollectionPage = navState.currentPage === 'collection';
   const activeCollectionId =
     selectedCollectionId?.value || navState.activeParams?.id || collectionId.value || null;
@@ -698,13 +738,6 @@ const handleAddMessage = async ({
     }
   }
 
-  // Handle file uploads if files are provided
-  // TODO: Implement file upload logic here
-  if (files?.length > 0) {
-    console.log('Files to upload:', files);
-    // Files will be handled here in future implementation
-  }
-
   // Use first video_id if videos array is provided and video_id is not set
   const finalVideoId = video_id || (videos?.length > 0 ? videos[0].id : null);
 
@@ -748,6 +781,39 @@ const chatAddMessage = async (messageData) => {
   scrollToLatestUserMessage();
 };
 
+const handleUpload = async (uploadData) => {
+  let name = 'Media';
+  if (uploadData.sourceType === 'file') {
+    name = uploadData.source.name;
+  } else {
+    name = uploadData.source.url;
+  }
+
+  const uploadId = uploadNotificationsRef.value.addUpload(name);
+
+  try {
+    const response = await uploadMedia(uploadData);
+
+    if (response?.ok || response?.status === 'READY') {
+      uploadNotificationsRef.value.updateUploadStatus(uploadId, 'success');
+      if (refetchCollectionVideos) {
+        await refetchCollectionVideos();
+      }
+      if (refetchCollectionAudios) {
+        await refetchCollectionAudios();
+      }
+      if (refetchCollectionImages) {
+        await refetchCollectionImages();
+      }
+    } else {
+      uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
+    }
+  } catch (error) {
+    console.error('Error uploading media:', error?.message || error);
+    uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
+  }
+};
+
 onUnmounted(() => {
   if (headerObserver.value) {
     headerObserver.value.disconnect();
@@ -780,7 +846,12 @@ const chatContext = {
   chatInput,
   chatAttachments,
   chatLoading,
-  conversations,
+  conversations: computed(() => {
+    if (sessionId.value && uploadSimulator.isMockSession(sessionId.value)) {
+      return uploadSimulator.getMockConversations(sessionId.value);
+    }
+    return conversations.value;
+  }),
   messageHandlers,
   addMessage,
   chatAddMessage,
@@ -792,6 +863,7 @@ const chatContext = {
   setChatInput,
   registerMessageHandler,
   uploadMedia,
+  handleUpload,
   canvasHandlers,
   registerCanvasHandler,
   canvasState,
@@ -804,7 +876,11 @@ const chatContext = {
   collectionId,
   videoId,
   collections,
-  sessions,
+  sessions: computed(() => {
+    const realSessions = sessions.value || [];
+    const mockSessions = uploadSimulator.getAllMockSessions();
+    return [...mockSessions, ...realSessions];
+  }),
   agents,
   activeVideoData,
   activeAudioData,
@@ -832,6 +908,7 @@ const chatContext = {
   handleSessionClick,
   handleCollectionClick,
   handleAgentClick,
+  handleNavigateToDefault,
   handleNavigateToAssets,
   handleNavigateToAgents,
   handleUpdateSessionName,
@@ -848,6 +925,7 @@ const chatContext = {
   chatInputPlaceholder: props.chatInputPlaceholder,
   handleAddMessage,
   handleTagAgent,
+  uploadSimulator,
 };
 
 provide('videodb-chat', chatContext);
