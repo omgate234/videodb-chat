@@ -366,7 +366,7 @@ function handleCardDoubleClick() {
 
 function handleChatWithVideo() {
   if (props.handleAddMessage) {
-    props.handleAddMessage({ text: props.item.name, video_id: props.item.id });
+    props.handleAddMessage({ text: props.item.name, video_id: props.item.id, from_event: true });
   }
 }
 

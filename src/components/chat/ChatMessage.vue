@@ -11,13 +11,14 @@
     <div class="message-width">
       <div v-if="isUser" class="vdb-c-w-full vdb-c-transform vdb-c-transition-all">
         <image-handler
-          v-if="message.content.find((c) => c.type === 'image')"
+          v-if="message.content?.find((c) => c.type === 'image')"
           :content="message.content.find((c) => c.type === 'image')"
           :is-user="true"
           :conv-id="message.conv_id"
           :msg-id="message.msg_id"
         />
         <text-response
+          v-if="message.content?.find((c) => c.type === 'text')"
           :content="message.content.find((c) => c.type === 'text')"
           :is-user="true"
           :conv-id="message.conv_id"
@@ -29,6 +30,7 @@
         <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-8">
           <div class="vdb-c-py-14">
             <ChatMessageSteps
+              v-if="!message?.is_mock"
               :has_text_content="
                 Array.isArray(message?.content)
                   ? message?.content?.findIndex((c) => c.type === 'text')
@@ -40,11 +42,11 @@
             />
           </div>
 
-          <div v-for="content in message.content">
+          <div v-for="(content, index) in message.content" :key="index">
             <component
-              v-if="Object.keys(messageHandlers).includes(content.type)"
+              v-if="content && content.type && Object.keys(messageHandlers).includes(content.type)"
               :is="messageHandlers[content.type]"
-              :is-last-conv="isLastConv"
+              :is-last-conv="isLastConv && isLastMessage"
               :content="content"
               :is-user="isUser"
               :search-term="searchTerm"
@@ -175,6 +177,7 @@ const { messageHandlers, updateMessageReaction } = useVideoDBChat();
 const isUser = computed(() => props.message.msg_type === 'input');
 const isAssistant = computed(() => props.message.msg_type === 'output');
 const isSystem = computed(() => props.message.msg_type === 'system');
+const isLastMessage = computed(() => props.currentIndex === props.messageList.length - 1);
 
 const finalStatus = computed(() => {
   if (props.message.status === 'error') {

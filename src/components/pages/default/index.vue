@@ -138,21 +138,12 @@
             </div>
 
             <!-- Upload Button -->
-            <button
-              @click="handleUploadClick"
-              class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-solid vdb-c-border-transparent vdb-c-bg-[#EC5B16] vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#D65214]"
-            >
-              <div
-                class="vdb-c-flex vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-items-center vdb-c-justify-center"
-              >
-                <UploadFileIcon :strokeColor="'white'" />
-              </div>
-              <span
-                class="vdb-c-whitespace-nowrap vdb-c-text-center vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-white"
-              >
+            <PrimaryButton @click="handleUploadClick">
+              <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
+              <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">
                 Upload file
               </span>
-            </button>
+            </PrimaryButton>
           </div>
         </div>
       </div>
@@ -332,13 +323,15 @@ import FolderImage from '../../chat/v2/icons/FolderImage.vue';
 import CreateFolderIcon from '../../chat/v2/icons/CreateFolderIcon.vue';
 import CreateCollectionModal from '../../chat/v2/CreateCollectionModal.vue';
 import HomeIcon from '../../chat/v2/icons/HomeIcon.vue';
-import UploadFileIcon from '../../chat/v2/icons/UploadFileIcon.vue';
+import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 import SearchInput from '../assets/SearchInput.vue';
 import ThreeDotsIcon from '../../chat/v2/icons/ThreeDotsIcon.vue';
 import EmptyFolderImage from '../../chat/v2/icons/EmptyFolderImage.vue';
 import CollectionOptionsMenu from './CollectionOptionsMenu.vue';
 import DeleteCollectionModal from './DeleteCollectionModal.vue';
 import UploadModal from '../../chat/v2/UploadModal.vue';
+import UploadFileIcon from '../../chat/v2/icons/UploadFileIcon.vue';
+import AddIcon from '../../chat/v2/icons/AddIcon.vue';
 
 const props = defineProps({
   context: {

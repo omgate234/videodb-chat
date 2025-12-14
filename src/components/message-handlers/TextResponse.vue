@@ -5,9 +5,7 @@
   >
     <LoadingMessage
       v-if="!isUser"
-      :status="
-        isMainReponse && message.status === 'error' ? 'error' : content.status
-      "
+      :status="isMainReponse && message?.status === 'error' ? 'error' : content?.status"
       :message="content?.status_message"
       :is-focused="isMainReponse"
       :is-last-conv="isLastConv"
@@ -15,9 +13,7 @@
 
     <transition name="fade" mode="out-in">
       <div
-        v-if="
-          content.status === 'success' || content.status === 'error' || isUser
-        "
+        v-if="content?.status === 'success' || content?.status === 'error' || isUser"
         class="vdb-c-flex vdb-c-flex-col"
       >
         <p
@@ -38,9 +34,7 @@
           "
           class="vdb-c-mt-12 vdb-c-flex vdb-c-flex-col vdb-c-gap-10"
         >
-          <div
-            class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-kilvish-900"
-          >
+          <div class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-kilvish-900">
             {{ content.mcq_data.question }}
           </div>
 
@@ -59,9 +53,7 @@
                 :disabled="isSendDisabled"
               />
               <span class="vdb-c-text-[14px] vdb-c-font-normal">
-                <span class="vdb-c-mr-6 vdb-c-font-medium"
-                  >{{ choice.label }}.</span
-                >
+                <span class="vdb-c-mr-6 vdb-c-font-medium">{{ choice.label }}.</span>
                 {{ choice.text }}
               </span>
             </label>
@@ -84,7 +76,7 @@
         </div>
       </div>
       <div
-        v-else-if="content.status === 'progress'"
+        v-else-if="content?.status === 'progress'"
         class="vdb-c-flex-start vdb-c-flex vdb-c-flex-col"
       >
         <div
@@ -102,14 +94,14 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
-import Prism from "prismjs";
-import { marked } from "marked";
-import markedKatex from "marked-katex-extension";
-import "prismjs/themes/prism.css";
-import "prismjs/components/prism-python";
-import LoadingMessage from "./elements/LoadingMessage.vue";
-import { useVideoDBChat } from "../../context.js";
+import { computed, ref, watch } from 'vue';
+import Prism from 'prismjs';
+import { marked } from 'marked';
+import markedKatex from 'marked-katex-extension';
+import 'prismjs/themes/prism.css';
+import 'prismjs/components/prism-python';
+import LoadingMessage from './elements/LoadingMessage.vue';
+import { useVideoDBChat } from '../../context.js';
 const options = {
   nonStandard: true,
 };
@@ -117,7 +109,7 @@ const options = {
 const props = defineProps({
   content: {
     type: Object,
-    required: true,
+    default: () => ({}),
   },
   isUser: {
     type: Boolean,
@@ -133,15 +125,15 @@ const props = defineProps({
   },
   convId: {
     type: String,
-    default: "",
+    default: '',
   },
   msgId: {
     type: String,
-    default: "",
+    default: '',
   },
 });
 
-const text = computed(() => props.content?.text || "");
+const text = computed(() => props.content?.text || '');
 const { conversations, addMessage } = useVideoDBChat();
 
 marked.setOptions({
@@ -158,7 +150,7 @@ const getMarkedMsg = (msg) => {
   return marked.parse(msg);
 };
 
-const isMainReponse = computed(() => props.content.agent_name === "assistant");
+const isMainReponse = computed(() => props.content.agent_name === 'assistant');
 
 const message = computed(() => {
   return conversations?.[props.convId]?.[props.msgId];
@@ -166,7 +158,7 @@ const message = computed(() => {
 
 // MCQ state
 const hasSentMCQ = ref(false);
-const selectedOption = ref("");
+const selectedOption = ref('');
 
 // Initialize default choice when mcq_data present
 watch(
@@ -176,7 +168,7 @@ watch(
       selectedOption.value = mcq.default_choice;
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 const isSendDisabled = computed(() => {
@@ -193,13 +185,13 @@ const onSendMCQ = () => {
   const choice = choices.find((c) => c.id === selectedOption.value);
   if (!choice) return;
 
-  const agent = props.content?.agent_name || "assistant";
+  const agent = props.content?.agent_name || 'assistant';
   const messageText = `@${agent} For the question ${mcq.question} I select option ${choice.label}`;
 
   addMessage?.({
-    content: [{ type: "text", text: messageText }],
+    content: [{ type: 'text', text: messageText }],
     additional_data: {
-      response_type: "clarify_question_mcq_answer",
+      response_type: 'clarify_question_mcq_answer',
       cid: choice.id,
       label: choice.label,
       delta: choice.delta ?? {},
@@ -211,11 +203,7 @@ const onSendMCQ = () => {
 
 <style>
 .vdb-c-readMoreGradient {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.3) 0%,
-    rgba(255, 255, 255, 1) 100%
-  );
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 1) 100%);
 }
 
 .fade-enter-active,

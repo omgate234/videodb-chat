@@ -26,10 +26,11 @@
         </template>
       </div>
       <textarea
+        name="chat-input"
         v-if="selectedAgent !== null"
         v-model="inputText"
         type="text"
-        class="vdb-c-chat-input vdb-c-mb-20 vdb-c-mt-12 vdb-c-max-h-[25vh] vdb-c-w-full vdb-c-bg-transparent vdb-c-px-10 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[24px] vdb-c-text-[#1E1E1E] vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
+        class="vdb-c-chat-input vdb-c-mb-20 vdb-c-mt-12 vdb-c-max-h-[25vh] vdb-c-w-full vdb-c-bg-transparent vdb-c-px-10 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
         rows="1"
         :placeholder="placeholder"
         autocomplete="off"
@@ -60,10 +61,11 @@
           />
         </div>
         <textarea
+          name="chat-input"
           v-if="selectedAgent === null"
           v-model="inputText"
           type="text"
-          class="vdb-c-chat-input vdb-c-max-h-[25vh] vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E] vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
+          class="vdb-c-chat-input vdb-c-max-h-[25vh] vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
           rows="1"
           :placeholder="placeholder"
           autocomplete="off"
@@ -144,10 +146,18 @@
           <button
             @click="handleSend"
             :disabled="!canSend"
-            class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-text-white vdb-c-transition"
+            :class="[
+              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-text-white vdb-c-transition',
+              chatLoading ? 'vdb-c-bg-[#B9B9B9]' : '',
+            ]"
             type="submit"
           >
-            <SendIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="canSend ? '#EC5B16' : '#B9B9B9'" />
+            <AnimatedEllipsisIcon v-if="chatLoading" />
+            <SendIcon
+              v-else
+              class-name="vdb-c-w-20 vdb-c-h-20"
+              :fill="canSend ? '#EC5B16' : '#B9B9B9'"
+            />
           </button>
         </div>
       </div>
@@ -189,6 +199,7 @@ import AddDropUp from './AddDropUp.vue';
 import ChevronDown from '../../../icons/ChevronDown.vue';
 import SearchControlsPanel from './SearchControlsPanel.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
+import AnimatedEllipsisIcon from '../../../chat/v2/icons/AnimatedEllipsisIcon.vue';
 
 const props = defineProps({
   context: {
@@ -203,6 +214,15 @@ const collectionHasVideos = computed(() => {
   return (
     context?.activeCollectionVideos?.value?.length > 0 ||
     context?.activeCollectionVideos?.length > 0
+  );
+});
+
+const chatLoading = computed(() => {
+  const conversations = context?.conversations?.value || context?.conversations || {};
+  return Object.values(conversations).some((conv) =>
+    Object.values(conv).some(
+      (content) => content.status === 'progress' || content.clientLoading || content.is_mock
+    )
   );
 });
 
@@ -331,11 +351,7 @@ const visibleAgents = computed(() => {
 });
 
 const canSend = computed(() => {
-  return (
-    inputText.value.trim().length > 0 ||
-    uploadedFiles.value.length > 0 ||
-    collectionAssets.value.length > 0
-  );
+  return inputText.value.trim().length > 0 && !chatLoading.value;
 });
 
 const isAgentSelected = (agent) => {

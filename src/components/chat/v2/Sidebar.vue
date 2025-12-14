@@ -91,8 +91,11 @@
                 class="cursor-pointer vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center"
                 aria-label="Create Collection"
                 @click="openCreateCollectionModal"
+                @mouseenter="isAddIconHovered = true"
+                @mouseleave="isAddIconHovered = false"
               >
-                <AddIcon stroke-color="#1E1E1E" />
+                <HoveredAddIcon v-if="isAddIconHovered" />
+                <AddIcon v-else stroke-color="#1E1E1E" />
               </button>
             </div>
             <div v-if="status !== 'inactive' && showCollections" class="vdb-c-overflow-y-auto">
@@ -101,7 +104,7 @@
                   class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]"
                   @click="openCreateCollectionModal"
                 >
-                  <FolderIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
+                  <CreateFolderIcon fill="#1E1E1E" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
                   <span
                     class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
                     >Create New Collection</span
@@ -226,6 +229,7 @@ import HomeIcon from './icons/HomeIcon.vue';
 import LibraryIcon from './icons/LibraryIcon.vue';
 import AgentsIcon from './icons/AgentsIcon.vue';
 import AddIcon from './icons/AddIcon.vue';
+import HoveredAddIcon from './icons/HoveredAddIcon.vue';
 import MoreHorizontalIcon from './icons/MoreHorizontalIcon.vue';
 import FolderIcon from './icons/FolderIcon.vue';
 import CollectionDropdown from './CollectionDropdown.vue';
@@ -233,6 +237,7 @@ import CollectionOptionsMenu from './CollectionOptionsMenu.vue';
 import CollectionPill from './CollectionPill.vue';
 import SessionPill from './SessionPill.vue';
 import CreateCollectionModal from './CreateCollectionModal.vue';
+import CreateFolderIcon from './icons/CreateFolderIcon.vue';
 
 const context = inject('videodb-chat-context');
 const currentPage = computed(() => context?.navState?.currentPage || 'default');
@@ -243,9 +248,11 @@ const sessions = computed(() => context?.sessions?.value || []);
 const status = computed(() =>
   context?.configStatus?.value !== null && context?.isSetupComplete?.value ? 'active' : 'inactive'
 );
-const newSessionButtonDisabled = computed(() =>
-  currentPage.value === 'collection' ? true : false
-);
+const newSessionButtonDisabled = computed(() => {
+  if (currentPage.value === 'collection') return true;
+  if (status.value === 'inactive' || collections.value.length === 0) return true;
+  return false;
+});
 const selectedSession = computed(
   () => context?.selectedSessionId?.value ?? context?.sessionId?.value
 );
@@ -282,6 +289,7 @@ const collectionPillRefs = ref({});
 const sidebarRef = ref(null);
 const showCreateCollectionModal = ref(false);
 const sidebarWidth = ref(260);
+const isAddIconHovered = ref(false);
 let resizeObserver = null;
 
 const visibleSections = computed(() => sidebarSections);

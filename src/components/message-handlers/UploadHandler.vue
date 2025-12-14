@@ -5,10 +5,11 @@
     <!-- Upload Status Header -->
     <div class="vdb-c-flex vdb-c-h-24 vdb-c-items-center vdb-c-gap-8">
       <div class="vdb-c-size-20 vdb-c-overflow-hidden">
-        <SpinnerIcon class="vdb-c-size-20" />
+        <SpinnerIcon v-if="!allUploadsComplete" class="vdb-c-size-20" />
+        <SuccessIcon v-else class="vdb-c-size-20" />
       </div>
       <div class="vdb-c-text-[14px] vdb-c-font-semibold vdb-c-leading-[22px] vdb-c-text-[#1E1E1E]">
-        Upload in progress
+        {{ allUploadsComplete ? 'Upload complete' : 'Upload in progress' }}
       </div>
     </div>
 
@@ -70,34 +71,32 @@
     >
       <template v-for="(file, index) in content.files" :key="index">
         <VideoFileDisplay
+          class="vdb-c-p-12"
           v-if="file.type === 'video'"
           :file="file"
           :full-width="true"
-          :error-message="file.errorMessage"
         />
         <AudioFileDisplay
+          class="vdb-c-p-12"
           v-else-if="file.type === 'audio'"
           :file="file"
           :full-width="true"
-          :error-message="file.errorMessage"
         />
-        <ImageFileDisplay
-          v-else-if="file.type === 'image'"
-          :file="file"
-          :error-message="file.errorMessage"
-        />
+        <ImageFileDisplay class="vdb-c-p-12" v-else-if="file.type === 'image'" :file="file" />
       </template>
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import SpinnerIcon from '../chat/v2/icons/SpinnerIcon.vue';
+import SuccessIcon from '../chat/v2/icons/SuccessIcon.vue';
 import VideoFileDisplay from '../pages/collection/components/VideoFileDisplay.vue';
 import AudioFileDisplay from '../pages/collection/components/AudioFileDisplay.vue';
 import ImageFileDisplay from '../chat/v2/UploadImageFileDisplay.vue';
 
-defineProps({
+const props = defineProps({
   content: {
     type: Object,
     required: true,
@@ -106,6 +105,13 @@ defineProps({
     type: Boolean,
     default: false,
   },
+});
+
+const allUploadsComplete = computed(() => {
+  if (!props.content.files || props.content.files.length === 0) {
+    return false;
+  }
+  return props.content.files.every((file) => file.status === 'success');
 });
 </script>
 

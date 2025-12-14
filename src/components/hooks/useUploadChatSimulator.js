@@ -5,15 +5,15 @@ const mockConversations = reactive({});
 
 export function useUploadChatSimulator() {
   const createMockSessionId = () => {
-    return `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return crypto.randomUUID();
   };
 
   const createMockConvId = () => {
-    return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return String(Date.now());
   };
 
   const createMockMsgId = () => {
-    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return String(Date.now() + Math.floor(Math.random() * 1000));
   };
 
   const formatFileForDisplay = (file) => {
@@ -56,15 +56,18 @@ export function useUploadChatSimulator() {
     activeCollectionData,
     generateImageUrl,
     generateAudioUrl,
+    navigateToSession,
   }) => {
     const mockSessionId = createMockSessionId();
     const mockConvId = createMockConvId();
 
+    const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id || 'default';
+
     mockSessions[mockSessionId] = {
       session_id: mockSessionId,
       name: 'Upload in progress',
-      collection_id: activeCollectionData?.value?.id || activeCollectionData?.id || 'default',
-      created_at: new Date().toISOString(),
+      collection_id: collectionId,
+      created_at: Math.floor(Date.now() / 1000),
       isUploading: true,
     };
 
@@ -75,7 +78,11 @@ export function useUploadChatSimulator() {
 
     const inputContent = [];
     if (text) {
-      inputContent.push({ type: 'text', text });
+      inputContent.push({ 
+        type: 'text', 
+        text,
+        status: 'success',
+      });
     }
     if (images?.length > 0) {
       for (const image of images) {
@@ -85,52 +92,60 @@ export function useUploadChatSimulator() {
             image_id: image.image_id,
             url: image.url,
           },
+          status: 'success',
         });
       }
     }
-    if (videos?.length > 0) {
-      for (const video of videos) {
-        inputContent.push({
-          type: 'video',
-          video: {
-            video_id: video.id,
-          },
-        });
-      }
-    }
-    if (audios?.length > 0) {
-      for (const audio of audios) {
-        inputContent.push({
-          type: 'audio',
-          audio: {
-            audio_id: audio.id,
-          },
-        });
-      }
+
+
+    if (inputContent.length === 0) {
+      inputContent.push({
+        type: 'text',
+        text: '',
+        status: 'success',
+        agent_name: 'user',
+      });
     }
 
     mockConversations[mockSessionId][mockConvId] = {
       [inputMsgId]: {
         msg_id: inputMsgId,
         conv_id: mockConvId,
+        session_id: mockSessionId,
         msg_type: 'input',
         content: inputContent,
         status: 'success',
+        agents: agents || [],
+        actions: [],
       },
       [outputMsgId]: {
         msg_id: outputMsgId,
         conv_id: mockConvId,
+        session_id: mockSessionId,
         msg_type: 'output',
         content: [
           {
             type: 'upload',
             files: files.map(formatFileForDisplay),
+            status: 'progress',
+            agent_name: 'assistant',
           },
         ],
         status: 'progress',
         actions: [],
+        is_mock: true,
+        agents: ['assistant'],
       },
     };
+
+    // Navigate to the mock session immediately after creating it
+    console.log('[UploadSimulator] Mock session created:', mockSessionId);
+    console.log('[UploadSimulator] Mock conversation created with', files.length, 'files');
+    
+    if (navigateToSession) {
+      console.log('[UploadSimulator] Triggering navigation to mock session');
+      navigateToSession(mockSessionId);
+    }
 
     const uploadResults = {
       videos: [...(videos || [])],
@@ -150,10 +165,30 @@ export function useUploadChatSimulator() {
           collectionId: collectionId,
         };
 
-        const response = await uploadMedia(uploadData);
+        let response;
+        try {
+          response = await uploadMedia(uploadData);
+        } catch (uploadError) {
+          console.error('Upload media error for file:', file.name, uploadError);
+          filesArray[index].status = 'failure';
+          filesArray[index].errorMessage = uploadError?.message || 'Upload failed. Please try again.';
+          return;
+        }
 
         if (response?.ok || response?.status === 'READY') {
-          const uploadResData = await response.json();
+          let uploadResData;
+          try {
+            if (response.json) {
+              uploadResData = await response.json();
+            } else {
+              uploadResData = response.data || response;
+            }
+          } catch (jsonError) {
+            console.error('JSON parse error for file:', file.name, jsonError);
+            filesArray[index].status = 'failure';
+            filesArray[index].errorMessage = 'Failed to process upload response.';
+            return;
+          }
 
           let fileType = 'file';
           if (file.type.startsWith('image/')) {
@@ -164,24 +199,30 @@ export function useUploadChatSimulator() {
             fileType = 'audio';
           }
 
+          const uploadedId = uploadResData.id || uploadResData.video_id || uploadResData.audio_id;
+
           if (fileType === 'image' && generateImageUrl) {
             try {
-              const imageUrlData = await generateImageUrl(uploadResData.collection_id, uploadResData.id);
+              const imageUrlData = await generateImageUrl(uploadResData.collection_id || collectionId, uploadedId);
               uploadResults.images.push({
-                image_id: uploadResData.id,
+                image_id: uploadedId,
                 url: imageUrlData.url,
               });
             } catch (e) {
               console.error('Failed to generate image URL:', e);
+              uploadResults.images.push({
+                image_id: uploadedId,
+                url: null,
+              });
             }
           } else if (fileType === 'video') {
             uploadResults.videos.push({
-              id: uploadResData.id,
+              id: uploadedId,
               name: file.name,
             });
           } else if (fileType === 'audio') {
             uploadResults.audios.push({
-              id: uploadResData.id,
+              id: uploadedId,
               name: file.name,
             });
           }
@@ -192,19 +233,32 @@ export function useUploadChatSimulator() {
           filesArray[index].errorMessage = 'Upload failed. Please try again.';
         }
       } catch (error) {
+        console.error('Unexpected upload error for file:', file.name, error);
         filesArray[index].status = 'failure';
-        filesArray[index].errorMessage = error.message || 'Network error. Please check your connection.';
+        filesArray[index].errorMessage = error?.message || 'Network error. Please check your connection.';
       }
     });
 
-    await Promise.all(uploadPromises);
+    try {
+      await Promise.all(uploadPromises);
+    } catch (error) {
+      console.error('Error in upload promises:', error);
+    }
 
     const allSuccess = filesArray.every(f => f.status === 'success');
 
-    if (allSuccess && handleAddMessage) {
+    if (allSuccess) {
       mockSessions[mockSessionId].name = 'Upload complete';
-      mockSessions[mockSessionId].isUploading = false;
+      mockSessions[mockSessionId].uploadComplete = true;
+    } else {
+      mockSessions[mockSessionId].name = 'Upload failed';
+      mockConversations[mockSessionId][mockConvId][outputMsgId].status = 'error';
+      mockConversations[mockSessionId][mockConvId][outputMsgId].content[0].status = 'error';
+    }
 
+    mockSessions[mockSessionId].isUploading = false;
+
+    if (handleAddMessage) {
       await handleAddMessage({
         text,
         images: uploadResults.images,
@@ -212,16 +266,13 @@ export function useUploadChatSimulator() {
         audios: uploadResults.audios,
         agents,
         additionalInfo,
+        reset_session: true,
       });
 
       setTimeout(() => {
         delete mockSessions[mockSessionId];
         delete mockConversations[mockSessionId];
-      }, 1000);
-    } else {
-      mockSessions[mockSessionId].name = 'Upload failed';
-      mockSessions[mockSessionId].isUploading = false;
-      mockConversations[mockSessionId][mockConvId][outputMsgId].status = 'error';
+      }, 6000);
     }
 
     return mockSessionId;

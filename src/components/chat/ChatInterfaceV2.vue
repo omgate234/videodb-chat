@@ -167,7 +167,7 @@ const {
   activeVideoData,
   addMessage,
   deleteSession,
-  conversations,
+  conversations: agentConversations,
   loadSession,
   generateImageUrl,
   generateAudioUrl,
@@ -192,6 +192,7 @@ const {
   makeSessionPublic,
   updateCollection,
   callApi,
+  isLoadingSession,
 } = agentHook;
 
 const uploadSimulator = useUploadChatSimulator();
@@ -327,8 +328,17 @@ watch(
     if (navState.currentPage === 'chat') {
       if (newParams?.sessionId) {
         if (sessionId.value !== newParams.sessionId) {
+          console.log('[ChatInterfaceV2] Setting sessionId to:', newParams.sessionId);
           sessionId.value = newParams.sessionId;
-          loadSession(newParams.sessionId);
+          if (!uploadSimulator.isMockSession(newParams.sessionId)) {
+            console.log('[ChatInterfaceV2] Loading real session:', newParams.sessionId);
+            loadSession(newParams.sessionId);
+          } else {
+            console.log(
+              '[ChatInterfaceV2] Mock session detected, clearing real agent conversations'
+            );
+            Object.keys(agentConversations).forEach((key) => delete agentConversations[key]);
+          }
         }
       } else {
         sessionId.value = null;
@@ -443,7 +453,7 @@ const isFreshUser = computed(() => {
 });
 
 const chatLoading = computed(() =>
-  Object.values(conversations.value || {}).some((conv) =>
+  Object.values(agentConversations || {}).some((conv) =>
     Object.values(conv || {}).some(
       (content) => content?.status === 'progress' || content?.clientLoading
     )
@@ -509,7 +519,7 @@ watch(sessionId, () => {
 });
 
 watch(
-  () => Object.keys(conversations).length,
+  () => Object.keys(agentConversations || {}).length,
   (newLength, oldLength) => {
     if (oldLength > 0 && newLength === 0 && canvasState.show) {
       closeCanvas();
@@ -660,9 +670,11 @@ const handleAddMessage = async ({
   files = [],
   agents = [],
   additionalInfo = null,
+  from_event = false,
+  reset_session = false,
 }) => {
   if (files?.length > 0) {
-    const mockSessionId = await uploadSimulator.startUploadSession({
+    await uploadSimulator.startUploadSession({
       text,
       images,
       videos,
@@ -674,19 +686,31 @@ const handleAddMessage = async ({
       handleAddMessage: async (params) => {
         await handleAddMessage({
           ...params,
-          files: [], // Don't pass files again
+          files: [],
         });
       },
       activeCollectionData,
       generateImageUrl,
       generateAudioUrl,
+      navigateToSession: (sessionId) => {
+        console.log('[ChatInterfaceV2] Navigation callback from upload simulator:', sessionId);
+        if (actions?.goToChat) {
+          actions.goToChat(sessionId);
+          console.log(
+            '[ChatInterfaceV2] Navigation triggered. New navState:',
+            navState.currentPage,
+            navState.activeParams
+          );
+        }
+      },
     });
 
-    if (actions?.goToChat) {
-      actions.goToChat(mockSessionId);
-    }
-
     return;
+  }
+
+  if (reset_session) {
+    console.log('[ChatInterfaceV2] Resetting sessionId as requested by upload simulator');
+    sessionId.value = null;
   }
 
   const isCollectionPage = navState.currentPage === 'collection';
@@ -717,26 +741,6 @@ const handleAddMessage = async ({
       });
     }
   }
-  if (videos?.length > 0) {
-    for (const video of videos) {
-      content.push({
-        type: 'video',
-        video: {
-          video_id: video.id,
-        },
-      });
-    }
-  }
-  if (audios?.length > 0) {
-    for (const audio of audios) {
-      content.push({
-        type: 'audio',
-        audio: {
-          audio_id: audio.id,
-        },
-      });
-    }
-  }
 
   // Use first video_id if videos array is provided and video_id is not set
   const finalVideoId = video_id || (videos?.length > 0 ? videos[0].id : null);
@@ -745,9 +749,15 @@ const handleAddMessage = async ({
     content: content,
     agents: agents,
     video_id: finalVideoId,
+    videos: videos,
+    audios: audios,
+    images: images,
     additional_data: additionalInfo,
+    from_event: from_event,
   });
   taggedAgent.value = [];
+
+  await nextTick();
 
   if (actions?.goToChat && sessionId.value) {
     actions.goToChat(sessionId.value);
@@ -820,37 +830,30 @@ onUnmounted(() => {
   }
 });
 
-defineExpose({
-  chatInput,
-  chatAttachments,
-  chatInputRef,
-  conversations,
-  messageHandlers,
-  addMessage,
-  loadSession,
-  activeCollectionData,
-  activeCollectionVideos,
-  activeCollectionAudios,
-  activeCollectionImages,
-  createNewSession,
-  setChatInput,
-  registerMessageHandler,
-  uploadMedia,
-  isScrolled,
-  canvasState,
-  openCanvas,
-  closeCanvas,
-});
-
 const chatContext = {
   chatInput,
   chatAttachments,
   chatLoading,
   conversations: computed(() => {
-    if (sessionId.value && uploadSimulator.isMockSession(sessionId.value)) {
-      return uploadSimulator.getMockConversations(sessionId.value);
+    const currentSessionId = sessionId.value;
+    const isMock = currentSessionId && uploadSimulator.isMockSession(currentSessionId);
+    const realConvs = agentConversations || {};
+    const mockConvs = isMock ? uploadSimulator.getMockConversations(currentSessionId) : {};
+
+    if (isMock) {
+      return mockConvs;
     }
-    return conversations.value;
+
+    if (Object.keys(realConvs).length > 0) {
+      return realConvs;
+    }
+    const mockForCurrentSession = uploadSimulator.getMockConversations(currentSessionId);
+    if (mockForCurrentSession && Object.keys(mockForCurrentSession).length > 0) {
+      console.log('[ChatInterfaceV2] Showing mock conversations during transition to real session');
+      return mockForCurrentSession;
+    }
+
+    return realConvs;
   }),
   messageHandlers,
   addMessage,
@@ -926,8 +929,31 @@ const chatContext = {
   handleAddMessage,
   handleTagAgent,
   uploadSimulator,
+  isLoadingSession,
 };
 
 provide('videodb-chat', chatContext);
 provide('videodb-chat-context', chatContext);
+
+defineExpose({
+  chatInput,
+  chatAttachments,
+  chatInputRef,
+  conversations: chatContext.conversations,
+  messageHandlers,
+  addMessage,
+  loadSession,
+  activeCollectionData,
+  activeCollectionVideos,
+  activeCollectionAudios,
+  activeCollectionImages,
+  createNewSession,
+  setChatInput,
+  registerMessageHandler,
+  uploadMedia,
+  isScrolled,
+  canvasState,
+  openCanvas,
+  closeCanvas,
+});
 </script>

@@ -11,8 +11,8 @@
         :placeholder="collectionName ? `Search files in '${collectionName}'` : 'Search files'"
       />
       <PrimaryButton :disabled="uploadDisabled" @click="handleUploadClick">
-        <UploadIcon class="vdb-c-h-16 vdb-c-w-16" :class="uploadIconClass" />
-        <span>Upload</span>
+        <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
+        <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">Upload</span>
       </PrimaryButton>
     </header>
     <div
@@ -219,6 +219,15 @@
       @delete="confirmDeleteCollection"
     />
 
+    <!-- Upload Modal -->
+    <UploadModal
+      :showUploadDialog="showUploadModal"
+      :collections="currentCollectionArray"
+      :defaultSelectedCollectionId="currentCollection?.id || null"
+      @cancel-upload="handleCancelUpload"
+      @upload="handleUploadWrapper"
+    />
+
     <NotificationCenter ref="notificationCenterRef" />
   </div>
 </template>
@@ -235,7 +244,6 @@ import {
   onBeforeUnmount,
   markRaw,
 } from 'vue';
-import UploadIcon from '../../chat/v2/icons/UploadIcon.vue';
 import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 import FolderIcon from '../../chat/v2/icons/FolderIcon.vue';
 import ThreeDotsIcon from '../../chat/v2/icons/ThreeDotsIcon.vue';
@@ -253,6 +261,8 @@ import ShowMoreChatInput from './components/ShowMoreChatInput.vue';
 import DeleteCollectionModal from './DeleteCollectionModal.vue';
 import NotificationCenter from '../../chat/elements/NotificationCenter.vue';
 import ErrorIcon from '../../chat/v2/icons/ErrorIcon.vue';
+import UploadModal from '../../chat/v2/UploadModal.vue';
+import AddIcon from '../../chat/v2/icons/AddIcon.vue';
 
 const props = defineProps({
   context: {
@@ -296,12 +306,47 @@ const collectionToDelete = ref(null);
 const notificationCenterRef = ref(null);
 
 const uploadDisabled = computed(() => !(configStatus !== null && isSetupComplete));
-const uploadIconClass = computed(() =>
-  uploadDisabled.value ? 'vdb-c-text-[#B9B9B9]' : 'vdb-c-text-[#EC5B16]'
-);
+
+const showUploadModal = ref(false);
+
 const handleUploadClick = () => {
-  console.log('upload');
+  showUploadModal.value = true;
 };
+
+const handleCancelUpload = () => {
+  showUploadModal.value = false;
+};
+
+const handleUploadWrapper = async (uploadData) => {
+  showUploadModal.value = false;
+  try {
+    await context?.handleUpload(uploadData);
+    const collectionId = currentCollection.value?.id;
+    if (collectionId) {
+      const [videosRes, audiosRes, imagesRes] = await Promise.all([
+        fetchCollectionVideos?.(collectionId) || Promise.resolve({ data: null }),
+        fetchCollectionAudios?.(collectionId) || Promise.resolve({ data: null }),
+        fetchCollectionImages?.(collectionId) || Promise.resolve({ data: null }),
+      ]);
+
+      if (activeCollectionVideos) {
+        activeCollectionVideos.value = videosRes?.data || null;
+      }
+      if (activeCollectionAudios) {
+        activeCollectionAudios.value = audiosRes?.data || null;
+      }
+      if (activeCollectionImages) {
+        activeCollectionImages.value = imagesRes?.data || null;
+      }
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error);
+  }
+};
+
+const currentCollectionArray = computed(() => {
+  return currentCollection.value ? [currentCollection.value] : [];
+});
 
 const currentCollection = computed(() => {
   if (activeCollectionData?.value) {

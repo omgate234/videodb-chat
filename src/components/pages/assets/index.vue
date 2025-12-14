@@ -22,8 +22,10 @@
           :disabled="uploadDisabled"
           @click="handleUploadClick"
         >
-          <UploadIcon class="vdb-c-mr-8 vdb-c-h-16 vdb-c-w-16" :class="uploadIconClass" />
-          <span class="vdb-c-text-body">Upload file</span>
+          <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
+          <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">
+            Upload file
+          </span>
         </PrimaryButton>
       </div>
     </header>
@@ -96,13 +98,21 @@
         />
       </div>
     </div>
+
+    <!-- Upload Modal -->
+    <UploadModal
+      :showUploadDialog="showUploadModal"
+      :collections="collections"
+      :defaultSelectedCollectionId="null"
+      @cancel-upload="handleCancelUpload"
+      @upload="handleUploadWrapper"
+    />
   </div>
 </template>
 
 <script setup>
 import { inject, computed, ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import LibraryIcon from '../../chat/v2/icons/LibraryIcon.vue';
-import UploadIcon from '../../chat/v2/icons/UploadIcon.vue';
 import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 import SearchInput from './SearchInput.vue';
 import VideoList from '../../chat/v2/collection/VideoList.vue';
@@ -111,9 +121,11 @@ import SortDropdown from './SortDropdown.vue';
 import FilterDropdown from './FilterDropdown.vue';
 import CollectionDropdown from './CollectionDropdown.vue';
 import EmptyFolderIcon from '../../chat/v2/icons/EmptyFolderIcon.vue';
+import UploadModal from '../../chat/v2/UploadModal.vue';
 import { useAssets } from './hooks/useAssets.js';
 import { useAssetFilters } from './hooks/useAssetFilters.js';
 import { useAssetSearch } from './hooks/useAssetSearch.js';
+import AddIcon from '../../chat/v2/icons/AddIcon.vue';
 
 const props = defineProps({
   context: {
@@ -131,12 +143,24 @@ const uploadDisabled = computed(
   () => !((configStatus?.value ?? null) !== null && isSetupComplete?.value)
 );
 
-const uploadIconClass = computed(() =>
-  uploadDisabled.value ? 'vdb-c-text-kilvish-400' : 'vdb-c-text-white'
-);
+const showUploadModal = ref(false);
 
 const handleUploadClick = () => {
-  console.log('upload');
+  showUploadModal.value = true;
+};
+
+const handleCancelUpload = () => {
+  showUploadModal.value = false;
+};
+
+const handleUploadWrapper = async (uploadData) => {
+  showUploadModal.value = false;
+  try {
+    await context?.handleUpload(uploadData);
+    await loadAllAssets();
+  } catch (error) {
+    console.error('Error uploading file:', error);
+  }
 };
 
 // State
@@ -204,6 +228,7 @@ const {
   handleDeleteVideo,
   handleDeleteAudio,
   handleDeleteImage,
+  loadAllAssets,
 } = useAssets(context);
 
 // 2. Initialize Search Hook

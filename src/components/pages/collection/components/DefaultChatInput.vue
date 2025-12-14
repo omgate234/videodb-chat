@@ -28,12 +28,13 @@
     <!-- Input Area -->
     <div
       class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-gap-px vdb-c-pl-[4px]"
-      :class="displayFiles.length > 0 ? 'vdb-c-h-[40px]' : 'vdb-c-h-[72px]'"
+      :class="displayFiles.length > 0 ? 'vdb-c-min-h-[40px]' : 'vdb-c-min-h-[72px]'"
     >
       <textarea
+        name="chat-input"
         v-model="inputText"
         :placeholder="placeholder"
-        class="vdb-c-leading-24 vdb-c-min-h-0 vdb-c-flex-1 vdb-c-resize-none vdb-c-border-0 vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-[#969696] vdb-c-placeholder-[#969696] vdb-c-outline-none"
+        class="vdb-c-leading-24 vdb-c-min-h-0 vdb-c-flex-1 vdb-c-resize-none vdb-c-border-0 vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none"
         rows="1"
         @input="handleInput"
         @keydown.enter.exact.prevent="handleSend"
@@ -132,7 +133,8 @@
           getSendButtonClasses(),
         ]"
       >
-        <SendButtonIcon :fill="getSendButtonFill()" />
+        <AnimatedEllipsisIcon v-if="chatLoading" />
+        <SendButtonIcon v-else :fill="getSendButtonFill()" />
       </button>
     </div>
 
@@ -174,6 +176,7 @@ import AudioFileDisplay from './AudioFileDisplay.vue';
 import SearchOptions from './SearchOptions.vue';
 import Tooltip from '../../../chat/v2/elements/Tooltip.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
+import AnimatedEllipsisIcon from '../../../chat/v2/icons/AnimatedEllipsisIcon.vue';
 
 const props = defineProps({
   context: {
@@ -188,6 +191,15 @@ const collectionHasVideos = computed(() => {
   return (
     context?.activeCollectionVideos?.value?.length > 0 ||
     context?.activeCollectionVideos?.length > 0
+  );
+});
+
+const chatLoading = computed(() => {
+  const conversations = context?.conversations?.value || context?.conversations || {};
+  return Object.values(conversations).some((conv) =>
+    Object.values(conv).some(
+      (content) => content.status === 'progress' || content.clientLoading || content.is_mock
+    )
   );
 });
 
@@ -302,11 +314,7 @@ const visibleAgents = computed(() => {
 });
 
 const canSend = computed(() => {
-  return (
-    inputText.value.trim().length > 0 ||
-    uploadedFiles.value.length > 0 ||
-    collectionAssets.value.length > 0
-  );
+  return inputText.value.trim().length > 0 && !chatLoading.value;
 });
 
 const isAgentSelected = (agent) => {
@@ -344,6 +352,9 @@ const getAgentTextClasses = (agent) => {
 };
 
 const getSendButtonClasses = () => {
+  if (chatLoading.value) {
+    return 'vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-cursor-not-allowed vdb-c-bg-[#B9B9B9]';
+  }
   if (!canSend.value) {
     return 'vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-cursor-not-allowed';
   }
@@ -351,7 +362,7 @@ const getSendButtonClasses = () => {
 };
 
 const getSendButtonFill = () => {
-  if (!canSend.value) {
+  if (!canSend.value || chatLoading.value) {
     return '#B9B9B9';
   }
   return '#EC5B16';

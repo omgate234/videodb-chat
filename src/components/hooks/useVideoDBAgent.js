@@ -78,6 +78,7 @@ export function useVideoDBAgent(config) {
     sessionId: null,
     videoId: null,
     collectionId: "default",
+    isLoadingSession: false,
   });
   const configStatus = ref(null);
 
@@ -518,19 +519,20 @@ const uploadMedia = async (uploadData) => {
       fetchPastMessages = false;
     }
     if (debug) console.log("debug :videodb-chat session loading", sessionId);
+    
     session.sessionId = sessionId;
+    Object.keys(conversations).forEach((key) => delete conversations[key]);
+
     if (!fetchPastMessages) {
-      Object.keys(conversations).forEach((key) => delete conversations[key]);
+      session.isLoadingSession = false;
     } else {
+      session.isLoadingSession = true;
       fetchSession(sessionId).then((res) => {
         if (debug) console.log("debug :videodb-chat session loaded", res);
         if (res.status === "success") {
           session.videoId = res.data.video_id || null;
           session.collectionId =
             res.data.collection_id || session.collectionId || null;
-          Object.keys(conversations).forEach(
-            (key) => delete conversations[key],
-          );
           // Populate conversations with fetched data
           if (res.data.conversation) {
             res.data.conversation.forEach((message) => {
@@ -545,6 +547,10 @@ const uploadMedia = async (uploadData) => {
             });
           }
         }
+        session.isLoadingSession = false;
+      }).catch((error) => {
+        console.error("Error loading session:", error);
+        session.isLoadingSession = false;
       });
     }
   };

@@ -17,7 +17,6 @@
       ]"
     >
       <span class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-gap-6 vdb-c-truncate">
-        <SpinnerIcon v-if="session.isUploading" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
         <template v-if="isEditing">
           <input
             :id="`edit-input-${session.session_id}`"
@@ -60,8 +59,10 @@
           </span>
         </template>
       </span>
+      <SpinnerIcon v-if="session.isUploading" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
+      <SuccessIcon v-else-if="session.uploadComplete" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
       <button
-        v-if="(hovered || (showOptions && !isActive && !isEditing)) && !isEditing"
+        v-else-if="(hovered || (showOptions && !isActive && !isEditing)) && !isEditing"
         ref="optionsButton"
         @click.stop="handleOptionsClick"
         class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-6 vdb-c-p-4 vdb-c-transition-all vdb-c-duration-200"
@@ -102,6 +103,7 @@
 import { ref, watch, nextTick, computed } from 'vue';
 import ThreeDotsIcon from './icons/ThreeDotsIcon.vue';
 import SpinnerIcon from './icons/SpinnerIcon.vue';
+import SuccessIcon from './icons/SuccessIcon.vue';
 import DeleteSessionModal from './DeleteSessionModal.vue';
 import ShareSessionModal from './ShareSessionModal.vue';
 import SessionOptionsMenu from './SessionOptionsMenu.vue';

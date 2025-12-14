@@ -1,6 +1,6 @@
 <template>
   <div
-    class="vdb-c-group vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-p-12"
+    class="vdb-c-group vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-p-6"
     :class="{
       'vdb-c-border vdb-c-border-[#EFEFEF]': focused,
       'vdb-c-border vdb-c-border-[#E02424] vdb-c-bg-[#FDF2F2]': file.status === 'failure',

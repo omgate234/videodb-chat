@@ -1,6 +1,6 @@
 <template>
   <div
-    class="vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-p-12 vdb-c-transition-colors"
+    class="vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-p-6 vdb-c-transition-colors"
     :class="[
       fullWidth ? 'vdb-c-w-full' : 'vdb-c-w-[238px] vdb-c-min-w-[238px]',
       {

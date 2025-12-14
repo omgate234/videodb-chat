@@ -18,15 +18,15 @@
           <folder-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]" />
           <span class="vdb-c-truncate">{{ breadcrumbCollectionName || 'Collection' }}</span>
         </button>
-        <span v-if="breadcrumbVideoId" class="vdb-c-text-[15px] vdb-c-text-[#1E1E1E]"
+        <span v-if="breadcrumbSessionName" class="vdb-c-text-[15px] vdb-c-text-[#1E1E1E]"
           ><chevron-right-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]"
         /></span>
         <span
-          v-if="breadcrumbVideoId"
+          v-if="breadcrumbSessionName"
           class="vdb-c-truncate vdb-c-text-[15px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-[#1E1E1E]"
-          :title="breadcrumbVideoId"
+          :title="breadcrumbSessionName"
         >
-          {{ breadcrumbVideoId }}
+          {{ breadcrumbSessionName }}
         </span>
       </div>
 
@@ -72,8 +72,37 @@
             v-else
             class="vdb-c-flex vdb-c-min-h-0 vdb-c-flex-1 vdb-c-flex-col vdb-c-overflow-hidden"
           >
+            <!-- Loading State -->
+            <div
+              v-if="showLoadingState"
+              class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-bg-white vdb-c-px-60 vdb-c-pb-20 vdb-c-pt-16"
+            >
+              <div
+                class="vdb-c-flex vdb-c-w-[268px] vdb-c-flex-col vdb-c-items-center vdb-c-gap-20"
+              >
+                <div class="vdb-c-h-40 vdb-c-w-40 vdb-c-shrink-0 vdb-c-overflow-clip">
+                  <spinner-icon class="vdb-c-h-full vdb-c-w-full" />
+                </div>
+                <div
+                  class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-4 vdb-c-text-center"
+                >
+                  <p
+                    class="vdb-c-w-full vdb-c-text-[16px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1E1E1E]"
+                  >
+                    Preparing the chat session
+                  </p>
+                  <p
+                    class="vdb-c-w-full vdb-c-text-[12px] vdb-c-font-normal vdb-c-leading-[20px] vdb-c-text-[#969696]"
+                  >
+                    We should be ready in a few seconds!
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <!-- Chat messages (scrollable area) -->
             <div
+              v-else
               ref="chatWindowRef"
               class="scrollbar-hide vdb-c-min-h-0 vdb-c-flex-1 vdb-c-overflow-y-auto"
               @scroll="handleScroll"
@@ -134,6 +163,7 @@ import ShareIcon from '../../icons/Share.vue';
 import FolderIcon from '../../chat/v2/icons/FolderIcon.vue';
 import ChevronRightIcon from '../../chat/v2/icons/ChevronRightIcon.vue';
 import UploadIcon from '../../chat/v2/icons/UploadIcon.vue';
+import SpinnerIcon from '../../chat/v2/icons/SpinnerIcon.vue';
 
 const props = defineProps({
   context: {
@@ -172,11 +202,19 @@ const {
   selectedCollectionId,
   showChatInput = true,
   chatInputPlaceholder = 'Ask Director',
+  isLoadingSession,
 } = injectedContext || {};
 
 const chatWindowRef = ref(null);
 const isScrolled = injectedContext?.isScrolled || ref(false);
 const showShareModal = ref(false);
+
+const showLoadingState = computed(() => {
+  return (
+    isLoadingSession?.value &&
+    (!conversations?.value || Object.keys(conversations.value).length === 0)
+  );
+});
 
 const sessionIdValue = computed(() => sessionIdRef?.value || '');
 const breadcrumbCollectionId = computed(() => {
@@ -188,7 +226,12 @@ const breadcrumbCollectionName = computed(() => {
   const name = activeCollectionData?.value?.name || activeCollectionData?.value?.title;
   return name || breadcrumbCollectionId.value || '';
 });
-const breadcrumbVideoId = computed(() => videoIdRef?.value || activeVideoData?.value?.id || '');
+const breadcrumbSessionName = computed(() => {
+  const sid = sessionIdValue.value;
+  if (!sid || !sessions?.value) return '';
+  const match = sessions.value.find((s) => s.session_id === sid);
+  return match?.name || '';
+});
 
 const isCurrentSessionPublic = computed(() => {
   const sid = sessionIdValue.value;
