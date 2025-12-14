@@ -1,47 +1,47 @@
 <template>
-  <!-- Backdrop -->
+  <!-- Full Screen Overlay -->
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-[1000] vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-bg-vdb-darkishgrey/95"
+      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-[1000] vdb-c-flex vdb-c-flex-col vdb-c-bg-[#3D3D3D]"
       @click.self="handleClose"
     >
-      <!-- Modal Content -->
+      <!-- Top Bar with Title and Actions -->
       <div
-        class="vdb-c-max-w-4xl vdb-c-relative vdb-c-max-h-[90vh] vdb-c-w-[80%] vdb-c-rounded-20 vdb-c-bg-white vdb-c-p-24 vdb-c-shadow-4"
+        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-px-24 vdb-c-py-20"
       >
-        <!-- Close Button -->
-        <button
-          @click="handleClose"
-          class="vdb-c-absolute vdb-c-left-24 vdb-c-top-24 vdb-c-flex vdb-c-h-32 vdb-c-w-32 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-gray-100 vdb-c-transition-colors hover:vdb-c-bg-gray-200"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+        <!-- Left: Close Button and Title -->
+        <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-16">
+          <!-- Close Button -->
+          <button
+            @click="handleClose"
+            class="vdb-c-flex vdb-c-h-24 vdb-c-w-24 vdb-c-items-center vdb-c-justify-center vdb-c-transition-opacity hover:vdb-c-opacity-70"
           >
-            <path
-              d="M12 4L4 12M4 4L12 12"
-              stroke="#1E1E1E"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </button>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="#FFFFFF"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
 
-        <!-- Title and Actions Row -->
-        <div class="vdb-c-mb-20 vdb-c-flex vdb-c-items-center vdb-c-justify-between">
           <!-- Title (editable) -->
-          <div class="vdb-c-ml-48 vdb-c-flex-1">
+          <div class="vdb-c-flex vdb-c-items-center">
             <template v-if="isEditingTitle">
               <input
                 :id="`edit-title-input-${item.id}`"
                 v-model="editingTitle"
                 type="text"
-                class="vdb-selection-orange vdb-c-text-16 vdb-c-w-full vdb-c-rounded-6 vdb-c-px-12 vdb-c-py-6 vdb-c-font-medium vdb-c-text-vdb-darkishgrey vdb-c-outline-none focus:vdb-c-border-vdb-darkorange"
+                class="vdb-selection-orange vdb-c-max-w-[50vw] vdb-c-rounded-6 vdb-c-bg-transparent vdb-c-px-8 vdb-c-py-4 vdb-c-text-[16px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-white vdb-c-outline-none focus:vdb-c-bg-white/10"
                 @click.stop
                 @keydown.enter.prevent="handleSaveTitle"
                 @keydown.esc.stop="handleCancelTitle"
@@ -50,58 +50,75 @@
             </template>
             <template v-else>
               <h2
-                class="vdb-c-text-20 vdb-c-cursor-pointer vdb-c-font-semibold vdb-c-text-vdb-darkishgrey"
+                class="vdb-c-cursor-pointer vdb-c-text-[16px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-white"
                 @dblclick.stop="handleStartEditingTitle"
                 title="Double-click to rename"
               >
                 {{ item.name }}
               </h2>
+              <button
+                @click="handleStartEditingTitle"
+                class="vdb-c-ml-8 vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center vdb-c-transition-opacity hover:vdb-c-opacity-70"
+              >
+                <EditIcon :stroke-color="'#FFFFFF'" />
+              </button>
             </template>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
-            <button
-              @click="handleChatWithVideo"
-              class="vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-16 vdb-c-py-8 vdb-c-transition-colors hover:vdb-c-bg-roy"
-            >
-              <ChatIcon class="vdb-c-h-16 vdb-c-w-16 vdb-c-text-[#1E1E1E]" />
-              <span class="vdb-c-text-14 vdb-c-font-medium vdb-c-text-black">Chat with video</span>
-            </button>
-
-            <button
-              @click="copyId(item.id)"
-              class="vdb-c-flex vdb-c-h-40 vdb-c-w-40 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-roy"
-              title="Copy ID"
-            >
-              <CopyIcon fill="#1E1E1E" />
-            </button>
-
-            <button
-              @click="handleDownload"
-              class="vdb-c-flex vdb-c-h-40 vdb-c-w-40 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-roy"
-              title="Download"
-            >
-              <DownloadIcon />
-            </button>
-
-            <button
-              @click="handleDelete"
-              class="vdb-c-flex vdb-c-h-40 vdb-c-w-40 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-red-200"
-              title="Delete"
-            >
-              <TrashIcon :stroke-color="'#E2462C'" />
-            </button>
           </div>
         </div>
 
-        <!-- Video Player -->
+        <!-- Right: Action Buttons -->
+        <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
+          <!-- Chat with video button -->
+          <button
+            @click="handleChatWithVideo"
+            class="vdb-c-flex vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-8 vdb-c-border vdb-c-border-white/20 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[#1E1E1E] vdb-c-transition-colors hover:vdb-c-bg-white/90"
+          >
+            <ChatIcon class="vdb-c-h-20 vdb-c-w-20" />
+            <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-[#1E1E1E]"
+              >Chat with video</span
+            >
+          </button>
+
+          <!-- Copy ID button -->
+          <button
+            @click="copyId(item.id)"
+            class="vdb-c-flex vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-white/20 vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-white/90"
+            title="Copy ID"
+          >
+            <CopyIcon fill="#1E1E1E" />
+          </button>
+
+          <!-- Download button -->
+          <button
+            @click="handleDownload"
+            class="vdb-c-flex vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-white/20 vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-white/90"
+            title="Download"
+          >
+            <DownloadIcon />
+          </button>
+
+          <!-- Delete button -->
+          <button
+            @click="handleDelete"
+            class="vdb-c-flex vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-white/20 vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-red-100"
+            title="Delete"
+          >
+            <TrashIcon :stroke-color="'#E2462C'" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Video Player Container -->
+      <div
+        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-px-48 vdb-c-pb-48"
+      >
         <div
-          class="vdb-c-relative vdb-c-aspect-video vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
+          class="vdb-c-relative vdb-c-w-full vdb-c-max-w-[1440px] vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
+          style="aspect-ratio: 16/9"
         >
           <div
             v-if="item.stream_url"
-            class="video-player-wrapper vdb-c-relative vdb-c-h-full vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
+            class="video-player-wrapper vdb-c-relative vdb-c-h-full vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-10 vdb-c-bg-black"
           >
             <VideoDBPlayer
               :stream-url="item.stream_url"
@@ -114,13 +131,6 @@
                   class="play-button vdb-c-absolute vdb-c-left-1/2 vdb-c-top-1/2 vdb-c-flex vdb-c-h-48 vdb-c-w-48 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all vdb-c-duration-300"
                 >
                 </BigCenterButton>
-
-                <!-- Duration Pill - Bottom Right -->
-                <div
-                  class="vdb-c-absolute vdb-c-bottom-8 vdb-c-right-8 vdb-c-z-10 vdb-c-inline-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-6 vdb-c-rounded-20 vdb-c-bg-black/50 vdb-c-px-6 vdb-c-py-4 vdb-c-text-right vdb-c-text-xs vdb-c-font-medium vdb-c-leading-normal vdb-c-text-white"
-                >
-                  {{ formatDuration(item.length) }}
-                </div>
               </template>
             </VideoDBPlayer>
           </div>
@@ -128,7 +138,7 @@
           <!-- Fallback for no stream_url -->
           <div
             v-else
-            class="video-thumbnail-wrapper vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
+            class="video-thumbnail-wrapper vdb-c-relative vdb-c-h-full vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
           >
             <div
               v-if="item.thumbnail_url"
@@ -187,6 +197,7 @@ import CopyIcon from '../icons/CopyIcon.vue';
 import DownloadIcon from '../icons/DownloadIcon.vue';
 import TrashIcon from '../icons/TrashIcon.vue';
 import ChatIcon from '../icons/ChatIcon.vue';
+import EditIcon from '../icons/EditIcon.vue';
 
 const props = defineProps({
   isOpen: {

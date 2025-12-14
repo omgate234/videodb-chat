@@ -50,45 +50,35 @@ export function useAssetFilters(assets, selectedCollection, activeTab, sortState
   /**
    * Sort assets based on sort state
    */
-  function sortAssets(list, sortState) {
+  function sortAssets(list, sortValue) {
+    if (!sortValue) return list;
+    
     const sorted = [...list];
 
     // Alphabetical sorting
-    if (sortState.alphabetical) {
+    if (sortValue === 'az' || sortValue === 'za') {
       sorted.sort((a, b) => {
         const nA = (a.name || '').toLowerCase();
         const nB = (b.name || '').toLowerCase();
-        return sortState.alphabetical === 'az'
-          ? nA.localeCompare(nB)
-          : nB.localeCompare(nA);
+        return sortValue === 'az' ? nA.localeCompare(nB) : nB.localeCompare(nA);
       });
     }
 
     // Duration sorting
-    if (sortState.duration) {
+    if (sortValue === 'short_long' || sortValue === 'long_short') {
       sorted.sort((a, b) => {
         const durationA = a.duration || 0;
         const durationB = b.duration || 0;
-        if (sortState.duration === 'short_long') {
-          return durationA - durationB;
-        } else if (sortState.duration === 'long_short') {
-          return durationB - durationA;
-        }
-        return 0;
+        return sortValue === 'short_long' ? durationA - durationB : durationB - durationA;
       });
     }
 
     // File size sorting
-    if (sortState.fileSize) {
+    if (sortValue === 'small_large' || sortValue === 'large_small') {
       sorted.sort((a, b) => {
         const sizeA = a.size || a.file_size || 0;
         const sizeB = b.size || b.file_size || 0;
-        if (sortState.fileSize === 'small_large') {
-          return sizeA - sizeB;
-        } else if (sortState.fileSize === 'large_small') {
-          return sizeB - sizeA;
-        }
-        return 0;
+        return sortValue === 'small_large' ? sizeA - sizeB : sizeB - sizeA;
       });
     }
 

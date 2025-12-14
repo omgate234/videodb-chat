@@ -209,11 +209,32 @@
       <!-- Fixed Chat Input at the bottom -->
       <ShowMoreChatInput :context="context" />
     </div>
+
+    <!-- Delete Collection Modal -->
+    <DeleteCollectionModal
+      :is-open="showDeleteCollectionModal"
+      :collection-name="collectionToDelete?.name || ''"
+      :total-files="totalFilesCount"
+      @close="cancelDeleteCollection"
+      @delete="confirmDeleteCollection"
+    />
+
+    <NotificationCenter ref="notificationCenterRef" />
   </div>
 </template>
 
 <script setup>
-import { inject, computed, ref, reactive, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import {
+  inject,
+  computed,
+  ref,
+  reactive,
+  watch,
+  nextTick,
+  onMounted,
+  onBeforeUnmount,
+  markRaw,
+} from 'vue';
 import UploadIcon from '../../chat/v2/icons/UploadIcon.vue';
 import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 import FolderIcon from '../../chat/v2/icons/FolderIcon.vue';
@@ -229,6 +250,9 @@ import EmptyFolderIcon from '../../chat/v2/icons/EmptyFolderIcon.vue';
 import { useAssetSearch } from '../assets/hooks/useAssetSearch.js';
 import { useAssetFilters } from '../assets/hooks/useAssetFilters.js';
 import ShowMoreChatInput from './components/ShowMoreChatInput.vue';
+import DeleteCollectionModal from './DeleteCollectionModal.vue';
+import NotificationCenter from '../../chat/elements/NotificationCenter.vue';
+import ErrorIcon from '../../chat/v2/icons/ErrorIcon.vue';
 
 const props = defineProps({
   context: {
@@ -253,7 +277,7 @@ const {
   configStatus = null,
   isSetupComplete = false,
   handleUpdateCollectionName,
-  promptDeleteCollection,
+  deleteCollection,
   fetchCollectionVideos,
   fetchCollectionAudios,
   fetchCollectionImages,
@@ -267,6 +291,9 @@ const {
 } = context || {};
 
 const showMore = ref(false);
+const showDeleteCollectionModal = ref(false);
+const collectionToDelete = ref(null);
+const notificationCenterRef = ref(null);
 
 const uploadDisabled = computed(() => !(configStatus !== null && isSetupComplete));
 const uploadIconClass = computed(() =>
@@ -350,9 +377,41 @@ const handleCancel = () => {
 
 const handleDeleteCollection = (collection) => {
   showCollectionOptions.value = false;
-  if (promptDeleteCollection && collection) {
-    promptDeleteCollection(collection);
+  collectionToDelete.value = collection;
+  showDeleteCollectionModal.value = true;
+};
+
+const confirmDeleteCollection = async () => {
+  if (!collectionToDelete.value) return;
+
+  try {
+    if (deleteCollection) {
+      await deleteCollection(collectionToDelete.value.id);
+      if (actions?.goToDefault) {
+        actions.goToDefault();
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting collection:', error);
+    if (notificationCenterRef.value) {
+      notificationCenterRef.value.addNotification(
+        'Unable to delete the collection. Please try again.',
+        {
+          type: 'error',
+          icon: markRaw(ErrorIcon),
+          duration: 5000,
+        }
+      );
+    }
+  } finally {
+    showDeleteCollectionModal.value = false;
+    collectionToDelete.value = null;
   }
+};
+
+const cancelDeleteCollection = () => {
+  showDeleteCollectionModal.value = false;
+  collectionToDelete.value = null;
 };
 
 // Assets section state
@@ -509,6 +568,21 @@ const displayedAssets = computed(() => {
 // Check if there are any assets
 const hasAssets = computed(() => {
   return combinedAssets.value.length > 0;
+});
+
+// Total files count for delete modal
+const totalFilesCount = computed(() => {
+  if (!collectionToDelete.value) return 0;
+
+  const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
+  const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
+  const images = activeCollectionImages?.value || activeCollectionImages || [];
+
+  return (
+    (Array.isArray(videos) ? videos.length : 0) +
+    (Array.isArray(audios) ? audios.length : 0) +
+    (Array.isArray(images) ? images.length : 0)
+  );
 });
 
 // Get image URL helper

@@ -3,14 +3,19 @@
     <button
       @click="$emit('toggle')"
       :class="[
-        'vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-8 vdb-c-border vdb-c-px-12 vdb-c-py-8 vdb-c-text-body vdb-c-font-medium vdb-c-text-kilvish-900 hover:vdb-c-bg-roy',
-        isOpen ? 'vdb-c-border-roy vdb-c-bg-roy' : 'vdb-c-border-[#B9B9B9] vdb-c-bg-white',
+        'vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-8 vdb-c-border vdb-c-px-[9px] vdb-c-py-[9px] vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-transition-colors',
+        hasActiveFilters
+          ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3] vdb-c-text-[#821F0C]'
+          : isOpen
+            ? 'vdb-c-border-[#B9B9B9] vdb-c-bg-[#EFEFEF] vdb-c-text-[#000000]'
+            : 'vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-text-[#000000]',
       ]"
     >
       <span>Filter by</span>
       <ChevronDownIcon
         :class="[
-          'vdb-c-h-20 vdb-c-w-20 vdb-c-text-vdb-darkishgrey vdb-c-transition-transform vdb-c-duration-200',
+          'vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-transition-transform vdb-c-duration-200',
+          hasActiveFilters ? 'vdb-c-text-[#821F0C]' : 'vdb-c-text-[#1E1E1E]',
           isOpen ? 'vdb-c-rotate-180' : '',
         ]"
       />
@@ -88,6 +93,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import ChevronDownIcon from '../../chat/v2/icons/ChevronDownIcon.vue';
 import CheckboxOption from './CheckboxOption.vue';
 
@@ -100,6 +106,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['toggle', 'update:modelValue']);
+
+// Check if any filter option is selected
+const hasActiveFilters = computed(() => {
+  return Object.values(props.modelValue).some((value) => value === true);
+});
 
 const updateFilter = (key, value) => {
   props.modelValue[key] = value;

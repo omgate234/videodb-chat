@@ -96,7 +96,7 @@
           "
           @click="handleCreate"
         >
-          Create
+          {{ isFirstCollection ? 'Next' : 'Create' }}
         </button>
       </footer>
     </div>
@@ -113,6 +113,10 @@ const DESCRIPTION_LIMIT = 250;
 
 const props = defineProps({
   showDialog: {
+    type: Boolean,
+    default: false,
+  },
+  isFirstCollection: {
     type: Boolean,
     default: false,
   },

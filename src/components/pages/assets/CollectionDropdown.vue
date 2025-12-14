@@ -4,7 +4,9 @@
       @click="$emit('toggle')"
       :class="[
         'vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-8 vdb-c-border vdb-c-px-12 vdb-c-py-8 vdb-c-text-body vdb-c-font-medium vdb-c-text-kilvish-900 hover:vdb-c-bg-roy',
-        isOpen ? 'vdb-c-border-roy vdb-c-bg-roy' : 'vdb-c-border-[#B9B9B9] vdb-c-bg-white',
+        isOpen
+          ? 'vdb-c-border-[#B9B9B9] vdb-c-bg-[#EFEFEF]'
+          : 'vdb-c-border-[#EFEFEF] vdb-c-bg-white',
       ]"
     >
       <FolderIcon class="vdb-c-h-16 vdb-c-w-16 vdb-c-text-kilvish-500" />

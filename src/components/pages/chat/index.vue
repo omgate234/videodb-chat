@@ -111,23 +111,7 @@
     </section>
 
     <!-- Chat Input - Fixed at bottom -->
-    <div
-      v-if="showChatInput"
-      class="vdb-c-chat-input-container vdb-c-flex-shrink-0 vdb-c-transition-all vdb-c-duration-300 vdb-c-ease-in-out"
-      :class="{
-        'vdb-c-pointer-events-none vdb-c-opacity-20': !(configStatus !== null && isSetupComplete),
-      }"
-    >
-      <chat-input
-        ref="chatInputRef"
-        :agents="agents || []"
-        :input-disabled="chatLoading"
-        :placeholder="chatInputPlaceholder"
-        :context-data="activeVideoData || activeCollectionData"
-        @on-submit="handleAddMessage"
-        @tag-agent="handleTagAgent($event, false)"
-      />
-    </div>
+    <ShowMoreChatInput v-if="showChatInput" :context="injectedContext" />
 
     <ShareSessionModal
       :is-open="showShareModal"
@@ -140,9 +124,9 @@
 </template>
 
 <script setup>
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, ref, watch } from 'vue';
 
-import ChatInput from '../../chat/ChatInput.vue';
+import ShowMoreChatInput from '../collection/components/ShowMoreChatInput.vue';
 import ChatMessageContainer from '../../chat/ChatMessageContainer.vue';
 import SetupScreen from '../../chat/elements/SetupScreen.vue';
 import ShareSessionModal from '../../chat/v2/ShareSessionModal.vue';
@@ -191,7 +175,6 @@ const {
 } = injectedContext || {};
 
 const chatWindowRef = ref(null);
-const chatInputRef = ref(null);
 const isScrolled = injectedContext?.isScrolled || ref(false);
 const showShareModal = ref(false);
 

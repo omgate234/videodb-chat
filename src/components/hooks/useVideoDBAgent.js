@@ -66,7 +66,7 @@ const apiRequest = async (rootUrl, endpoint, options = {}) => {
 };
 
 export function useVideoDBAgent(config) {
-  const { debug = false, socketUrl, httpUrl } = config;
+  const { debug = false, socketUrl, httpUrl, dbUrl, apiKey } = config;
   if (debug) console.log("debug :videodb-chat config", config);
   const socket = io(socketUrl);
 
@@ -129,26 +129,199 @@ export function useVideoDBAgent(config) {
   const fetchAllAgents = async () => fetchData(httpUrl, "/agent");
   const fetchConfigStatus = async () => fetchData(httpUrl, "/config/check");
 
-  const uploadMedia = async (uploadData) => {
-    const { source, sourceType, collectionId } = uploadData;
-    if (sourceType === "file") {
-      const formData = new FormData();
-      formData.append("file", source);
+  const getFileType = (file) => {
+    if (!file || !file.type) {
+      return null;
+    }
 
-      return fetch(`${httpUrl}/videodb/collection/${collectionId}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-    } else if (sourceType === "url") {
-      return fetch(`${httpUrl}/videodb/collection/${collectionId}/upload`, {
+    const mimeType = file.type.toLowerCase();
+
+    if (mimeType.startsWith("image/")) {
+      return "image";
+    } else if (mimeType.startsWith("video/")) {
+      return "video";
+    } else if (mimeType.startsWith("audio/")) {
+      return "audio";
+    }
+
+    return null;
+  };
+
+  const getMediaTypeFromUrl = async (url) => {
+  const res = await fetch(url, { method: "HEAD" });
+  const contentType = res.headers.get("content-type");
+
+  if (!contentType) return "unknown";
+
+  if (contentType.startsWith("image/")) return "image";
+  if (contentType.startsWith("video/")) return "video";
+  if (contentType.startsWith("audio/")) return "audio";
+
+  return "unknown";
+};
+
+
+
+
+
+const uploadMedia = async (uploadData) => {
+  const { source, sourceType, collectionId } = uploadData;
+  if (sourceType === "file") {
+    const formData = new FormData();
+    formData.append("file", source);
+
+    const file = source;
+    const mediaType = file.type.split("/")[0];
+    const name = file.name.split(".")[0];
+    const res = await fetch(
+      `${dbUrl}/collection/${collectionId}/upload_url/`,
+      {
+        method: "GET",
+        headers: new Headers({
+          "x-access-token": apiKey,
+        }),
+      }
+    );
+    const json = await res.json();
+    const presignedUrl = json.data?.upload_url;
+    if (!presignedUrl) throw new Error("Failed to get upload URL");
+
+    await fetch(presignedUrl, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (mediaType === "video") {
+      return uploadVideo(presignedUrl);
+    }
+
+    return fetch(`${httpUrl}/videodb/collection/${collectionId}/upload`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        source: presignedUrl,
+        source_type: "url",
+        media_type: mediaType,
+        name: name,
+      }),
+    });
+  } else if (sourceType === "url") {
+    const mediaType = await getMediaTypeFromUrl(source.url);
+    if (mediaType === "video") {
+      return uploadVideo(source.url);
+    }
+
+    return fetch(`${httpUrl}/videodb/collection/${collectionId}/upload`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        source: source.url,
+        source_type: sourceType,
+        media_type: mediaType,
+      }),
+    });
+  }
+};
+
+  const uploadVideo = async (videoUrl) => {
+    try {
+      const ingestResponse = await fetch(`${httpUrl}/auto_indexer/ingest`, {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ source: source.url, source_type: sourceType }),
+        body: JSON.stringify({
+          video_url: videoUrl,
+        }),
       });
+
+      if (!ingestResponse.ok) {
+        const errorData = await ingestResponse.json();
+        throw new Error(errorData.message || "Failed to ingest video");
+      }
+
+      const ingestData = await ingestResponse.json();
+      const requestId = ingestData.request_id;
+
+      if (!requestId) {
+        throw new Error("No request_id received from ingest endpoint");
+      }
+
+      const result = await pollVideoUpload(requestId);
+      return { ok: true, status: result.status, data: result };
+    } catch (error) {
+      if (debug) console.error("debug :videodb-chat error uploading video", error);
+      throw error;
     }
+  };
+
+  const pollVideoUpload = async (requestId, maxAttempts = 450, pollInterval = 2000) => {
+    let attempts = 0;
+    let lastStatusData = null;
+
+    while (attempts < maxAttempts) {
+      try {
+        const statusResponse = await fetch(
+          `${httpUrl}/auto_indexer/status?request_id=${requestId}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!statusResponse.ok) {
+          throw new Error("Failed to fetch upload status");
+        }
+
+        const statusData = await statusResponse.json();
+        lastStatusData = statusData;
+
+        if (statusData.status === "READY") {
+          return {
+            status: "READY",
+            request_id: requestId,
+            video_id: statusData.media_id,
+            audio_id: statusData.audio_id,
+            tasks: statusData.tasks,
+          };
+        } else if (statusData.status === "FAILED" || statusData.status === "ERROR") {
+          throw new Error(
+            `Video upload failed: ${statusData.error || "Unknown error"}`
+          );
+        } else if (statusData.status === "PROCESSING") {
+          attempts++;
+          await new Promise((resolve) => setTimeout(resolve, pollInterval));
+          continue;
+        } else {
+          throw new Error(`Unknown status: ${statusData.status}`);
+        }
+      } catch (error) {
+        if (debug)
+          console.error("debug :videodb-chat error polling upload status", error);
+        throw error;
+      }
+    }
+
+    if (lastStatusData?.media_id || lastStatusData?.audio_id) {
+      return {
+        status: "READY",
+        request_id: requestId,
+        video_id: lastStatusData.media_id,
+        audio_id: lastStatusData.audio_id,
+        tasks: lastStatusData.tasks,
+      };
+    }
+
+    throw new Error("Video upload polling timeout - exceeded maximum attempts");
   };
 
   const generateAudioUrl = async (collectionId, audioId) => {
@@ -849,6 +1022,9 @@ export function useVideoDBAgent(config) {
     deleteImage,
     getVideoDownloadUrl,
     uploadMedia,
+    uploadVideo,
+    pollVideoUpload,
+    getFileType,
     generateImageUrl,
     generateAudioUrl,
     makeSessionPublic,

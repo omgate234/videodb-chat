@@ -3,14 +3,19 @@
     <button
       @click="$emit('toggle')"
       :class="[
-        'vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-8 vdb-c-border vdb-c-px-12 vdb-c-py-8 vdb-c-text-body vdb-c-font-medium vdb-c-text-kilvish-900 hover:vdb-c-bg-roy',
-        isOpen ? 'vdb-c-border-roy vdb-c-bg-roy' : 'vdb-c-border-[#B9B9B9] vdb-c-bg-white',
+        'vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-8 vdb-c-border vdb-c-px-[9px] vdb-c-py-[9px] vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-transition-colors',
+        hasActiveSort
+          ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3] vdb-c-text-[#821F0C]'
+          : isOpen
+            ? 'vdb-c-border-[#B9B9B9] vdb-c-bg-[#EFEFEF] vdb-c-text-[#000000]'
+            : 'vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-text-[#000000]',
       ]"
     >
       <span>Sort by</span>
       <ChevronDownIcon
         :class="[
-          'vdb-c-h-20 vdb-c-w-20 vdb-c-text-vdb-darkishgrey vdb-c-transition-transform vdb-c-duration-200',
+          'vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-transition-transform vdb-c-duration-200',
+          hasActiveSort ? 'vdb-c-text-[#821F0C]' : 'vdb-c-text-[#1E1E1E]',
           isOpen ? 'vdb-c-rotate-180' : '',
         ]"
       />
@@ -26,18 +31,18 @@
         <TitleWithTooltip title="Alphabetical" tooltip-text="" />
         <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
           <RadioInput
-            name="alphabetical"
+            name="sort"
             value="az"
             label="A to Z"
-            :model-value="modelValue.alphabetical"
-            @update:model-value="(val) => updateCategory('alphabetical', val)"
+            :model-value="modelValue"
+            @update:model-value="updateSort"
           />
           <RadioInput
-            name="alphabetical"
+            name="sort"
             value="za"
             label="Z to A"
-            :model-value="modelValue.alphabetical"
-            @update:model-value="(val) => updateCategory('alphabetical', val)"
+            :model-value="modelValue"
+            @update:model-value="updateSort"
           />
         </div>
       </div>
@@ -47,18 +52,18 @@
         <TitleWithTooltip title="Duration" tooltip-text="" />
         <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
           <RadioInput
-            name="duration"
+            name="sort"
             value="short_long"
             label="Short to Long"
-            :model-value="modelValue.duration"
-            @update:model-value="(val) => updateCategory('duration', val)"
+            :model-value="modelValue"
+            @update:model-value="updateSort"
           />
           <RadioInput
-            name="duration"
+            name="sort"
             value="long_short"
             label="Long to Short"
-            :model-value="modelValue.duration"
-            @update:model-value="(val) => updateCategory('duration', val)"
+            :model-value="modelValue"
+            @update:model-value="updateSort"
           />
         </div>
       </div>
@@ -68,18 +73,18 @@
         <TitleWithTooltip title="File size" tooltip-text="" />
         <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
           <RadioInput
-            name="file_size"
+            name="sort"
             value="small_large"
             label="Small to Large"
-            :model-value="modelValue.fileSize"
-            @update:model-value="(val) => updateCategory('fileSize', val)"
+            :model-value="modelValue"
+            @update:model-value="updateSort"
           />
           <RadioInput
-            name="file_size"
+            name="sort"
             value="large_small"
             label="Large to Small"
-            :model-value="modelValue.fileSize"
-            @update:model-value="(val) => updateCategory('fileSize', val)"
+            :model-value="modelValue"
+            @update:model-value="updateSort"
           />
         </div>
       </div>
@@ -88,6 +93,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import ChevronDownIcon from '../../chat/v2/icons/ChevronDownIcon.vue';
 import TitleWithTooltip from '../collection/components/TitleWithTooltip.vue';
 import RadioInput from '../../chat/v2/elements/RadioInput.vue';
@@ -95,17 +101,19 @@ import RadioInput from '../../chat/v2/elements/RadioInput.vue';
 const props = defineProps({
   isOpen: Boolean,
   modelValue: {
-    type: Object,
-    default: () => ({}),
+    type: String,
+    default: '',
   },
 });
 
 const emit = defineEmits(['toggle', 'update:modelValue']);
 
-const updateCategory = (category, value) => {
-  emit('update:modelValue', {
-    ...props.modelValue,
-    [category]: value,
-  });
+// Check if any sort option is selected
+const hasActiveSort = computed(() => {
+  return Boolean(props.modelValue);
+});
+
+const updateSort = (value) => {
+  emit('update:modelValue', value);
 };
 </script>

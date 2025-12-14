@@ -142,7 +142,7 @@ const handleUploadClick = () => {
 // State
 const activeTab = ref('Video');
 const selectedCollection = ref(null);
-const sortState = ref({});
+const sortState = ref('');
 const editingAssetId = ref(null);
 const filterState = reactive({
   dur_less_1: false,
