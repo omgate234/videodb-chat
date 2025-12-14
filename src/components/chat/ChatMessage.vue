@@ -47,6 +47,8 @@
               v-if="content && content.type && Object.keys(messageHandlers).includes(content.type)"
               :is="messageHandlers[content.type]"
               :is-last-conv="isLastConv && isLastMessage"
+              :current-message-index="currentIndex"
+              :message-list="messageList"
               :content="content"
               :is-user="isUser"
               :search-term="searchTerm"

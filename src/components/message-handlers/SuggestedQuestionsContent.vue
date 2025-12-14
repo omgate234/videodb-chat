@@ -1,5 +1,6 @@
-<template v-if="isLastConv">
+<template>
   <div
+    v-if="shouldShow"
     class="vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-8 vdb-c-bg-white vdb-c-py-14 vdb-c-text-left"
   >
     <transition name="fade" mode="out-in">
@@ -62,9 +63,8 @@
 </template>
 
 <script setup>
-import { useVideoDBChat } from '../../context.js';
+import { computed } from 'vue';
 import SuggestionIcon from '../chat/v2/icons/SuggestionIcon.vue';
-import LoadingMessage from './elements/LoadingMessage.vue';
 
 const props = defineProps({
   content: {
@@ -79,12 +79,26 @@ const props = defineProps({
     type: Function,
     default: null,
   },
+  currentMessageIndex: {
+    type: Number,
+    required: true,
+  },
+  messageList: {
+    type: Array,
+    required: true,
+  },
+});
+
+const shouldShow = computed(() => {
+  const isLastMessageInConv = props.currentMessageIndex === props.messageList.length - 1;
+  return props.isLastConv && isLastMessageInConv;
 });
 
 const handleQuestionClick = (question) => {
   if (!question) return;
 
-  props.addMessage({ text: question });
+  const content = [{ type: 'text', text: question }];
+  props.addMessage({ content });
 };
 </script>
 
