@@ -1,5 +1,87 @@
 <template>
+  <!-- Empty State -->
   <div
+    v-if="shouldShowEmptyState"
+    class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-bg-white"
+  >
+    <!-- Outer Container with 40px padding -->
+    <div class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-p-[40px]">
+      <!-- Inner Bordered Container -->
+      <div
+        class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[20px] vdb-c-border-2 vdb-c-border-solid vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-[82px] vdb-c-py-[32px]"
+      >
+        <!-- Content Container -->
+        <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center">
+          <div class="vdb-c-flex vdb-c-flex-col vdb-c-items-center vdb-c-gap-[20px]">
+            <!-- Folder Icon -->
+            <div
+              class="vdb-c-relative vdb-c-flex vdb-c-h-[88px] vdb-c-w-[104px] vdb-c-items-center vdb-c-justify-center"
+            >
+              <FolderImage />
+            </div>
+
+            <!-- Copy Section -->
+            <div class="vdb-c-flex vdb-c-flex-col vdb-c-items-center">
+              <!-- Title -->
+              <h1
+                class="vdb-c-text-center vdb-c-text-[30px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-black"
+              >
+                No assets yet
+              </h1>
+            </div>
+
+            <!-- Description Text -->
+            <div class="vdb-c-flex vdb-c-w-[492px] vdb-c-flex-col vdb-c-items-center">
+              <p
+                class="vdb-c-w-full vdb-c-text-center vdb-c-text-[18px] vdb-c-font-normal vdb-c-leading-[28px] vdb-c-text-[#242424]"
+              >
+                Upload videos, images, or audio to start building your library. But first, create a
+                collection.
+              </p>
+            </div>
+
+            <!-- Create Collection Button -->
+            <button
+              @click="handleCreateCollection"
+              class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-[6px] vdb-c-rounded-[12px] vdb-c-border vdb-c-border-solid vdb-c-border-[#C14103] vdb-c-bg-[#EC5B16] vdb-c-py-[11px] vdb-c-pl-[18px] vdb-c-pr-[21px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#D65214]"
+            >
+              <div
+                class="vdb-c-flex vdb-c-h-[30px] vdb-c-w-[30px] vdb-c-items-center vdb-c-justify-center"
+              >
+                <CreateFolderIcon :fill="'white'" />
+              </div>
+              <span
+                class="vdb-c-flex vdb-c-h-[30px] vdb-c-w-[135px] vdb-c-items-center vdb-c-justify-center vdb-c-text-center vdb-c-text-[16px] vdb-c-font-semibold vdb-c-leading-normal vdb-c-text-white"
+              >
+                Create Collection
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Collection Modal -->
+    <CreateCollectionModal
+      :showDialog="showCreateCollectionModal"
+      :isFirstCollection="shouldShowEmptyState"
+      @cancel="handleCancelCreateCollection"
+      @create="handleCreateCollectionFromEmpty"
+    />
+
+    <!-- Upload Modal -->
+    <UploadModal
+      :showUploadDialog="showUploadModal"
+      :collections="collections"
+      :defaultSelectedCollectionId="newlyCreatedCollectionId"
+      @cancel-upload="handleCancelUpload"
+      @upload="handleUploadWrapper"
+    />
+  </div>
+
+  <!-- Normal Asset Library View -->
+  <div
+    v-else
     class="vdb-c-flex vdb-c-h-screen vdb-c-w-full vdb-c-flex-col vdb-c-overflow-hidden vdb-c-bg-white"
   >
     <!-- TOP HEADER -->
@@ -122,6 +204,9 @@ import FilterDropdown from './FilterDropdown.vue';
 import CollectionDropdown from './CollectionDropdown.vue';
 import EmptyFolderIcon from '../../chat/v2/icons/EmptyFolderIcon.vue';
 import UploadModal from '../../chat/v2/UploadModal.vue';
+import FolderImage from '../../chat/v2/icons/FolderImage.vue';
+import CreateFolderIcon from '../../chat/v2/icons/CreateFolderIcon.vue';
+import CreateCollectionModal from '../../chat/v2/CreateCollectionModal.vue';
 import { useAssets } from './hooks/useAssets.js';
 import { useAssetFilters } from './hooks/useAssetFilters.js';
 import { useAssetSearch } from './hooks/useAssetSearch.js';
@@ -143,7 +228,16 @@ const uploadDisabled = computed(
   () => !((configStatus?.value ?? null) !== null && isSetupComplete?.value)
 );
 
+const shouldShowEmptyState = computed(() => {
+  if (!isSetupComplete.value) {
+    return true;
+  }
+  return collections.value.length === 0;
+});
+
 const showUploadModal = ref(false);
+const showCreateCollectionModal = ref(false);
+const newlyCreatedCollectionId = ref(null);
 
 const handleUploadClick = () => {
   showUploadModal.value = true;
@@ -151,15 +245,50 @@ const handleUploadClick = () => {
 
 const handleCancelUpload = () => {
   showUploadModal.value = false;
+
+  if (newlyCreatedCollectionId.value) {
+    newlyCreatedCollectionId.value = null;
+  }
 };
 
 const handleUploadWrapper = async (uploadData) => {
   showUploadModal.value = false;
+
+  if (newlyCreatedCollectionId.value) {
+    newlyCreatedCollectionId.value = null;
+  }
+
   try {
     await context?.handleUpload(uploadData);
     await loadAllAssets();
   } catch (error) {
     console.error('Error uploading file:', error);
+  }
+};
+
+const handleCreateCollection = () => {
+  showCreateCollectionModal.value = true;
+};
+
+const handleCancelCreateCollection = () => {
+  showCreateCollectionModal.value = false;
+};
+
+const handleCreateCollectionFromEmpty = async (newCollection) => {
+  const wasEmptyState = shouldShowEmptyState.value || collections.value.length === 0;
+  showCreateCollectionModal.value = false;
+  try {
+    const createdCollection = await context?.createCollection(
+      newCollection.name,
+      newCollection.description || ' '
+    );
+
+    if (wasEmptyState) {
+      newlyCreatedCollectionId.value = createdCollection?.id;
+      showUploadModal.value = true;
+    }
+  } catch (error) {
+    console.error('Error creating collection:', error?.message || error);
   }
 };
 
