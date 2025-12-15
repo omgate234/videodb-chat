@@ -190,7 +190,7 @@
                 </button>
 
                 <!-- Options Button (Three Dots) -->
-                <div ref="menuButtonRef" class="vdb-c-relative">
+                <div ref="menuButtonRef">
                   <button
                     class="vdb-c-flex vdb-c-h-[32px] vdb-c-w-[32px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[32.143px] vdb-c-border-[1.071px] vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-p-[6px] vdb-c-transition-all hover:vdb-c-border-[#E6E6E6] hover:vdb-c-bg-vdb-lightgrey"
                     @click.stop="toggleMenu"
@@ -198,44 +198,6 @@
                   >
                     <ThreeDotsIcon />
                   </button>
-
-                  <!-- Dropdown Menu -->
-                  <ul
-                    v-if="showMenu"
-                    class="menu-dropdown vdb-c-absolute vdb-c-left-0 vdb-c-top-full vdb-c-z-[1000] vdb-c-mt-2 vdb-c-w-[200px] vdb-c-min-w-[200px] vdb-c-cursor-pointer vdb-c-rounded-12 vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
-                  >
-                    <!-- Copy Asset ID (shown when audioId exists) -->
-                    <li
-                      v-if="audioId"
-                      class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-[#efefef] vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
-                      @click.stop="copyAssetId"
-                    >
-                      <CopyIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" />
-                      <span class="vdb-c-flex-shrink-0">Copy Asset ID</span>
-                    </li>
-
-                    <!-- Add to Collection (shown when audioId doesn't exist) -->
-                    <li
-                      v-if="!audioId"
-                      class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-[#efefef] vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
-                      @click.stop="handleAddToCollection"
-                    >
-                      <FolderIcon
-                        class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0"
-                        stroke-color="#1E1E1E"
-                      />
-                      <span class="vdb-c-flex-shrink-0">Add to collection</span>
-                    </li>
-
-                    <!-- Download -->
-                    <li
-                      class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
-                      @click.stop="handleDownload"
-                    >
-                      <DownloadIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" />
-                      <span class="vdb-c-flex-shrink-0">Download</span>
-                    </li>
-                  </ul>
                 </div>
               </div>
             </div>
@@ -262,11 +224,49 @@
       </div>
       <div v-else-if="content.status === 'not_generated'" class="vdb-c-flex vdb-c-flex-col"></div>
     </transition>
+
+    <!-- Dropdown Menu (Teleported) -->
+    <Teleport to="body">
+      <ul
+        v-if="showMenu && menuPosition"
+        class="menu-dropdown vdb-c-fixed vdb-c-z-[10000] vdb-c-w-[200px] vdb-c-min-w-[200px] vdb-c-cursor-pointer vdb-c-rounded-12 vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
+        :style="{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }"
+      >
+        <!-- Copy Asset ID (shown when audioId exists) -->
+        <li
+          v-if="audioId"
+          class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
+          @click.stop="copyAssetId"
+        >
+          <CopyIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" />
+          <span class="vdb-c-flex-shrink-0">Copy Asset ID</span>
+        </li>
+
+        <!-- Add to Collection (shown when audioId doesn't exist) -->
+        <li
+          v-if="!audioId"
+          class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
+          @click.stop="handleAddToCollection"
+        >
+          <FolderIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" stroke-color="#1E1E1E" />
+          <span class="vdb-c-flex-shrink-0">Add to collection</span>
+        </li>
+
+        <!-- Download -->
+        <li
+          class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
+          @click.stop="handleDownload"
+        >
+          <DownloadIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" />
+          <span class="vdb-c-flex-shrink-0">Download</span>
+        </li>
+      </ul>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch, inject } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, inject, nextTick } from 'vue';
 import PlayIcon from '../chat/v2/icons/audio-player/PlayIcon.vue';
 import PauseIcon from '../chat/v2/icons/audio-player/PauseIcon.vue';
 import VolumeOnIcon from '../chat/v2/icons/audio-player/VolumeOnIcon.vue';
@@ -308,6 +308,7 @@ const lastVolume = ref(0.5);
 const linkCopied = ref(false);
 const showMenu = ref(false);
 const menuButtonRef = ref(null);
+const menuPosition = ref(null);
 
 const audioUrl = computed(() => {
   return props.content?.audio?.audio_url || '';
@@ -435,8 +436,16 @@ const copyAudioLink = async () => {
   }
 };
 
-const toggleMenu = () => {
+const toggleMenu = async () => {
   showMenu.value = !showMenu.value;
+  if (showMenu.value && menuButtonRef.value) {
+    await nextTick();
+    const rect = menuButtonRef.value.getBoundingClientRect();
+    menuPosition.value = {
+      top: rect.bottom + 8,
+      left: rect.left,
+    };
+  }
 };
 
 const copyAssetId = async () => {

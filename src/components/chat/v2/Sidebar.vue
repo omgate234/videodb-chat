@@ -7,7 +7,7 @@
     <div class="vdb-c-sticky vdb-c-top-0 vdb-c-z-10 vdb-c-bg-white">
       <div class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-px-10 vdb-c-pt-20">
         <div class="vdb-c-cursor-pointer">
-          <component v-if="config.icon" :is="config.icon" class="vdb-c-h-24" />
+          <component v-if="config.icon" :is="config.icon" class="vdb-c-mb-20 vdb-c-h-24" />
         </div>
       </div>
 

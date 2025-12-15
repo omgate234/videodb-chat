@@ -110,7 +110,7 @@
               class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#F5F5F5]"
             >
               <div
-                v-if="button.icon"
+                v-if="button.icon && isValidComponent(button.icon)"
                 class="vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
               >
                 <component
@@ -136,7 +136,7 @@
               class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-left vdb-c-no-underline vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#F5F5F5]"
             >
               <div
-                v-if="button.icon"
+                v-if="button.icon && isValidComponent(button.icon)"
                 class="vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
               >
                 <component
@@ -169,7 +169,7 @@
               class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#F5F5F5]"
             >
               <div
-                v-if="button.icon"
+                v-if="button.icon && isValidComponent(button.icon)"
                 class="vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
               >
                 <component
@@ -195,7 +195,7 @@
               class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-left vdb-c-no-underline vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#F5F5F5]"
             >
               <div
-                v-if="button.icon"
+                v-if="button.icon && isValidComponent(button.icon)"
                 class="vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
               >
                 <component

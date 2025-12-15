@@ -1,28 +1,21 @@
 <template>
   <div class="vdb-c-flex vdb-c-items-center vdb-c-space-x-2">
     <transition name="fade" mode="out-in">
-      <span
-        v-if="status === 'progress'"
-        class="vdb-c-text-gray-500"
-        key="progress"
-      >
+      <span v-if="status === 'progress'" class="vdb-c-text-gray-500" key="progress">
         <transition name="fade" mode="out-in">
-          <span :key="message">{{ message || "Thinking..." }}</span>
+          <span :key="message">{{ message || 'Thinking...' }}</span>
         </transition>
       </span>
       <span
         v-else-if="status === 'success'"
         :class="[
           'vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-font-semibold vdb-c-text-[#333]',
-          { 'vdb-c-text-vdb-green': isFocused },
+          { 'vdb-c-text-black': isFocused },
         ]"
         key="success"
       >
-        <CheckIcon
-          :class="{ bounce: isLastConv }"
-          :fill="isFocused ? '#53B745' : '#EC5B16'"
-        />
-        <span> {{ message || "Here is your response" }} </span>
+        <CheckIconFilled :class="{ bounce: isLastConv }" />
+        <span> {{ message || 'Here is your response' }} </span>
       </span>
       <span
         v-else-if="status === 'error'"
@@ -34,12 +27,12 @@
         ]"
         key="error"
       >
-        <span> {{ message || "An error occurred" }} </span>
+        <span> {{ message || 'An error occurred' }} </span>
       </span>
       <span v-else-if="status === 'unknown'">
         <Shape1 />
         <span class="vdb-c-font-semibold">
-          {{ message || "Here is your response" }}
+          {{ message || 'Here is your response' }}
         </span>
       </span>
     </transition>
@@ -47,17 +40,18 @@
 </template>
 
 <script setup>
-import { defineProps, ref, watch } from "vue";
+import { defineProps, ref, watch } from 'vue';
 
-import CheckIcon from "../../icons/Check.vue";
-import Shape1 from "../../icons/Shape1.vue";
-import RedExclamation from "../../icons/RedExclamation.vue";
+import CheckIcon from '../../icons/Check.vue';
+import Shape1 from '../../icons/Shape1.vue';
+import RedExclamation from '../../icons/RedExclamation.vue';
+import CheckIconFilled from '../../chat/v2/CheckIconFilled.vue';
 
 const props = defineProps({
   status: {
     type: String,
     required: true,
-    validator: (value) => ["progress", "success", "error"].includes(value),
+    validator: (value) => ['progress', 'success', 'error'].includes(value),
   },
   message: {
     type: String,
@@ -77,10 +71,10 @@ const messageKey = ref(0);
 watch(
   () => props.message,
   () => {
-    if (props.status === "progress") {
+    if (props.status === 'progress') {
       messageKey.value++;
     }
-  },
+  }
 );
 </script>
 

@@ -53,7 +53,6 @@
             :alt="imageName || 'Image'"
             class="vdb-c-max-h-full vdb-c-max-w-full vdb-c-rounded-12 vdb-c-object-contain"
           />
-          <DefaultThumbnail v-else class="vdb-c-max-h-full vdb-c-max-w-full vdb-c-rounded-12" />
         </div>
       </div>
     </div>
@@ -61,8 +60,6 @@
 </template>
 
 <script setup>
-import DefaultThumbnail from '../../../assets/DefaultThumbnail.vue';
-
 const props = defineProps({
   isOpen: {
     type: Boolean,

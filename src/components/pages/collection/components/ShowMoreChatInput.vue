@@ -206,6 +206,10 @@ const props = defineProps({
     type: Object,
     default: undefined,
   },
+  showLoadingState: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const context = props.context || inject('videodb-chat-context', {});
@@ -218,6 +222,9 @@ const collectionHasVideos = computed(() => {
 });
 
 const chatLoading = computed(() => {
+  if (!props.showLoadingState) {
+    return false;
+  }
   const conversations = context?.conversations?.value || context?.conversations || {};
   return Object.values(conversations).some((conv) =>
     Object.values(conv).some(

@@ -25,6 +25,10 @@ import TextResponse from '../message-handlers/TextResponse.vue';
 import SuggestedQuestionsContent from '../message-handlers/SuggestedQuestionsContent.vue';
 import UploadHandler from '../message-handlers/UploadHandler.vue';
 import AudioHandler from '../message-handlers/AudioHandler.vue';
+import ConfirmationHandler from '../message-handlers/ConfirmationHandler.vue';
+import EditStagesHandler from '../message-handlers/EditStagesHandler.vue';
+import CensorReportHandler from '../message-handlers/CensorReportHandler.vue';
+import PromptClipContent from '../message-handlers/prompt_clip/PromptClipContent.vue';
 import DeleteIcon from '../icons/Delete3.vue';
 
 const props = defineProps({
@@ -408,6 +412,10 @@ registerMessageHandler('image', ImageHandler);
 registerMessageHandler('suggested_questions', SuggestedQuestionsContent);
 registerMessageHandler('upload', UploadHandler);
 registerMessageHandler('audio', AudioHandler);
+registerMessageHandler('confirmation', ConfirmationHandler);
+registerMessageHandler('edit_stages', EditStagesHandler);
+registerMessageHandler('censor', CensorReportHandler);
+registerMessageHandler('prompt_clip', PromptClipContent);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
@@ -744,13 +752,10 @@ const handleAddMessage = async ({
     }
   }
 
-  // Use first video_id if videos array is provided and video_id is not set
-  const finalVideoId = video_id || (videos?.length > 0 ? videos[0].id : null);
-
   addMessage({
     content: content,
     agents: agents,
-    video_id: finalVideoId,
+    video_id: video_id,
     videos: videos,
     audios: audios,
     images: images,

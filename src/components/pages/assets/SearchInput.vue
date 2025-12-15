@@ -1,6 +1,6 @@
 <template>
   <div
-    class="vdb-c-relative vdb-c-z-[1000] vdb-c-box-border vdb-c-flex vdb-c-justify-between vdb-c-pl-2 vdb-c-text-sm"
+    class="vdb-c-relative vdb-c-box-border vdb-c-flex vdb-c-justify-between vdb-c-pl-2 vdb-c-text-sm"
   >
     <div
       ref="inputContainer"

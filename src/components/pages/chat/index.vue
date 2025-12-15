@@ -140,7 +140,7 @@
     </section>
 
     <!-- Chat Input - Fixed at bottom -->
-    <ShowMoreChatInput v-if="showChatInput" :context="injectedContext" />
+    <ShowMoreChatInput v-if="showChatInput" :context="injectedContext" :show-loading-state="true" />
 
     <ShareSessionModal
       :is-open="showShareModal"

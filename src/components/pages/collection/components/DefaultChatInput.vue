@@ -81,7 +81,7 @@
           ]"
         >
           <Tooltip
-            v-if="agent.disabled"
+            v-if="agent.disabled && !collectionHasVideos"
             text="Add or generate videos in your collection to enable this"
             class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-[calc(100%+15px)] vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
           />
@@ -133,8 +133,7 @@
           getSendButtonClasses(),
         ]"
       >
-        <AnimatedEllipsisIcon v-if="chatLoading" />
-        <SendButtonIcon v-else :fill="getSendButtonFill()" />
+        <SendButtonIcon :fill="getSendButtonFill()" />
       </button>
     </div>
 
@@ -176,7 +175,6 @@ import AudioFileDisplay from './AudioFileDisplay.vue';
 import SearchOptions from './SearchOptions.vue';
 import Tooltip from '../../../chat/v2/elements/Tooltip.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
-import AnimatedEllipsisIcon from '../../../chat/v2/icons/AnimatedEllipsisIcon.vue';
 
 const props = defineProps({
   context: {
@@ -195,12 +193,7 @@ const collectionHasVideos = computed(() => {
 });
 
 const chatLoading = computed(() => {
-  const conversations = context?.conversations?.value || context?.conversations || {};
-  return Object.values(conversations).some((conv) =>
-    Object.values(conv).some(
-      (content) => content.status === 'progress' || content.clientLoading || content.is_mock
-    )
-  );
+  return false;
 });
 
 const inputText = ref('');
@@ -314,7 +307,7 @@ const visibleAgents = computed(() => {
 });
 
 const canSend = computed(() => {
-  return inputText.value.trim().length > 0 && !chatLoading.value;
+  return inputText.value.trim().length > 0;
 });
 
 const isAgentSelected = (agent) => {
@@ -352,9 +345,6 @@ const getAgentTextClasses = (agent) => {
 };
 
 const getSendButtonClasses = () => {
-  if (chatLoading.value) {
-    return 'vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-cursor-not-allowed vdb-c-bg-[#B9B9B9]';
-  }
   if (!canSend.value) {
     return 'vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-cursor-not-allowed';
   }
@@ -362,7 +352,7 @@ const getSendButtonClasses = () => {
 };
 
 const getSendButtonFill = () => {
-  if (!canSend.value || chatLoading.value) {
+  if (!canSend.value) {
     return '#B9B9B9';
   }
   return '#EC5B16';

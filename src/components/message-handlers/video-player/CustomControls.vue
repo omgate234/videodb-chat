@@ -3,7 +3,7 @@
     class="vdb-c-absolute vdb-c-bottom-8 vdb-c-left-8 vdb-c-right-8 vdb-c-flex vdb-c-flex-col vdb-c-gap-4 vdb-c-px-1"
   >
     <!-- Progress Bar -->
-    <div class="vdb-c-relative vdb-c-h-9 vdb-c-w-full">
+    <div class="vdb-c-relative vdb-c-h-[12px] vdb-c-w-full">
       <ProgressBar :stream-url="streamUrl" />
     </div>
 
