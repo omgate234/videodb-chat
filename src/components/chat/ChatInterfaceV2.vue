@@ -24,6 +24,7 @@ import ImageHandler from '../message-handlers/ImageHandler.vue';
 import TextResponse from '../message-handlers/TextResponse.vue';
 import SuggestedQuestionsContent from '../message-handlers/SuggestedQuestionsContent.vue';
 import UploadHandler from '../message-handlers/UploadHandler.vue';
+import AudioHandler from '../message-handlers/AudioHandler.vue';
 import DeleteIcon from '../icons/Delete3.vue';
 
 const props = defineProps({
@@ -406,6 +407,7 @@ registerMessageHandler('search_results', ChatSearchResults);
 registerMessageHandler('image', ImageHandler);
 registerMessageHandler('suggested_questions', SuggestedQuestionsContent);
 registerMessageHandler('upload', UploadHandler);
+registerMessageHandler('audio', AudioHandler);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
