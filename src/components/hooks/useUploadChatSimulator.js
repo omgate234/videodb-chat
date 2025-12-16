@@ -8,14 +8,6 @@ export function useUploadChatSimulator() {
     return crypto.randomUUID();
   };
 
-  const createMockConvId = () => {
-    return String(Date.now());
-  };
-
-  const createMockMsgId = () => {
-    return String(Date.now() + Math.floor(Math.random() * 1000));
-  };
-
   const formatFileForDisplay = (file) => {
     const formatFileSize = (bytes) => {
       if (bytes === 0) return '0 B';
@@ -64,7 +56,10 @@ export function useUploadChatSimulator() {
     
     const useExistingSession = !!currentSessionId;
     const sessionId = useExistingSession ? currentSessionId : createMockSessionId();
-    const mockConvId = createMockConvId();
+    
+    const convId = Date.now();
+    const inputMsgId = convId + 1;
+    const outputMsgId = convId + 2;
 
     if (!useExistingSession) {
       // Create mock session only if no active session exists
@@ -85,9 +80,6 @@ export function useUploadChatSimulator() {
         isExistingSession: true,
       };
     }
-
-    const inputMsgId = createMockMsgId();
-    const outputMsgId = createMockMsgId();
 
     const inputContent = [];
     if (text) {
@@ -125,10 +117,10 @@ export function useUploadChatSimulator() {
       mockConversations[sessionId] = {};
     }
 
-    mockConversations[sessionId][mockConvId] = {
-      [inputMsgId]: {
-        msg_id: inputMsgId,
-        conv_id: mockConvId,
+    mockConversations[sessionId][String(convId)] = {
+      [String(inputMsgId)]: {
+        msg_id: String(inputMsgId),
+        conv_id: String(convId),
         session_id: sessionId,
         msg_type: 'input',
         content: inputContent,
@@ -136,9 +128,9 @@ export function useUploadChatSimulator() {
         agents: agents || [],
         actions: [],
       },
-      [outputMsgId]: {
-        msg_id: outputMsgId,
-        conv_id: mockConvId,
+      [String(outputMsgId)]: {
+        msg_id: String(outputMsgId),
+        conv_id: String(convId),
         session_id: sessionId,
         msg_type: 'output',
         content: [
@@ -177,7 +169,7 @@ export function useUploadChatSimulator() {
       images: [...(images || [])],
     };
 
-    const filesArray = mockConversations[sessionId][mockConvId][outputMsgId].content[0].files;
+    const filesArray = mockConversations[sessionId][String(convId)][String(outputMsgId)].content[0].files;
 
     const uploadPromises = files.map(async (file, index) => {
       try {
@@ -271,14 +263,36 @@ export function useUploadChatSimulator() {
 
     const allSuccess = filesArray.every(f => f.status === 'success');
 
+    const uploadMetadata = {
+      uploaded_files: filesArray.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        status: f.status,
+        errorMessage: f.errorMessage,
+      })),
+      upload_summary: {
+        total: filesArray.length,
+        successful: filesArray.filter(f => f.status === 'success').length,
+        failed: filesArray.filter(f => f.status === 'failure').length,
+        uploaded_files: filesArray.map(f => ({
+          name: f.name,
+          size: f.size,
+          type: f.type,
+          status: f.status,
+          errorMessage: f.errorMessage,
+        })),
+      },
+    };
+
     if (useExistingSession) {
       // For existing sessions, just update the upload status
       if (allSuccess) {
-        mockConversations[sessionId][mockConvId][outputMsgId].status = 'success';
-        mockConversations[sessionId][mockConvId][outputMsgId].content[0].status = 'success';
+        mockConversations[sessionId][String(convId)][String(outputMsgId)].status = 'success';
+        mockConversations[sessionId][String(convId)][String(outputMsgId)].content[0].status = 'success';
       } else {
-        mockConversations[sessionId][mockConvId][outputMsgId].status = 'error';
-        mockConversations[sessionId][mockConvId][outputMsgId].content[0].status = 'error';
+        mockConversations[sessionId][String(convId)][String(outputMsgId)].status = 'error';
+        mockConversations[sessionId][String(convId)][String(outputMsgId)].content[0].status = 'error';
       }
 
       mockSessions[sessionId].isUploading = false;
@@ -292,6 +306,8 @@ export function useUploadChatSimulator() {
           audios: uploadResults.audios,
           agents,
           additionalInfo,
+          uploaded_files: uploadMetadata.uploaded_files,
+          upload_summary: uploadMetadata.upload_summary,
           reset_session: false, // Keep existing session
           scroll_to_message: true, // Flag to trigger scroll after message is added
         });
@@ -309,8 +325,8 @@ export function useUploadChatSimulator() {
         mockSessions[sessionId].uploadComplete = true;
       } else {
         mockSessions[sessionId].name = 'Upload failed';
-        mockConversations[sessionId][mockConvId][outputMsgId].status = 'error';
-        mockConversations[sessionId][mockConvId][outputMsgId].content[0].status = 'error';
+        mockConversations[sessionId][String(convId)][String(outputMsgId)].status = 'error';
+        mockConversations[sessionId][String(convId)][String(outputMsgId)].content[0].status = 'error';
       }
 
       mockSessions[sessionId].isUploading = false;
@@ -323,6 +339,8 @@ export function useUploadChatSimulator() {
           audios: uploadResults.audios,
           agents,
           additionalInfo,
+          uploaded_files: uploadMetadata.uploaded_files,
+          upload_summary: uploadMetadata.upload_summary,
           reset_session: true,
         });
 

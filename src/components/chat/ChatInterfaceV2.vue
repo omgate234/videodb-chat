@@ -26,6 +26,7 @@ import SuggestedQuestionsContent from '../message-handlers/SuggestedQuestionsCon
 import UploadHandler from '../message-handlers/UploadHandler.vue';
 import AudioHandler from '../message-handlers/AudioHandler.vue';
 import ConfirmationHandler from '../message-handlers/ConfirmationHandler.vue';
+import CloneVoiceConfirmationHandler from '../message-handlers/CloneVoiceConfirmationHandler.vue';
 import EditStagesHandler from '../message-handlers/EditStagesHandler.vue';
 import CensorReportHandler from '../message-handlers/CensorReportHandler.vue';
 import PromptClipContent from '../message-handlers/prompt_clip/PromptClipContent.vue';
@@ -361,9 +362,15 @@ watch(
       }
     }
 
-    if (navState.currentPage === 'collection' && newParams?.id) {
-      collectionId.value = newParams.id;
-    } else if (navState.currentPage !== 'collection' && navState.currentPage !== 'chat') {
+    if (navState.currentPage === 'collection') {
+      if (sessionId.value) {
+        console.log('[ChatInterfaceV2] Resetting sessionId on collection page navigation');
+        sessionId.value = null;
+      }
+      if (newParams?.id) {
+        collectionId.value = newParams.id;
+      }
+    } else if (navState.currentPage !== 'chat') {
       collectionId.value = null;
     }
   },
@@ -374,7 +381,9 @@ watch(
   () => navState.currentPage,
   (newPage) => {
     if (newPage !== 'chat' && sessionId.value) {
+      console.log('[ChatInterfaceV2] Resetting sessionId because leaving chat page');
       sessionId.value = null;
+      Object.keys(agentConversations).forEach((key) => delete agentConversations[key]);
     }
   }
 );
@@ -424,6 +433,7 @@ registerMessageHandler('suggested_questions', SuggestedQuestionsContent);
 registerMessageHandler('upload', UploadHandler);
 registerMessageHandler('audio', AudioHandler);
 registerMessageHandler('confirmation', ConfirmationHandler);
+registerMessageHandler('clone_voice_confirmation', CloneVoiceConfirmationHandler);
 registerMessageHandler('edit_stages', EditStagesHandler);
 registerMessageHandler('censor', CensorReportHandler);
 registerMessageHandler('prompt_clip', PromptClipContent);
@@ -694,6 +704,8 @@ const handleAddMessage = async ({
   from_event = false,
   reset_session = false,
   scroll_to_message = false,
+  uploaded_files = null,
+  upload_summary = null,
 }) => {
   if (files?.length > 0) {
     await uploadSimulator.startUploadSession({
@@ -778,6 +790,8 @@ const handleAddMessage = async ({
     images: images,
     additional_data: additionalInfo,
     from_event: from_event,
+    uploaded_files: uploaded_files,
+    upload_summary: upload_summary,
   });
   taggedAgent.value = [];
 

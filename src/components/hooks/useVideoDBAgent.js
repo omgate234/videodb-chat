@@ -948,8 +948,11 @@ const uploadMedia = async (uploadData) => {
               (a, b) => b.created_at - a.created_at,
             );
 
-            session.sessionId = data.session_id;
-            session.name = data.name;
+            if (session.sessionId === null) {
+              session.sessionId = data.session_id;
+              session.isLoadingSession = false;
+            }
+            
           });
       }
 
@@ -966,11 +969,16 @@ const uploadMedia = async (uploadData) => {
 
   socket.on("chat", (event) => {
     if (debug) console.log("debug :videodb-chat socket emmited chat", event);
-    if (session.sessionId !== event.session_id) return;
     if (session.isConnected) {
-      const { conv_id: convId, msg_id: msgId } = event;
+      const { conv_id: convId, msg_id: msgId, session_id: sessionId } = event;
+      console.log('[useVideoDBAgent] current chats', conversations)
+      console.log('[useVideoDBAgent] new chat', event);
+      console.log("[useVideoDBAgent] current sessionId", session.sessionId);
+      if (session.sessionId !== sessionId) return;
+
+      
       if (!conversations[convId]) {
-        conversations[convId] = {};
+        return;
       }
       conversations[convId][msgId] = { sender: "assistant", ...event };
       removeClientLoadingMessage(convId);

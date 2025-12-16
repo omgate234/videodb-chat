@@ -70,7 +70,14 @@ const props = defineProps({
 
 const messages = computed(() => {
   const vals = Object.values(props.conversation);
-  return vals.filter((val) => val.sender !== 'system');
+  console.log('[ChatMessageContainer] vals', vals);
+  const filtered = vals.filter((val) => val.sender !== 'system');
+
+  return filtered.sort((a, b) => {
+    const aId = parseFloat(a.msg_id);
+    const bId = parseFloat(b.msg_id);
+    return aId - bId;
+  });
 });
 
 const messageLoading = computed(() => {
