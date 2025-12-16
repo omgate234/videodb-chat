@@ -359,7 +359,13 @@ const openCreateCollectionModal = () => {
 const handleCreateCollection = async (newCollection) => {
   showCreateCollectionModal.value = false;
   try {
-    await context?.createCollection(newCollection.name, newCollection.description || ' ');
+    const createdCollection = await context?.createCollection(
+      newCollection.name,
+      newCollection.description || ' '
+    );
+    if (createdCollection?.id) {
+      context?.handleCollectionClick(createdCollection.id);
+    }
   } catch (error) {
     console.error('Error creating collection:', error?.message || error);
   }
