@@ -28,8 +28,10 @@
       class="vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-shrink-0 vdb-c-items-center vdb-c-justify-end vdb-c-gap-8 vdb-c-bg-vdb-lightgrey vdb-c-p-10"
     >
       <div class="vdb-c-relative vdb-c-flex vdb-c-shrink-0 vdb-c-items-center vdb-c-gap-8">
-        <SecondaryButton @click="handleCancel">Cancel</SecondaryButton>
-        <PrimaryButton @click="handleConfirm">Yes, proceed</PrimaryButton>
+        <SecondaryButton @click="handleCancel" :disabled="!isInteractive">Cancel</SecondaryButton>
+        <PrimaryButton @click="handleConfirm" :disabled="!isInteractive"
+          >Yes, proceed</PrimaryButton
+        >
       </div>
     </div>
   </div>
@@ -45,6 +47,18 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  isLastConv: {
+    type: Boolean,
+    default: false,
+  },
+  currentMessageIndex: {
+    type: Number,
+    required: true,
+  },
+  messageList: {
+    type: Array,
+    required: true,
+  },
 });
 
 const context = inject('videodb-chat-context');
@@ -57,6 +71,11 @@ const formattedDescription = computed(() => {
     /\*\*(.*?)\*\*/g,
     '<span class="vdb-c-font-bold">$1</span>'
   );
+});
+
+const isInteractive = computed(() => {
+  const isLastMessageInConv = props.currentMessageIndex === props.messageList.length - 1;
+  return props.isLastConv && isLastMessageInConv;
 });
 
 const handleCancel = () => {
