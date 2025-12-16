@@ -474,9 +474,10 @@ const handleAddToCollection = async () => {
     }
 
     await handleUpload({
-      source: audioUrl.value,
+      source: { url: audioUrl.value },
       sourceType: 'url',
       collectionId: targetCollectionId,
+      mediaType: 'audio',
     });
     showMenu.value = false;
   } catch (err) {

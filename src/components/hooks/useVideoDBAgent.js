@@ -166,13 +166,13 @@ export function useVideoDBAgent(config) {
 
 
 const uploadMedia = async (uploadData) => {
-  const { source, sourceType, collectionId } = uploadData;
+  const { source, sourceType, collectionId, mediaType: providedMediaType } = uploadData;
   if (sourceType === "file") {
     const formData = new FormData();
     formData.append("file", source);
 
     const file = source;
-    const mediaType = file.type.split("/")[0];
+    const mediaType = providedMediaType || file.type.split("/")[0];
     const name = file.name.split(".")[0];
     const res = await fetch(
       `${dbUrl}/collection/${collectionId}/upload_url/`,
@@ -210,7 +210,7 @@ const uploadMedia = async (uploadData) => {
       }),
     });
   } else if (sourceType === "url") {
-    const mediaType = await getMediaTypeFromUrl(source.url);
+    const mediaType = providedMediaType || await getMediaTypeFromUrl(source.url);
     if (mediaType === "video") {
       return uploadVideo(source.url);
     }

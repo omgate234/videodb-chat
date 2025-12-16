@@ -59,10 +59,13 @@
           </span>
         </template>
       </span>
-      <SpinnerIcon v-if="session.isUploading" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
+      <SpinnerIcon
+        v-if="session.isUploading"
+        class="vdb-c-size-20 vdb-c-flex-shrink-0 vdb-c-text-vdb-orange"
+      />
       <SuccessIcon v-else-if="session.uploadComplete" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
       <button
-        v-else-if="(hovered || (showOptions && !isActive && !isEditing)) && !isEditing"
+        v-else-if="(hovered || showOptions) && !isEditing"
         ref="optionsButton"
         @click.stop="handleOptionsClick"
         class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-6 vdb-c-p-4 vdb-c-transition-all vdb-c-duration-200"

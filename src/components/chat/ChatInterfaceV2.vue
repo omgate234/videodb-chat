@@ -197,6 +197,7 @@ const {
   makeSessionPublic,
   updateCollection,
   callApi,
+  generateVideoStream,
   isLoadingSession,
 } = agentHook;
 
@@ -335,14 +336,24 @@ watch(
         if (sessionId.value !== newParams.sessionId) {
           console.log('[ChatInterfaceV2] Setting sessionId to:', newParams.sessionId);
           sessionId.value = newParams.sessionId;
+
           if (!uploadSimulator.isMockSession(newParams.sessionId)) {
             console.log('[ChatInterfaceV2] Loading real session:', newParams.sessionId);
             loadSession(newParams.sessionId);
           } else {
-            console.log(
-              '[ChatInterfaceV2] Mock session detected, clearing real agent conversations'
-            );
-            Object.keys(agentConversations).forEach((key) => delete agentConversations[key]);
+            const mockSession = uploadSimulator.getMockSession(newParams.sessionId);
+            if (mockSession?.isExistingSession) {
+              console.log(
+                '[ChatInterfaceV2] Returning to existing session with upload, reloading session data'
+              );
+              // This is an existing session with upload - reload it to get the real conversations
+              loadSession(newParams.sessionId);
+            } else {
+              console.log(
+                '[ChatInterfaceV2] Pure mock session detected, clearing real agent conversations'
+              );
+              Object.keys(agentConversations).forEach((key) => delete agentConversations[key]);
+            }
           }
         }
       } else {
@@ -682,6 +693,7 @@ const handleAddMessage = async ({
   additionalInfo = null,
   from_event = false,
   reset_session = false,
+  scroll_to_message = false,
 }) => {
   if (files?.length > 0) {
     await uploadSimulator.startUploadSession({
@@ -713,6 +725,8 @@ const handleAddMessage = async ({
           );
         }
       },
+      currentSessionId: sessionId.value, // Pass current session ID
+      existingConversations: agentConversations, // Pass existing conversations
     });
 
     return;
@@ -732,8 +746,11 @@ const handleAddMessage = async ({
       collectionId.value = activeCollectionId;
     }
     loadSession();
-  } else if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
-    collectionId.value = activeCollectionId;
+  } else {
+    if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
+      collectionId.value = activeCollectionId;
+    }
+    console.log('[ChatInterfaceV2] Using existing session:', sessionId.value);
   }
 
   const content = [];
@@ -771,6 +788,14 @@ const handleAddMessage = async ({
   }
 
   scrollToLatestUserMessage();
+
+  // If this is from upload completion, scroll again after a delay to ensure
+  // we scroll to the real message after mock conversation is replaced
+  if (scroll_to_message) {
+    setTimeout(() => {
+      scrollToLatestUserMessage();
+    }, 500);
+  }
 };
 
 const chatAddMessage = async (messageData) => {
@@ -847,13 +872,54 @@ const chatContext = {
     const realConvs = agentConversations || {};
     const mockConvs = isMock ? uploadSimulator.getMockConversations(currentSessionId) : {};
 
-    if (isMock) {
+    const mockSession = uploadSimulator.getMockSession(currentSessionId);
+    const isExistingSessionWithUpload = mockSession?.isExistingSession;
+
+    // Helper function to merge and sort conversations by conv_id (timestamp)
+    const mergeSortedConversations = (real, mock) => {
+      const merged = { ...real, ...mock };
+      const sortedKeys = Object.keys(merged).sort((a, b) => {
+        // conv_id is a timestamp string, sort numerically
+        return Number(a) - Number(b);
+      });
+
+      // Rebuild object with sorted keys
+      const sorted = {};
+      sortedKeys.forEach((key) => {
+        sorted[key] = merged[key];
+      });
+
+      return sorted;
+    };
+
+    if (isMock && !isExistingSessionWithUpload) {
       return mockConvs;
+    }
+
+    if (isExistingSessionWithUpload) {
+      // Existing session with upload - wait for real conversations to load before merging
+      const isLoading = isLoadingSession?.value;
+
+      if (isLoading) {
+        // Still loading - return empty to show loading state
+        console.log('[ChatInterfaceV2] Waiting for session to load before showing conversations');
+        return {};
+      }
+
+      // Session loaded - merge and sort real and mock conversations
+      const mockForSession = uploadSimulator.getMockConversations(currentSessionId);
+      if (mockForSession && Object.keys(mockForSession).length > 0) {
+        console.log(
+          '[ChatInterfaceV2] Merging and sorting mock upload conversations with existing session'
+        );
+        return mergeSortedConversations(realConvs, mockForSession);
+      }
     }
 
     if (Object.keys(realConvs).length > 0) {
       return realConvs;
     }
+
     const mockForCurrentSession = uploadSimulator.getMockConversations(currentSessionId);
     if (mockForCurrentSession && Object.keys(mockForCurrentSession).length > 0) {
       console.log('[ChatInterfaceV2] Showing mock conversations during transition to real session');
@@ -909,6 +975,7 @@ const chatContext = {
   deleteAudio,
   deleteImage,
   getVideoDownloadUrl,
+  generateVideoStream,
   callApi,
   makeSessionPublic,
   fetchCollectionVideos,

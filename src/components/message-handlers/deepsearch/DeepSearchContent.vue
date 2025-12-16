@@ -1,146 +1,583 @@
 <template>
   <div
-    class="vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-8 vdb-c-py-14 vdb-c-text-left"
+    class="vdb-c-mx-auto vdb-c-flex vdb-c-w-full vdb-c-max-w-[1080px] vdb-c-flex-col vdb-c-gap-20"
   >
-    <LoadingMessage
-      :status="content.status"
-      :message="content.status_message"
-      :is-last-conv="isLastConv"
-    />
-    <div
-      class="vdb-c-flex vdb-c-flex-col vdb-c-gap-8"
-      v-if="Array.isArray(content?.videos) && content.videos.length"
-    >
-      <DeepSearchVideo
-        v-for="(item, idx) in visibleItems"
-        :key="item?.video?.id || item?.id || idx"
-        :content="item"
-        :is-last-conv="isLastConv"
-      />
-
+    <!-- Show grid view when no video is being edited -->
+    <template v-if="editingIndex === null">
+      <!-- Header -->
       <div
-        v-if="showMoreVisible"
-        class="show-more-divider vdb-c-mt-4 vdb-c-flex vdb-c-justify-center"
+        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-16 vdb-c-rounded-[12px] vdb-c-border vdb-c-border-[#ec5b16] vdb-c-bg-[#fff5ec] vdb-c-p-6"
       >
-        <button
-          class="vdb-c-relative vdb-c-z-10 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12 vdb-c-text-sm vdb-c-text-black vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#EFEFEF] vdb-c-transition-colors vdb-c-duration-100 hover:vdb-c-bg-[#EFEFEF]"
-          @click="handleShowMore"
+        <!-- Results Badge -->
+        <div
+          class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-[6px] vdb-c-rounded-[8px] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px]"
         >
-          See more
-          <ChevronDown class="vdb-c-h-16 vdb-c-w-16 vdb-c-text-black" />
-        </button>
+          <MagicIcon stroke="#ec5b16" />
+          <span
+            class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
+          >
+            Found {{ content.videos.length }} results
+          </span>
+        </div>
+
+        <!-- Info Text -->
+        <div class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center">
+          <p class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-[#1e1e1e]">
+            Click Edit on any clip to make quick adjustments.
+          </p>
+        </div>
       </div>
 
-      <div
-        v-else-if="showLessVisible"
-        class="show-more-divider vdb-c-mt-4 vdb-c-flex vdb-c-justify-center"
-      >
-        <button
-          class="vdb-c-relative vdb-c-z-10 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-px-16 vdb-c-py-12 vdb-c-text-sm vdb-c-text-black vdb-c-outline vdb-c-outline-1 vdb-c-outline-[#EFEFEF] vdb-c-transition-colors vdb-c-duration-100 hover:vdb-c-bg-[#EFEFEF]"
-          @click="handleShowLess"
-        >
-          See less
-          <ChevronDown
-            class="vdb-c-h-16 vdb-c-w-16 vdb-c-rotate-180 vdb-c-text-black"
-          />
-        </button>
+      <!-- Video Grid -->
+      <div class="vdb-c-flex vdb-c-flex-wrap vdb-c-justify-center vdb-c-gap-16">
+        <VideoCard
+          v-for="(video, index) in content.videos"
+          :key="video.id + '-' + index"
+          :video="video"
+          :call-api="callApi"
+          :on-convert-to-reel="() => handleConvertToReelFromGrid(index)"
+          @edit="startEditing(index)"
+        />
       </div>
-    </div>
+    </template>
+
+    <!-- Show editor when a video is being edited -->
+    <template v-else>
+      <!-- Editor Header -->
+      <div
+        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[100px] vdb-c-rounded-[12px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-p-6"
+      >
+        <!-- Back Button -->
+        <button
+          @click="exitEditing"
+          class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[6px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7]"
+        >
+          <ArrowLeftIcon />
+          <span
+            class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
+          >
+            See all results
+          </span>
+        </button>
+
+        <!-- Center Info -->
+        <div
+          class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-gap-[8px]"
+        >
+          <p class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-[#c14103]">
+            {{ internalVideos[editingIndex].name || 'Untitled' }}
+          </p>
+          <div class="vdb-c-h-[16px] vdb-c-w-0 vdb-c-border-l vdb-c-border-[#1e1e1e]"></div>
+          <p class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-[#464646]">
+            Showing {{ editingIndex + 1 }} of {{ internalVideos.length }} results
+          </p>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[12px]">
+          <button
+            @click="previousVideo"
+            :disabled="editingIndex === 0"
+            class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[5px] vdb-c-pr-[17px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50"
+          >
+            <ChevronIcon fill="#1e1e1e" />
+            <span
+              class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
+            >
+              Previous
+            </span>
+          </button>
+
+          <button
+            @click="nextVideo"
+            :disabled="editingIndex === content.videos.length - 1"
+            class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[17px] vdb-c-pr-[5px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50"
+          >
+            <span
+              class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
+            >
+              Next
+            </span>
+            <ChevronIcon fill="#1e1e1e" class="vdb-c-rotate-180" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Video Preview Section -->
+      <div class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-justify-center vdb-c-gap-[10px]">
+        <!-- Video Container -->
+        <div class="vdb-c-flex vdb-c-w-fit vdb-c-flex-col vdb-c-items-center vdb-c-gap-[10px]">
+          <div class="vdb-c-relative vdb-c-h-full vdb-c-w-[480px]">
+            <ChatVideo
+              :show-loading="false"
+              class="vdb-c-h-full vdb-c-w-full"
+              v-if="internalVideos[editingIndex].stream_url"
+              :content="{
+                status: 'success',
+                video: {
+                  stream_url: internalVideos[editingIndex].stream_url,
+                  name: internalVideos[editingIndex].name,
+                  collection_name: internalVideos[editingIndex].collection_name || '',
+                  style: internalVideos[editingIndex].style || 'horizontal',
+                  id: internalVideos[editingIndex]?.video_id || internalVideos[editingIndex]?.id,
+                  collection_id: internalVideos[editingIndex]?.collection_id,
+                },
+              }"
+              :is-last-conv="false"
+              :full-width="true"
+              :show-overlay-menu="false"
+            />
+
+            <!-- Loading Overlay -->
+            <div
+              v-if="isGeneratingStream"
+              class="vdb-c-absolute vdb-c-left-[50%] vdb-c-top-[50%] vdb-c-z-[1000000] vdb-c-flex vdb-c-translate-x-[-50%] vdb-c-translate-y-[-50%] vdb-c-transform vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[rgba(0,0,0,0.5)]"
+            >
+              <div
+                class="vdb-c-flex vdb-c-items-center vdb-c-gap-[4px] vdb-c-rounded-[60px] vdb-c-bg-[rgba(0,0,0,0.5)] vdb-c-px-[8px] vdb-c-py-[4px] vdb-c-pl-[6px]"
+              >
+                <LoadingIcon
+                  class="loading-spinner vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0"
+                />
+                <span
+                  class="vdb-c-whitespace-nowrap vdb-c-text-[12px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#969696]"
+                >
+                  Loading preview
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[8px]">
+            <!-- Reset Button -->
+            <button
+              @click="resetToDefault"
+              class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#ec5b16] hover:vdb-c-bg-[#ffe9d3]"
+            >
+              <ResetIcon fill="#2d2d2d" />
+              <span
+                class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
+              >
+                Reset to default
+              </span>
+            </button>
+
+            <!-- Download Clip Button -->
+            <button
+              @click="downloadClip"
+              class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#ec5b16] hover:vdb-c-bg-[#ffe9d3]"
+            >
+              <DownloadIcon fill="#1E1E1E" />
+              <span
+                class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-vdb-darkishgrey"
+              >
+                Download clip
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Toolbar (Right Side) -->
+        <div
+          class="vdb-c-mt-[18px] vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px] vdb-c-rounded-[40px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-p-[4px]"
+        >
+          <!-- Copy Link -->
+          <button
+            @click="copyLink"
+            class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+          >
+            <CheckIcon v-if="showCheckIcon" class="vdb-c-text-[#1e1e1e]" />
+            <LinkIcon v-else fill="#1e1e1e" />
+          </button>
+
+          <!-- Convert to Reel -->
+          <button
+            @click="convertToReel"
+            class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+          >
+            <RotateIcon fill="#1e1e1e" />
+          </button>
+
+          <!-- Download -->
+          <button
+            @click="downloadVideo"
+            class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+          >
+            <DownloadIcon fill="#1e1e1e" />
+          </button>
+
+          <!-- Save to Collection -->
+          <button
+            @click="saveToCollection"
+            class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+          >
+            <AddToFolderIcon fill="#1e1e1e" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Slider Component -->
+      <div class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center">
+        <SliderComponent
+          :total-duration="internalVideos[editingIndex].length"
+          :original-start="internalVideos[editingIndex].original_start"
+          :original-end="internalVideos[editingIndex].original_end"
+          :max-extension="20"
+          :thumbnails="internalVideos[editingIndex].thumbnail_data"
+          v-model:start="videoStates[editingIndex].start"
+          v-model:end="videoStates[editingIndex].end"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
-import DeepSearchVideo from "./DeepSearchVideo.vue";
-import ChevronDown from "../../icons/ChevronDown.vue";
-import LoadingMessage from "../elements/LoadingMessage.vue";
+import { ref, watch, inject } from 'vue';
+import SliderComponent from './SliderComponent.vue';
+import VideoCard from './VideoCard.vue';
+import ChatVideo from '../ChatVideo.vue';
+import MagicIcon from '../../chat/v2/icons/deep-search/MagicIcon.vue';
+import ArrowLeftIcon from '../../chat/v2/icons/deep-search/ArrowLeftIcon.vue';
+import ChevronIcon from '../../chat/v2/icons/deep-search/ChevronIcon.vue';
+import ResetIcon from '../../chat/v2/icons/deep-search/ResetIcon.vue';
+import DownloadIcon from '../../chat/v2/icons/deep-search/DownloadIcon.vue';
+import LinkIcon from '../../chat/v2/icons/deep-search/LinkIcon.vue';
+import RotateIcon from '../../chat/v2/icons/deep-search/RotateIcon.vue';
+import AddToFolderIcon from '../../chat/v2/icons/deep-search/AddToFolderIcon.vue';
+import LoadingIcon from '../../chat/v2/icons/deep-search/LoadingIcon.vue';
+import CheckIcon from '../../chat/v2/icons/CheckIcon.vue';
 
 const props = defineProps({
-  content: { type: Object, required: true },
-  isLastConv: { type: Boolean, default: false },
+  content: {
+    type: Object,
+    required: true,
+  },
+  callApi: {
+    type: Function,
+    default: null,
+  },
 });
 
-const BATCH_SIZE = 2;
-const visibleCount = ref(0);
+const context = inject('videodb-chat-context');
+const getVideoDownloadUrl = context?.getVideoDownloadUrl;
+const generateVideoStream = context?.generateVideoStream;
+const callApi = props.callApi || context?.callApi;
+const handleAddMessage = context?.handleAddMessage;
+const handleUpload = context?.handleUpload;
+const activeCollectionData = context?.activeCollectionData;
 
-const total = computed(() =>
-  Array.isArray(props.content?.videos) ? props.content.videos.length : 0,
+const internalVideos = ref(
+  props.content.videos.map((video) => ({
+    ...video,
+    start: video.start,
+    end: video.end,
+    stream_url: video.stream_url,
+    original_start: video.start,
+    original_end: video.end,
+    original_stream_url: video.stream_url,
+  }))
+);
+
+const videoStates = ref(
+  props.content.videos.map((video) => ({
+    start: video.start,
+    end: video.end,
+  }))
+);
+
+const editingIndex = ref(null);
+const isGeneratingStream = ref(false);
+const showCheckIcon = ref(false);
+
+const startEditing = (index) => {
+  editingIndex.value = index;
+};
+
+const exitEditing = () => {
+  editingIndex.value = null;
+};
+
+const previousVideo = () => {
+  if (editingIndex.value > 0) {
+    editingIndex.value--;
+  }
+};
+
+const nextVideo = () => {
+  if (editingIndex.value < internalVideos.value.length - 1) {
+    editingIndex.value++;
+  }
+};
+
+const resetToDefault = () => {
+  const currentVideo = internalVideos.value[editingIndex.value];
+  videoStates.value[editingIndex.value].start = currentVideo.original_start;
+  videoStates.value[editingIndex.value].end = currentVideo.original_end;
+
+  internalVideos.value[editingIndex.value].stream_url = currentVideo.original_stream_url;
+  internalVideos.value[editingIndex.value].start = currentVideo.original_start;
+  internalVideos.value[editingIndex.value].end = currentVideo.original_end;
+};
+
+const updateStreamUrl = async (index) => {
+  const video = internalVideos.value[index];
+  const state = videoStates.value[index];
+
+  const videoId = video.video_id || video.id;
+  const collectionId = video.collection_id;
+
+  if (state.start === video.start && state.end === video.end) {
+    return;
+  }
+
+  if (!generateVideoStream || !collectionId || !videoId) {
+    console.error('Cannot generate stream - missing required data', {
+      collectionId,
+      videoId,
+      hasFunction: !!generateVideoStream,
+    });
+    return;
+  }
+
+  try {
+    isGeneratingStream.value = true;
+    const result = await generateVideoStream(collectionId, videoId, state.start, state.end);
+
+    if (result?.status === 'success' && result?.data?.stream_url) {
+      // Update internal video state with new stream URL and times
+      internalVideos.value[index].stream_url = result.data.stream_url;
+      internalVideos.value[index].start = state.start;
+      internalVideos.value[index].end = state.end;
+    } else {
+      console.error('Failed to generate stream URL', result);
+    }
+  } catch (error) {
+    console.error('Error generating stream URL:', error);
+  } finally {
+    isGeneratingStream.value = false;
+  }
+};
+
+const downloadClip = async () => {
+  const currentVideo = internalVideos.value[editingIndex.value];
+  const streamUrl = currentVideo.stream_url;
+
+  if (!streamUrl) {
+    console.error('Download not available - missing stream URL');
+    return;
+  }
+
+  try {
+    const clipName = `${currentVideo.name || 'clip'}_${currentVideo.start}-${currentVideo.end}`;
+
+    if (callApi) {
+      const downloadResult = await callApi('/videodb/download', {
+        method: 'POST',
+        payload: {
+          stream_url: streamUrl,
+          name: clipName,
+        },
+      });
+
+      if (downloadResult?.status === 'success' && downloadResult?.data?.download_url) {
+        const link = document.createElement('a');
+        link.href = downloadResult.data.download_url;
+        link.download = `${clipName}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        console.error('No download URL received', downloadResult);
+      }
+    } else {
+      const link = document.createElement('a');
+      link.href = streamUrl;
+      link.download = `${clipName}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  } catch (error) {
+    console.error('Error downloading clip:', error);
+  }
+};
+
+const copyLink = async () => {
+  const currentVideo = internalVideos.value[editingIndex.value];
+  const streamUrl = currentVideo.stream_url;
+
+  if (!streamUrl) {
+    console.error('Copy link not available - missing stream URL');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(
+      `https://console.videodb.io/player?url=${encodeURIComponent(streamUrl)}`
+    );
+
+    showCheckIcon.value = true;
+    setTimeout(() => {
+      showCheckIcon.value = false;
+    }, 1000);
+
+    console.log('Link copied to clipboard');
+  } catch (error) {
+    console.error('Error copying link:', error);
+  }
+};
+
+const convertToReel = () => {
+  const currentVideo = internalVideos.value[editingIndex.value];
+
+  if (!handleAddMessage) {
+    console.error('handleAddMessage not available');
+    return;
+  }
+
+  const videoId = currentVideo.video_id || currentVideo.id;
+  const message = `Convert this video clip from ${currentVideo.name || 'video'} from ${currentVideo.start} to ${currentVideo.end} into a reel.`;
+
+  handleAddMessage({
+    text: message,
+    videos: [videoId],
+    agents: ['Edit'],
+    from_event: true,
+  });
+};
+
+const handleConvertToReelFromGrid = (index) => {
+  const video = props.content.videos[index];
+
+  if (!handleAddMessage) {
+    console.error('handleAddMessage not available');
+    return;
+  }
+
+  const videoId = video.video_id || video.id;
+  const message = `Convert this video clip from ${video.name || 'video'} from ${video.start} to ${video.end} into a reel.`;
+
+  handleAddMessage({
+    text: message,
+    videos: [videoId],
+    agents: ['Edit'],
+    from_event: true,
+  });
+};
+
+const downloadVideo = async () => {
+  const currentVideo = internalVideos.value[editingIndex.value];
+
+  const videoId = currentVideo.video_id || currentVideo.id;
+  const collectionId = currentVideo.collection_id;
+
+  if (!getVideoDownloadUrl || !videoId || !collectionId) {
+    console.error('Download not available - missing videoId or collectionId', {
+      collectionId,
+      videoId,
+      hasFunction: !!getVideoDownloadUrl,
+    });
+    return;
+  }
+
+  try {
+    const result = await getVideoDownloadUrl(collectionId, videoId);
+    if (result?.data && result?.data?.download_url) {
+      const link = document.createElement('a');
+      link.href = result.data.download_url;
+      link.download = `${currentVideo.name || 'video'}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      console.error('No download URL received', result);
+    }
+  } catch (error) {
+    console.error('Error downloading video:', error);
+  }
+};
+
+const saveToCollection = async () => {
+  const currentVideo = internalVideos.value[editingIndex.value];
+  const streamUrl = currentVideo.stream_url;
+
+  if (!handleUpload || !streamUrl) {
+    console.error('Save to collection not available');
+    return;
+  }
+
+  try {
+    const targetCollectionId = activeCollectionData?.value?.id;
+    if (!targetCollectionId) {
+      console.error('No active collection');
+      return;
+    }
+
+    await handleUpload({
+      source: { url: streamUrl },
+      sourceType: 'url',
+      collectionId: targetCollectionId,
+      mediaType: 'video',
+    });
+
+    console.log('Video added to collection');
+  } catch (error) {
+    console.error('Error adding to collection:', error);
+  }
+};
+
+watch(
+  () => videoStates.value,
+  () => {
+    if (editingIndex.value !== null) {
+      if (updateStreamUrl.timeoutId) {
+        clearTimeout(updateStreamUrl.timeoutId);
+      }
+
+      updateStreamUrl.timeoutId = setTimeout(() => {
+        updateStreamUrl(editingIndex.value);
+      }, 500);
+    }
+  },
+  { deep: true }
 );
 
 watch(
-  () => total.value,
-  (len, prev) => {
-    const initialVisible = Math.min(BATCH_SIZE, len);
-    const existing = visibleCount.value ?? 0;
-    const desired = Math.max(existing, initialVisible);
-    visibleCount.value = Math.min(desired, len);
+  () => props.content.videos,
+  (newVideos) => {
+    // Update both videoStates and internalVideos when content changes
+    videoStates.value = newVideos.map((video) => ({
+      start: video.start,
+      end: video.end,
+    }));
+
+    internalVideos.value = newVideos.map((video) => ({
+      ...video,
+      start: video.start,
+      end: video.end,
+      stream_url: video.stream_url,
+      original_start: video.start,
+      original_end: video.end,
+      original_stream_url: video.stream_url,
+    }));
   },
-  { immediate: true },
+  { deep: true }
 );
-
-const normalizedItems = computed(() => {
-  const list = Array.isArray(props.content?.videos) ? props.content.videos : [];
-  const parentStatus = props.content?.status ?? "success";
-  const parentStatusMessage = props.content?.status_message ?? "";
-  const parentAgent = props.content?.agent_name ?? "deepsearch";
-  return list.map((entry) => {
-    // If already in expected shape: has status and video
-    if (
-      entry &&
-      typeof entry === "object" &&
-      ("video" in entry || "status" in entry)
-    ) {
-      const videoObj = entry.video ?? entry;
-      return {
-        type: "video",
-        agent_name: entry.agent_name ?? parentAgent,
-        status: entry.status ?? parentStatus,
-        status_message: entry.status_message ?? parentStatusMessage,
-        video: videoObj,
-      };
-    }
-    // Fallback: bare video object
-    return {
-      type: "video",
-      agent_name: parentAgent,
-      status: parentStatus,
-      status_message: parentStatusMessage,
-      video: entry,
-    };
-  });
-});
-
-const visibleItems = computed(() =>
-  normalizedItems.value.slice(0, visibleCount.value),
-);
-
-const showMoreVisible = computed(() => visibleCount.value < total.value);
-const showLessVisible = computed(
-  () => !showMoreVisible.value && total.value > BATCH_SIZE,
-);
-
-const handleShowMore = () => {
-  const next = Math.min(visibleCount.value + BATCH_SIZE, total.value);
-  visibleCount.value = next;
-};
-
-const handleShowLess = () => {
-  visibleCount.value = Math.min(BATCH_SIZE, total.value);
-};
 </script>
 
 <style scoped>
-.show-more-divider {
-  position: relative;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
-.show-more-divider::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: #e5e7eb; /* divider line color */
-  transform: translateY(-50%);
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
 }
 </style>

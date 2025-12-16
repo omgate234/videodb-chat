@@ -57,21 +57,34 @@ export function useUploadChatSimulator() {
     generateImageUrl,
     generateAudioUrl,
     navigateToSession,
+    currentSessionId = null,
+    existingConversations = null,
   }) => {
-    const mockSessionId = createMockSessionId();
+    const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id || 'default';
+    
+    const useExistingSession = !!currentSessionId;
+    const sessionId = useExistingSession ? currentSessionId : createMockSessionId();
     const mockConvId = createMockConvId();
 
-    const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id || 'default';
+    if (!useExistingSession) {
+      // Create mock session only if no active session exists
+      mockSessions[sessionId] = {
+        session_id: sessionId,
+        name: 'Upload in progress',
+        collection_id: collectionId,
+        created_at: Math.floor(Date.now() / 1000),
+        isUploading: true,
+      };
 
-    mockSessions[mockSessionId] = {
-      session_id: mockSessionId,
-      name: 'Upload in progress',
-      collection_id: collectionId,
-      created_at: Math.floor(Date.now() / 1000),
-      isUploading: true,
-    };
-
-    mockConversations[mockSessionId] = {};
+      mockConversations[sessionId] = {};
+    } else {
+      // Mark existing session as uploading
+      mockSessions[sessionId] = {
+        session_id: sessionId,
+        isUploading: true,
+        isExistingSession: true,
+      };
+    }
 
     const inputMsgId = createMockMsgId();
     const outputMsgId = createMockMsgId();
@@ -107,11 +120,16 @@ export function useUploadChatSimulator() {
       });
     }
 
-    mockConversations[mockSessionId][mockConvId] = {
+    // Store mock conversation for this session
+    if (!mockConversations[sessionId]) {
+      mockConversations[sessionId] = {};
+    }
+
+    mockConversations[sessionId][mockConvId] = {
       [inputMsgId]: {
         msg_id: inputMsgId,
         conv_id: mockConvId,
-        session_id: mockSessionId,
+        session_id: sessionId,
         msg_type: 'input',
         content: inputContent,
         status: 'success',
@@ -121,7 +139,7 @@ export function useUploadChatSimulator() {
       [outputMsgId]: {
         msg_id: outputMsgId,
         conv_id: mockConvId,
-        session_id: mockSessionId,
+        session_id: sessionId,
         msg_type: 'output',
         content: [
           {
@@ -138,13 +156,19 @@ export function useUploadChatSimulator() {
       },
     };
 
-    // Navigate to the mock session immediately after creating it
-    console.log('[UploadSimulator] Mock session created:', mockSessionId);
-    console.log('[UploadSimulator] Mock conversation created with', files.length, 'files');
-    
-    if (navigateToSession) {
-      console.log('[UploadSimulator] Triggering navigation to mock session');
-      navigateToSession(mockSessionId);
+    if (useExistingSession) {
+      console.log('[UploadSimulator] Using existing session:', sessionId);
+      console.log('[UploadSimulator] Mock upload conversation added to existing session with', files.length, 'files');
+      // No navigation needed - stay in current session
+    } else {
+      // Navigate to the mock session immediately after creating it
+      console.log('[UploadSimulator] Mock session created:', sessionId);
+      console.log('[UploadSimulator] Mock conversation created with', files.length, 'files');
+      
+      if (navigateToSession) {
+        console.log('[UploadSimulator] Triggering navigation to mock session');
+        navigateToSession(sessionId);
+      }
     }
 
     const uploadResults = {
@@ -153,7 +177,7 @@ export function useUploadChatSimulator() {
       images: [...(images || [])],
     };
 
-    const filesArray = mockConversations[mockSessionId][mockConvId][outputMsgId].content[0].files;
+    const filesArray = mockConversations[sessionId][mockConvId][outputMsgId].content[0].files;
 
     const uploadPromises = files.map(async (file, index) => {
       try {
@@ -247,35 +271,69 @@ export function useUploadChatSimulator() {
 
     const allSuccess = filesArray.every(f => f.status === 'success');
 
-    if (allSuccess) {
-      mockSessions[mockSessionId].name = 'Upload complete';
-      mockSessions[mockSessionId].uploadComplete = true;
+    if (useExistingSession) {
+      // For existing sessions, just update the upload status
+      if (allSuccess) {
+        mockConversations[sessionId][mockConvId][outputMsgId].status = 'success';
+        mockConversations[sessionId][mockConvId][outputMsgId].content[0].status = 'success';
+      } else {
+        mockConversations[sessionId][mockConvId][outputMsgId].status = 'error';
+        mockConversations[sessionId][mockConvId][outputMsgId].content[0].status = 'error';
+      }
+
+      mockSessions[sessionId].isUploading = false;
+
+      if (handleAddMessage) {
+        // Add message to the SAME session (no reset)
+        await handleAddMessage({
+          text,
+          images: uploadResults.images,
+          videos: uploadResults.videos,
+          audios: uploadResults.audios,
+          agents,
+          additionalInfo,
+          reset_session: false, // Keep existing session
+          scroll_to_message: true, // Flag to trigger scroll after message is added
+        });
+
+        // Clean up mock conversation after a delay
+        setTimeout(() => {
+          delete mockSessions[sessionId];
+          delete mockConversations[sessionId];
+        }, 3000);
+      }
     } else {
-      mockSessions[mockSessionId].name = 'Upload failed';
-      mockConversations[mockSessionId][mockConvId][outputMsgId].status = 'error';
-      mockConversations[mockSessionId][mockConvId][outputMsgId].content[0].status = 'error';
+      // For new mock sessions, follow original behavior
+      if (allSuccess) {
+        mockSessions[sessionId].name = 'Upload complete';
+        mockSessions[sessionId].uploadComplete = true;
+      } else {
+        mockSessions[sessionId].name = 'Upload failed';
+        mockConversations[sessionId][mockConvId][outputMsgId].status = 'error';
+        mockConversations[sessionId][mockConvId][outputMsgId].content[0].status = 'error';
+      }
+
+      mockSessions[sessionId].isUploading = false;
+
+      if (handleAddMessage) {
+        await handleAddMessage({
+          text,
+          images: uploadResults.images,
+          videos: uploadResults.videos,
+          audios: uploadResults.audios,
+          agents,
+          additionalInfo,
+          reset_session: true,
+        });
+
+        setTimeout(() => {
+          delete mockSessions[sessionId];
+          delete mockConversations[sessionId];
+        }, 6000);
+      }
     }
 
-    mockSessions[mockSessionId].isUploading = false;
-
-    if (handleAddMessage) {
-      await handleAddMessage({
-        text,
-        images: uploadResults.images,
-        videos: uploadResults.videos,
-        audios: uploadResults.audios,
-        agents,
-        additionalInfo,
-        reset_session: true,
-      });
-
-      setTimeout(() => {
-        delete mockSessions[mockSessionId];
-        delete mockConversations[mockSessionId];
-      }, 6000);
-    }
-
-    return mockSessionId;
+    return sessionId;
   };
 
   const getMockSession = (sessionId) => {

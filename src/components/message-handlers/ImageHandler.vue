@@ -244,9 +244,10 @@ const handleAddToCollection = async () => {
     }
 
     await handleUpload({
-      source: props.content.image.url,
+      source: { url: props.content.image.url },
       sourceType: 'url',
       collectionId: targetCollectionId,
+      mediaType: 'image',
     });
     showMenu.value = false;
   } catch (err) {

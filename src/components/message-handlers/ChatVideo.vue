@@ -3,6 +3,7 @@
     class="vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-8 vdb-c-py-14 vdb-c-text-left"
   >
     <LoadingMessage
+      v-if="showLoading"
       :status="content.status"
       :message="content.status_message"
       :is-last-conv="isLastConv"
@@ -13,13 +14,7 @@
         class="vdb-c-w-full vdb-c-py-6"
       >
         <div
-          :class="
-            isFullScreen
-              ? 'vdb-c-fixed vdb-c-inset-0 vdb-c-z-50 vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-overflow-y-hidden vdb-c-bg-black-64'
-              : isVertical
-                ? 'vdb-c-full xl:vdb-c-1/2 vdb-c-aspect-[9/16] vdb-c-overflow-hidden vdb-c-rounded-16 sm:vdb-c-h-[75vh] lg:vdb-c-h-[60vh] xl:vdb-c-h-[50vh]'
-                : 'vdb-c-full xl:vdb-c-1/2 vdb-c-overflow-hidden vdb-c-rounded-16 sm:vdb-c-w-3/4 lg:vdb-c-w-3/5 xl:vdb-c-w-1/2'
-          "
+          :class="videoContainerClasses"
           :style="!isFullScreen ? { border: '2px solid var(--Light-Grey-VDB, #F7F7F7)' } : {}"
         >
           <!-- Vertical 9:16 wrapper when not fullscreen -->
@@ -47,6 +42,7 @@
                     :video-id="content.video.id"
                     :collection-id="content.video.collection_id"
                     :is-hovered="isHovered"
+                    :show-overlay-menu="showOverlayMenu"
                     @mouseenter="isHovered = true"
                     @mouseleave="isHovered = false"
                   />
@@ -79,6 +75,7 @@
                 :video-id="content.video.id"
                 :collection-id="content.video.collection_id"
                 :is-hovered="isHovered"
+                :show-overlay-menu="showOverlayMenu"
                 @mouseenter="isHovered = true"
                 @mouseleave="isHovered = false"
               />
@@ -126,6 +123,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  fullWidth: {
+    type: Boolean,
+    default: false,
+  },
+  showOverlayMenu: {
+    type: Boolean,
+    default: true,
+  },
+  showLoading: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const playerRef = ref(null);
@@ -140,6 +149,22 @@ const isVertical = computed(() => {
 });
 
 const verticalPadding = computed(() => (isVertical.value ? '177.78%' : '56.25%'));
+
+const videoContainerClasses = computed(() => {
+  if (isFullScreen.value) {
+    return 'vdb-c-fixed vdb-c-inset-0 vdb-c-z-50 vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-overflow-y-hidden vdb-c-bg-black-64';
+  }
+
+  if (props.fullWidth) {
+    return isVertical.value
+      ? 'vdb-c-w-full vdb-c-aspect-[9/16] vdb-c-overflow-hidden vdb-c-rounded-16'
+      : 'vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-16';
+  }
+
+  return isVertical.value
+    ? 'vdb-c-full xl:vdb-c-1/2 vdb-c-aspect-[9/16] vdb-c-overflow-hidden vdb-c-rounded-16 sm:vdb-c-h-[75vh] lg:vdb-c-h-[60vh] xl:vdb-c-h-[50vh]'
+    : 'vdb-c-full xl:vdb-c-1/2 vdb-c-overflow-hidden vdb-c-rounded-16 sm:vdb-c-w-3/4 lg:vdb-c-w-3/5 xl:vdb-c-w-1/2';
+});
 
 // Trigger native browser fullscreen action
 const handleFullScreenChange = async () => {

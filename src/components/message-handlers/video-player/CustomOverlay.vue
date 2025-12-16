@@ -45,6 +45,7 @@
 
     <!-- Top Right: Copy Link and Menu -->
     <div
+      v-if="showOverlayMenu"
       :class="[
         'vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-10 vdb-c-flex vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-border-white-40 vdb-c-bg-[rgba(128,128,128,0.3)] vdb-c-p-4 vdb-c-backdrop-blur-[23.438px] vdb-c-transition-opacity vdb-c-duration-300',
         showElements ? 'vdb-c-opacity-100' : 'vdb-c-opacity-0',
@@ -173,6 +174,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showOverlayMenu: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['mouseenter', 'mouseleave']);
@@ -239,9 +244,10 @@ const handleAddToCollection = async () => {
     }
 
     await handleUpload({
-      source: props.streamUrl,
+      source: { url: props.streamUrl },
       sourceType: 'url',
       collectionId: collectionId,
+      mediaType: 'video',
     });
     showMenu.value = false;
   } catch (err) {

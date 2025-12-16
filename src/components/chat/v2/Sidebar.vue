@@ -239,7 +239,15 @@ const currentPage = computed(() => context?.navState?.currentPage || 'default');
 
 const config = computed(() => context?.sidebarConfig || {});
 const collections = computed(() => context?.collections?.value || []);
-const sessions = computed(() => context?.sessions?.value || []);
+const sessions = computed(() => {
+  const allSessions = context?.sessions?.value || [];
+  return allSessions.filter((session) => {
+    if (session.isUploading && session.isExistingSession) {
+      return false;
+    }
+    return true;
+  });
+});
 const status = computed(() =>
   context?.configStatus?.value !== null && context?.isSetupComplete?.value ? 'active' : 'inactive'
 );
