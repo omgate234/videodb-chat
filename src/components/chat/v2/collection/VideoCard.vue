@@ -12,11 +12,11 @@
       <!-- Selection Checkbox -->
       <div
         v-if="enabledSelection"
-        class="selection-checkbox vdb-c-absolute vdb-c-left-4 vdb-c-top-4 vdb-c-z-20 vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-4 vdb-c-border-2 vdb-c-transition-all"
+        class="selection-checkbox vdb-c-absolute vdb-c-left-4 vdb-c-top-4 vdb-c-z-20 vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-rounded-[7px] vdb-c-border vdb-c-border-solid vdb-c-transition-all"
         :class="
           isSelected
             ? 'vdb-c-border-[#EC5B16] vdb-c-bg-[#EC5B16]'
-            : 'vdb-c-border-white vdb-c-bg-white/80'
+            : 'vdb-c-border-[#E5E7EB] vdb-c-bg-white'
         "
         @click.stop="handleSelect"
       >

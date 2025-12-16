@@ -127,6 +127,36 @@ export function useVideoDBAgent(config) {
   const fetchCollectionImages = async (collectionId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/image`);
 
+  const fetchAssets = async (params = {}) => {
+    const {
+      collection_id,
+      asset_type,
+      sort_by = 'created_at',
+      sort_order = 'desc',
+      min_duration,
+      max_duration,
+      min_size,
+      max_size,
+      page = 1,
+      page_size = 50,
+    } = params;
+
+    const queryParams = new URLSearchParams();
+    
+    if (collection_id) queryParams.append('collection_id', collection_id);
+    if (asset_type) queryParams.append('asset_type', asset_type);
+    if (sort_by) queryParams.append('sort_by', sort_by);
+    if (sort_order) queryParams.append('sort_order', sort_order);
+    if (min_duration !== undefined && min_duration !== null) queryParams.append('min_duration', min_duration);
+    if (max_duration !== undefined && max_duration !== null) queryParams.append('max_duration', max_duration);
+    if (min_size !== undefined && min_size !== null) queryParams.append('min_size', min_size);
+    if (max_size !== undefined && max_size !== null) queryParams.append('max_size', max_size);
+    if (page) queryParams.append('page', page);
+    if (page_size) queryParams.append('page_size', page_size);
+
+    return fetchData(httpUrl, `/videodb/assets?${queryParams.toString()}`);
+  };
+
   const fetchAllAgents = async () => fetchData(httpUrl, "/agent");
   const fetchConfigStatus = async () => fetchData(httpUrl, "/config/check");
 
@@ -158,7 +188,7 @@ export function useVideoDBAgent(config) {
   if (contentType.startsWith("video/")) return "video";
   if (contentType.startsWith("audio/")) return "audio";
 
-  return "unknown";
+  return "video";
 };
 
 
@@ -1023,6 +1053,7 @@ const uploadMedia = async (uploadData) => {
     activeImageData,
     fetchCollectionImages,
     refetchCollectionImages,
+    fetchAssets,
     conversations,
     addMessage,
     loadSession,

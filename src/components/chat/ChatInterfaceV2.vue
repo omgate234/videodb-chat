@@ -30,6 +30,7 @@ import CloneVoiceConfirmationHandler from '../message-handlers/CloneVoiceConfirm
 import EditStagesHandler from '../message-handlers/EditStagesHandler.vue';
 import CensorReportHandler from '../message-handlers/CensorReportHandler.vue';
 import PromptClipContent from '../message-handlers/prompt_clip/PromptClipContent.vue';
+import SubtitlesContentHandler from '../message-handlers/SubtitlesContentHandler.vue';
 import DeleteIcon from '../icons/Delete3.vue';
 
 const props = defineProps({
@@ -190,6 +191,7 @@ const {
   activeImageData,
   fetchCollectionImages,
   refetchCollectionImages,
+  fetchAssets,
   deleteVideo,
   deleteAudio,
   deleteImage,
@@ -437,6 +439,7 @@ registerMessageHandler('clone_voice_confirmation', CloneVoiceConfirmationHandler
 registerMessageHandler('edit_stages', EditStagesHandler);
 registerMessageHandler('censor', CensorReportHandler);
 registerMessageHandler('prompt_clip', PromptClipContent);
+registerMessageHandler('subtitles', SubtitlesContentHandler);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
@@ -995,6 +998,7 @@ const chatContext = {
   fetchCollectionVideos,
   fetchCollectionAudios,
   fetchCollectionImages,
+  fetchAssets,
   handleCreateNewSession,
   handleSessionClick,
   handleCollectionClick,

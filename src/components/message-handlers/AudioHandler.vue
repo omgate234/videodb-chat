@@ -214,6 +214,21 @@
             @pause="isPlaying = false"
           />
         </div>
+
+        <!-- Voice and Text Details -->
+        <div
+          v-if="audioVoiceName || audioText"
+          class="vdb-c-mt-20 vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-[6px] vdb-c-text-[13px] vdb-c-leading-[1.5] vdb-c-text-[#1e1e1e]"
+        >
+          <p v-if="audioVoiceName" class="vdb-c-w-full">
+            <span class="vdb-c-font-semibold">Voice:&nbsp;</span>
+            <span class="vdb-c-font-normal"> {{ audioVoiceName }}</span>
+          </p>
+          <p v-if="audioText" class="vdb-c-w-full">
+            <span class="vdb-c-font-bold">Text:&nbsp;</span>
+            <span class="vdb-c-font-normal"> {{ audioText }}</span>
+          </p>
+        </div>
       </div>
       <div v-else-if="content.status === 'progress'">
         <div
@@ -316,6 +331,14 @@ const audioUrl = computed(() => {
 
 const audioTitle = computed(() => {
   return props.content?.audio?.name || 'Audio Track';
+});
+
+const audioText = computed(() => {
+  return props.content?.audio?.text || null;
+});
+
+const audioVoiceName = computed(() => {
+  return props.content?.audio?.voice_name || null;
 });
 
 const audioId = computed(() => {

@@ -63,7 +63,7 @@
           </div>
 
           <div
-            v-if="finalStatus === 'success'"
+            v-if="finalStatus === 'success' && !messageLoading"
             class="vdb-c-mt-2 vdb-c-flex vdb-c-items-center vdb-c-gap-12"
           >
             <WithPopper

@@ -9,7 +9,11 @@
         <SuccessIcon v-else class="vdb-c-size-20" />
       </div>
       <div class="vdb-c-text-[14px] vdb-c-font-semibold vdb-c-leading-[22px] vdb-c-text-[#1E1E1E]">
-        {{ allUploadsComplete ? 'Upload complete' : 'Upload in progress' }}
+        {{
+          allUploadsComplete
+            ? 'Your assets were loaded. Working on them for your query...'
+            : 'Upload in progress'
+        }}
       </div>
     </div>
 
