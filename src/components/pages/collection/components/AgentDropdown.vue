@@ -22,6 +22,7 @@
         ]"
       >
         <Tooltip
+          v-if="agent.disabled"
           class="vdb-c-absolute vdb-c-left-[87.5%] vdb-c-top-0 vdb-c-hidden group-hover:vdb-c-block"
           text="Add or generate videos in your collection to enable this"
         />
