@@ -31,12 +31,49 @@
       <!-- Video Grid -->
       <div class="vdb-c-flex vdb-c-flex-wrap vdb-c-justify-center vdb-c-gap-16">
         <VideoCard
-          v-for="(video, index) in content.videos"
+          v-for="(video, index) in paginatedVideos"
           :key="video.id + '-' + index"
           :video="video"
           :call-api="callApi"
-          :on-convert-to-reel="() => handleConvertToReelFromGrid(index)"
-          @edit="startEditing(index)"
+          :on-convert-to-reel="() => handleConvertToReelFromGrid(getOriginalIndex(index))"
+          @edit="startEditing(getOriginalIndex(index))"
+        />
+      </div>
+
+      <!-- Pagination -->
+      <div
+        v-if="totalPages > 1"
+        class="vdb-c-mt-20 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-8"
+      >
+        <NavigationButton
+          label="Previous"
+          :disabled="currentPage === 1"
+          :is-previous="true"
+          @click="goToPage(currentPage - 1)"
+        />
+
+        <template v-for="(pageNumber, index) in displayedPageNumbers" :key="pageNumber">
+          <PaginationButton
+            :target-page="pageNumber"
+            :state="currentPage === pageNumber ? 'active' : 'default'"
+            :label="pageNumber"
+            @click="goToPage"
+          />
+          <div
+            class="vdb-c-flex vdb-c-h-40 vdb-c-w-40 vdb-c-items-end vdb-c-justify-center vdb-c-px-2 vdb-c-text-[#969696]"
+            v-if="
+              index < displayedPageNumbers.length - 1 &&
+              displayedPageNumbers[index + 1] - pageNumber > 1
+            "
+          >
+            <span> ... </span>
+          </div>
+        </template>
+
+        <NavigationButton
+          label="Next"
+          :disabled="currentPage === totalPages"
+          @click="goToPage(currentPage + 1)"
         />
       </div>
     </template>
@@ -234,7 +271,7 @@
 </template>
 
 <script setup>
-import { ref, watch, inject } from 'vue';
+import { ref, watch, inject, computed } from 'vue';
 import SliderComponent from './SliderComponent.vue';
 import VideoCard from './VideoCard.vue';
 import ChatVideo from '../ChatVideo.vue';
@@ -248,6 +285,8 @@ import RotateIcon from '../../chat/v2/icons/deep-search/RotateIcon.vue';
 import AddToFolderIcon from '../../chat/v2/icons/deep-search/AddToFolderIcon.vue';
 import LoadingIcon from '../../chat/v2/icons/deep-search/LoadingIcon.vue';
 import CheckIcon from '../../chat/v2/icons/CheckIcon.vue';
+import NavigationButton from '../../chat/v2/collection/NavigationButton.vue';
+import PaginationButton from '../../chat/v2/collection/PaginationButton.vue';
 
 const props = defineProps({
   content: {
@@ -290,6 +329,54 @@ const videoStates = ref(
 const editingIndex = ref(null);
 const isGeneratingStream = ref(false);
 const showCheckIcon = ref(false);
+
+const itemsPerPage = 8;
+const currentPage = ref(1);
+
+const totalPages = computed(() => Math.ceil(props.content.videos.length / itemsPerPage));
+
+const paginatedVideos = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return props.content.videos.slice(start, end);
+});
+
+const displayedPageNumbers = computed(() => {
+  const total = totalPages.value;
+  const current = currentPage.value;
+
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages = new Set([1, total]);
+
+  if (current <= 3) {
+    pages.add(2);
+    pages.add(3);
+    pages.add(4);
+  } else if (current >= total - 2) {
+    pages.add(total - 3);
+    pages.add(total - 2);
+    pages.add(total - 1);
+  } else {
+    pages.add(current - 1);
+    pages.add(current);
+    pages.add(current + 1);
+  }
+
+  return Array.from(pages).sort((a, b) => a - b);
+});
+
+const getOriginalIndex = (paginatedIndex) => {
+  return (currentPage.value - 1) * itemsPerPage + paginatedIndex;
+};
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
 
 const startEditing = (index) => {
   editingIndex.value = index;
@@ -547,7 +634,6 @@ watch(
 watch(
   () => props.content.videos,
   (newVideos) => {
-    // Update both videoStates and internalVideos when content changes
     videoStates.value = newVideos.map((video) => ({
       start: video.start,
       end: video.end,
@@ -562,6 +648,8 @@ watch(
       original_end: video.end,
       original_stream_url: video.stream_url,
     }));
+
+    currentPage.value = 1;
   },
   { deep: true }
 );

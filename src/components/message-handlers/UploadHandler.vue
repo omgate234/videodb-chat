@@ -15,6 +15,7 @@
 
     <!-- Warning Alert -->
     <div
+      v-if="!allUploadsComplete"
       class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-gap-8 vdb-c-rounded-[12px] vdb-c-border vdb-c-border-[#F8C450] vdb-c-bg-[#FEFCE8] vdb-c-p-12"
     >
       <!-- Warning Icon -->

@@ -155,10 +155,7 @@
             class="menu-item vdb-c-flex vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
             @click.stop="handleChatWithVideo"
           >
-            <ComposeAltIcon
-              class="flex-shrink-0 vdb-c-h-full vdb-c-min-h-20 vdb-c-w-full vdb-c-min-w-20"
-              stroke-color="#1E1E1E"
-            />
+            <ChatWithVideo class="flex-shrink-0 vdb-c-h-20 vdb-c-w-20" fill="#1E1E1E" />
             <span class="vdb-c-flex-shrink-0">Chat with video</span>
           </li>
           <li
@@ -228,6 +225,7 @@ import UploadIcon from '../icons/UploadIcon.vue';
 import TrashIcon from '../icons/TrashIcon.vue';
 import CheckIcon from '../icons/CheckIcon.vue';
 import VideoModal from './VideoModal.vue';
+import ChatWithVideo from '../icons/ChatWithVideo.vue';
 
 const props = defineProps({
   item: {

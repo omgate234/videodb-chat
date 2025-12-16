@@ -12,7 +12,12 @@
         class="vdb-c-flex vdb-c-w-full vdb-c-gap-12 vdb-c-overflow-x-auto vdb-c-pb-4 vdb-c-pt-4"
       >
         <template v-for="(file, index) in displayFiles" :key="file.id">
-          <ImageFileDisplay v-if="file.type === 'image'" :file="file" @remove="removeFile(index)" />
+          <ImageFileDisplay
+            v-if="file.type === 'image'"
+            :file="file"
+            :context="context"
+            @remove="removeFile(index)"
+          />
           <VideoFileDisplay
             v-else-if="file.type === 'video'"
             :file="file"
@@ -459,7 +464,7 @@ const displayFiles = ref([]);
 
 const additionalData = ref({
   precision: 'exact',
-  searchFor: 'videos',
+  searchFor: 'scenes',
 });
 
 const formatFileSize = (bytes) => {
@@ -570,7 +575,11 @@ const handleUploadFromCollection = () => {
 };
 
 const handleCollectionAssetsSelected = async (selectedAssets) => {
-  const { generateImageUrl, generateAudioUrl } = context || {};
+  const { activeCollectionData, collectionId: collectionIdRef } = context || {};
+
+  // Get current collection ID from context
+  const currentCollectionId =
+    activeCollectionData?.value?.id || activeCollectionData?.id || collectionIdRef?.value;
 
   for (const asset of selectedAssets) {
     if (!asset || !asset.type) {
@@ -595,37 +604,9 @@ const handleCollectionAssetsSelected = async (selectedAssets) => {
       name: asset.name || asset.title || `Untitled ${asset.type}`,
       url: null,
       isFromDevice: false,
+      collectionId: currentCollectionId || asset.collectionId || asset.collection_id,
+      assetId: asset.id,
     };
-
-    // Generate URL for images (required for ImageFileDisplay validator)
-    if (displayFile.type === 'image' && generateImageUrl) {
-      try {
-        const collectionId = asset.collectionId || asset.collection_id;
-        if (collectionId && asset.id) {
-          const result = await generateImageUrl(collectionId, asset.id);
-          if (result?.url) {
-            displayFile.url = result.url;
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to generate image URL:', error);
-      }
-    }
-
-    // Generate URL for audios (optional, but useful for preview)
-    if (displayFile.type === 'audio' && generateAudioUrl) {
-      try {
-        const collectionId = asset.collectionId || asset.collection_id;
-        if (collectionId && asset.id) {
-          const result = await generateAudioUrl(collectionId, asset.id);
-          if (result?.url) {
-            displayFile.url = result.url;
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to generate audio URL:', error);
-      }
-    }
 
     // Add to displayFiles - component validators will handle missing properties
     displayFiles.value.push(displayFile);
@@ -641,18 +622,11 @@ const handleInput = (event) => {
 const handleSend = () => {
   if (!canSend.value) return;
 
-  // Prepare files for sending (raw File objects)
+  // Prepare files for sending (raw File objects from device uploads)
   const filesToSend = uploadedFiles.value.map((f) => f.file);
 
-  // Separate collection assets by type
-  const videos = collectionAssets.value.filter((a) => a.asset.type === 'video').map((a) => a.asset);
-  const audios = collectionAssets.value.filter((a) => a.asset.type === 'audio').map((a) => a.asset);
-  const images = collectionAssets.value
-    .filter((a) => a.asset.type === 'image')
-    .map((a) => ({
-      image_id: a.asset.id,
-      url: displayFiles.value.find((f) => f.id === a.id)?.url || null,
-    }));
+  // Prepare collection assets as uploaded_files
+  const uploadedFilesFromCollection = collectionAssets.value.map((a) => a.asset);
 
   const additionalInfo =
     selectedAgent.value?.name === 'Search'
@@ -667,9 +641,7 @@ const handleSend = () => {
       text: inputText.value,
       agents: selectedAgent.value ? [selectedAgent.value.name] : [],
       files: filesToSend,
-      videos: videos,
-      audios: audios,
-      images: images,
+      uploaded_files: uploadedFilesFromCollection,
       additionalInfo: additionalInfo,
     });
   }
@@ -687,7 +659,7 @@ const handleSend = () => {
   displayFiles.value = [];
   additionalData.value = {
     precision: 'exact',
-    searchFor: 'videos',
+    searchFor: 'scenes',
   };
   showSearchControlsPanel.value = false;
 };
