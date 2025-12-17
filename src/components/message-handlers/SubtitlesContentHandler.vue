@@ -62,10 +62,19 @@
             <div
               v-for="style in styleOptions"
               :key="style.id"
-              class="vdb-c-relative vdb-c-aspect-square vdb-c-min-h-[200px] vdb-c-w-full vdb-c-cursor-pointer vdb-c-overflow-hidden vdb-c-rounded-[14.864px] vdb-c-bg-white vdb-c-transition-all vdb-c-duration-300 hover:vdb-c-shadow-lg"
+              class="vdb-c-relative vdb-c-w-full vdb-c-cursor-pointer vdb-c-overflow-hidden vdb-c-rounded-[14.864px] vdb-c-bg-black vdb-c-transition-all vdb-c-duration-300 hover:vdb-c-shadow-lg"
               :class="{ 'vdb-c-pointer-events-none vdb-c-opacity-50': isGenerating }"
+              style="aspect-ratio: 854 / 480"
               @click="toggleStyleSelection(style.id)"
             >
+              <video
+                :src="style.video"
+                class="vdb-c-absolute vdb-c-inset-0 vdb-c-h-full vdb-c-w-full vdb-c-object-cover"
+                autoplay
+                loop
+                muted
+                playsinline
+              />
               <div
                 class="vdb-c-absolute vdb-c-left-[8px] vdb-c-top-[7.5px] vdb-c-z-20 vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-rounded-[7px] vdb-c-border vdb-c-border-solid vdb-c-transition-all"
                 :class="
@@ -167,14 +176,14 @@ const isGenerating = ref(false);
 const generatedVideos = ref([]);
 
 const styleOptions = [
-  { id: '1_tiktok_classic', name: 'TikTok Classic' },
-  { id: '2_cinematic_gold', name: 'Cinematic Gold' },
-  { id: '3_bold_impact', name: 'Bold Impact' },
-  { id: '4_box_highlight', name: 'Box Highlight' },
-  { id: '5_color_wave', name: 'Color Wave' },
-  { id: '6_supersize_drama', name: 'Supersize Drama' },
-  { id: '7_clean_minimal', name: 'Clean Minimal' },
-  { id: '8_modern_boxed', name: 'Modern Boxed' },
+  { id: '1_tiktok_classic', name: 'TikTok Classic', video: '/1.mp4' },
+  { id: '2_cinematic_gold', name: 'Cinematic Gold', video: '/2.mp4' },
+  { id: '3_bold_impact', name: 'Bold Impact', video: '/3.mp4' },
+  { id: '4_box_highlight', name: 'Box Highlight', video: '/4.mp4' },
+  { id: '5_color_wave', name: 'Color Wave', video: '/5.mp4' },
+  { id: '6_supersize_drama', name: 'Supersize Drama', video: '/6.mp4' },
+  { id: '7_clean_minimal', name: 'Clean Minimal', video: '/7.mp4' },
+  { id: '8_modern_boxed', name: 'Modern Boxed', video: '/8.mp4' },
 ];
 
 const isInteractive = computed(() => {
