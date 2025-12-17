@@ -16,7 +16,7 @@
           <span
             class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
           >
-            Found {{ content.videos.length }} results
+            Found {{ totalVideosCount }} results
           </span>
         </div>
 
@@ -127,7 +127,7 @@
 
           <button
             @click="nextVideo"
-            :disabled="editingIndex === content.videos.length - 1"
+            :disabled="editingIndex === internalVideos.length - 1"
             class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[17px] vdb-c-pr-[5px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50"
           >
             <span
@@ -333,6 +333,10 @@ const showCheckIcon = ref(false);
 
 const itemsPerPage = 8;
 const currentPage = ref(1);
+
+const totalVideosCount = computed(() => {
+  return props.content.count ?? props.content.videos.length;
+});
 
 const totalPages = computed(() => Math.ceil(props.content.videos.length / itemsPerPage));
 

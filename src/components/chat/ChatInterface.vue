@@ -357,6 +357,7 @@ import DeepSearchContent from '../message-handlers/deepsearch/DeepSearchContent.
 import ImageHandler from '../message-handlers/ImageHandler.vue';
 import TextResponse from '../message-handlers/TextResponse.vue';
 import SMPContent from '../message-handlers/smp_agent/SMPContent.vue';
+import ProcessSteps from './elements/ProcessSteps.vue';
 import CheckIcon from '../icons/Check.vue';
 import CollectionIcon from '../icons/Collection.vue';
 import DeleteIcon from '../icons/Delete3.vue';
@@ -580,6 +581,8 @@ registerMessageHandler('text', TextResponse);
 registerMessageHandler('search_results', ChatSearchResults);
 registerMessageHandler('image', ImageHandler);
 registerMessageHandler('snp_agent', SMPContent);
+
+registerStepActionHandler('process', ProcessSteps);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {

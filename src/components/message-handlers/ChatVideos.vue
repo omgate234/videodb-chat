@@ -111,8 +111,7 @@ const props = defineProps({
 const columns = computed(() => props.content?.ui_config?.columns || 4);
 
 const totalVideos = computed(() => {
-  const videos = props.content?.videos || [];
-  return videos.length;
+  return props.content?.count ?? (props.content?.videos || []).length;
 });
 
 const itemsPerPage = 8;

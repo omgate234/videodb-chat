@@ -24,7 +24,21 @@
         v-if="isExpanded"
         class="vdb-c-shadow-sm vdb-c-overflow-hidden vdb-c-rounded-md vdb-c-bg-white"
       >
-        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-12 vdb-c-overflow-y-auto">
+        <div
+          ref="timelineEl"
+          class="vdb-c-relative vdb-c-flex vdb-c-flex-col vdb-c-gap-12 vdb-c-overflow-y-auto"
+        >
+          <!-- Dotted rail (behind steps) -->
+          <div class="timeline-rail">
+            <div
+              class="timeline-rail-line"
+              :style="{
+                left: `${railLeft}px`,
+                top: `${railStart}px`,
+                height: `${railLength}px`,
+              }"
+            />
+          </div>
           <div
             v-for="(step, index) in displaySteps"
             :key="index"
@@ -34,7 +48,8 @@
               <span v-if="index !== displaySteps.length - 1" class="vdb-c-text-[#D9D9D9]">|</span>
               <div
                 v-else
-                class="vdb-c-block vdb-c-h-1/2 vdb-c-w-10 vdb-c-rounded-full"
+                :ref="setBulletRef(index)"
+                class="bullet vdb-c-block vdb-c-h-1/2 vdb-c-w-10 vdb-c-rounded-full"
                 :class="
                   status === 'progress'
                     ? 'vdb-c-animate-pulse vdb-c-bg-orange-500'
@@ -44,20 +59,44 @@
                 "
               ></div>
             </span>
-            <span
-              class="vdb-c-flex-grow"
-              :class="
-                status !== 'success' && status !== 'progress' && index === displaySteps.length - 1
-                  ? 'vdb-c-font-semibold vdb-c-text-[#0075FF]'
-                  : status === 'success' &&
-                      index === displaySteps.length - 1 &&
-                      has_text_content !== -1
-                    ? 'vdb-c-font-semibold vdb-c-text-green'
-                    : 'vdb-c-font-medium vdb-c-text-kilvish-800'
-              "
-              v-html="step.replace(/@(\w+)/g, '<span class=\'vdb-c-text-orange-500\'>@$1</span>')"
-            >
-            </span>
+            <div class="vdb-c-flex-grow">
+              <!-- 1. Check for registered custom handler -->
+              <component
+                v-if="getRegisteredHandler(step)"
+                :is="getRegisteredHandler(step)"
+                :step="step"
+                :index="index"
+                :status="status"
+                :active-index="activeIndex"
+              />
+
+              <!-- 2. String step -->
+              <span
+                v-else-if="typeof step === 'string'"
+                :class="
+                  status !== 'success' && status !== 'progress' && index === displaySteps.length - 1
+                    ? 'vdb-c-font-semibold vdb-c-text-[#0075FF]'
+                    : status === 'success' &&
+                        index === displaySteps.length - 1 &&
+                        has_text_content !== -1
+                      ? 'vdb-c-font-semibold vdb-c-text-green'
+                      : 'vdb-c-font-medium vdb-c-text-kilvish-800'
+                "
+                v-html="formatStepText(step)"
+              >
+              </span>
+
+              <!-- 3. Process step (default handler) -->
+              <ProcessSteps
+                v-else-if="step.type === 'process'"
+                :step="step"
+                :index="index"
+                :status="status"
+                :active-index="activeIndex"
+                :is-expanded="isProcessExpanded(index)"
+                :toggle="() => toggleProcess(index)"
+              />
+            </div>
           </div>
           <!-- /Steps -->
         </div>
@@ -69,6 +108,8 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import ChevronDown from '../../icons/ChevronDown.vue';
+import ProcessSteps from './ProcessSteps.vue';
+import { useVideoDBChat } from '../../../context.js';
 
 const props = defineProps({
   has_text_content: {
@@ -89,6 +130,8 @@ const props = defineProps({
   },
 });
 
+const { stepActionHandlers } = useVideoDBChat();
+
 const isExpanded = ref(props.expanded);
 const expandedProcesses = ref(new Set());
 const lastStepsLength = ref(0);
@@ -104,6 +147,36 @@ const displaySteps = computed(() => {
 });
 
 const activeIndex = computed(() => displaySteps.value.length - 1);
+
+// Helper to get step type
+const getStepType = (s) => {
+  if (typeof s === 'string') return 'string';
+  return s?.type || 'unknown';
+};
+
+// Check for registered handler
+const getRegisteredHandler = (s) => {
+  const type = getStepType(s);
+  return stepActionHandlers?.[type] || null;
+};
+
+// Format string steps (highlight @mentions)
+const formatStepText = (step) => {
+  return step.replace(/@(\w+)/g, '<span class="vdb-c-text-orange-500">@$1</span>');
+};
+
+// Process expansion helpers
+const toggleProcess = (i) => {
+  const next = new Set(expandedProcesses.value);
+  if (next.has(i)) {
+    next.delete(i);
+  } else {
+    next.add(i);
+  }
+  expandedProcesses.value = next;
+};
+
+const isProcessExpanded = (i) => expandedProcesses.value.has(i);
 
 // ---- timeline rail measurement ----
 const timelineEl = ref(null);
