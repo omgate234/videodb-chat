@@ -99,7 +99,7 @@
 
       <!-- Image Display Container -->
       <div
-        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-px-48 vdb-c-pb-48"
+        class="vdb-c-flex vdb-c-w-[80%] vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-px-48 vdb-c-pb-48"
       >
         <div
           class="vdb-c-relative vdb-c-flex vdb-c-max-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-rounded-12"
