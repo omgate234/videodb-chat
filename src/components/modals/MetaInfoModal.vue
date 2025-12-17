@@ -208,7 +208,7 @@ const videoName = computed(() => {
 });
 
 const actors = computed(() => {
-  return props.video?.metadata?.source?.actors || ['Mark armelis'];
+  return props.video?.metadata?.source?.actors || [];
 });
 
 const objects = computed(() => {
