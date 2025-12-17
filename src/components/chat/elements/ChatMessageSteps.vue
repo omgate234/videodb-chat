@@ -55,7 +55,7 @@
                     ? 'vdb-c-animate-pulse vdb-c-bg-orange-500'
                     : status === 'success'
                       ? 'vdb-c-bg-[#0AA910]'
-                      : 'vdb-c-bg-[#0075FF]'
+                      : 'vdb-c-bg-[#0AA910]'
                 "
               ></div>
             </span>
@@ -77,7 +77,7 @@
                 v-else-if="typeof step === 'string'"
                 :class="
                   status !== 'success' && status !== 'progress' && index === displaySteps.length - 1
-                    ? 'vdb-c-font-semibold vdb-c-text-[#0075FF]'
+                    ? 'vdb-c-font-medium vdb-c-text-kilvish-800'
                     : status === 'success' &&
                         index === displaySteps.length - 1 &&
                         has_text_content !== -1
