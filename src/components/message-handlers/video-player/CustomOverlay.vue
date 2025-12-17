@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="vdb-c-absolute vdb-c-inset-0 vdb-c-flex vdb-c-flex-col"
-    @mouseenter="$emit('mouseenter')"
-    @mouseleave="$emit('mouseleave')"
-  >
+  <div class="vdb-c-absolute vdb-c-inset-0 vdb-c-flex vdb-c-flex-col">
     <!-- Gradient Overlay (shown on hover) -->
     <div
       :class="[
@@ -179,8 +175,6 @@ const props = defineProps({
     default: true,
   },
 });
-
-const emit = defineEmits(['mouseenter', 'mouseleave']);
 
 const { playing, togglePlay, showElements } = useVideoDBPlayer();
 const linkCopied = ref(false);

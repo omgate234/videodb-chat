@@ -33,6 +33,8 @@
                 :default-controls="false"
                 :default-overlay="false"
                 @fullScreenChange="handleFullScreenChange"
+                @mouseenter="isHovered = true"
+                @mouseleave="isHovered = false"
               >
                 <template #overlay>
                   <CustomOverlay
@@ -43,12 +45,11 @@
                     :collection-id="content.video.collection_id"
                     :is-hovered="isHovered"
                     :show-overlay-menu="showOverlayMenu"
-                    @mouseenter="isHovered = true"
-                    @mouseleave="isHovered = false"
                   />
                 </template>
                 <template #controls>
                   <CustomControls
+                    v-show="isHovered"
                     :is-vertical="true"
                     :stream-url="content.video.stream_url"
                     :is-full-screen="isFullScreen"
@@ -66,6 +67,8 @@
             :default-controls="false"
             :default-overlay="false"
             @fullScreenChange="handleFullScreenChange"
+            @mouseenter="isHovered = true"
+            @mouseleave="isHovered = false"
           >
             <template #overlay>
               <CustomOverlay
@@ -76,12 +79,11 @@
                 :collection-id="content.video.collection_id"
                 :is-hovered="isHovered"
                 :show-overlay-menu="showOverlayMenu"
-                @mouseenter="isHovered = true"
-                @mouseleave="isHovered = false"
               />
             </template>
             <template #controls>
               <CustomControls
+                v-show="isHovered"
                 :is-vertical="false"
                 :stream-url="content.video.stream_url"
                 :is-full-screen="isFullScreen"
