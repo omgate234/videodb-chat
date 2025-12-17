@@ -114,7 +114,7 @@
           </button>
           <button
             v-if="selectedAgent && selectedAgent.name?.toLowerCase() === 'search'"
-            @click.stop="showSearchControlsPanel = !showSearchControlsPanel"
+            @click.stop="handleControlsToggle"
             ref="controlsButtonRef"
             :class="[
               'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
@@ -250,6 +250,7 @@ const attachButtonRef = ref(null);
 const plusButtonRef = ref(null);
 const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
+const wasManuallyClosed = ref(false);
 const placeholder = computed(() => {
   if (context?.activeCollectionData?.value?.name) {
     return `Chat with "${context.activeCollectionData.value.name}" collection`;
@@ -424,8 +425,10 @@ const handleAgentClick = (agent) => {
   if (isAgentSelected(agent)) {
     selectedAgent.value = null;
     showSearchControlsPanel.value = false;
+    wasManuallyClosed.value = false;
   } else {
     selectedAgent.value = agent;
+    wasManuallyClosed.value = false;
   }
 };
 
@@ -531,6 +534,13 @@ const removeFile = (index) => {
   }
 };
 
+const handleControlsToggle = () => {
+  showSearchControlsPanel.value = !showSearchControlsPanel.value;
+  if (!showSearchControlsPanel.value) {
+    wasManuallyClosed.value = true;
+  }
+};
+
 const handleClickOutside = (event) => {
   if (
     controlsButtonRef.value &&
@@ -538,16 +548,18 @@ const handleClickOutside = (event) => {
     showSearchControlsPanel.value
   ) {
     showSearchControlsPanel.value = false;
+    wasManuallyClosed.value = true;
   }
 };
 
 watch(
   () => selectedAgent.value?.name?.toLowerCase() === 'search',
   (isSearchSelected) => {
-    if (isSearchSelected) {
+    if (isSearchSelected && !wasManuallyClosed.value) {
       showSearchControlsPanel.value = true;
-    } else {
+    } else if (!isSearchSelected) {
       showSearchControlsPanel.value = false;
+      wasManuallyClosed.value = false;
     }
   }
 );
@@ -565,9 +577,7 @@ onUnmounted(() => {
   window.removeEventListener('click', handleClickOutside);
 });
 
-const handleUploadFromDevice = () => {
-  console.log('Upload from device clicked');
-};
+const handleUploadFromDevice = () => {};
 
 const handleUploadFromCollection = () => {
   showUploadFromCollectionModal.value = true;
@@ -586,8 +596,6 @@ const handleCollectionAssetsSelected = async (selectedAssets) => {
       console.warn('Invalid asset skipped:', asset);
       continue;
     }
-
-    console.log('>>> asset', asset);
 
     const fileId = Date.now() + Math.random() + (asset.id || Math.random());
 
@@ -693,6 +701,7 @@ const handleSend = () => {
     searchFor: 'scenes',
   };
   showSearchControlsPanel.value = false;
+  wasManuallyClosed.value = false;
 };
 </script>
 <style>

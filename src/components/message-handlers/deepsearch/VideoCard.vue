@@ -262,8 +262,6 @@ const handleCopyLink = async () => {
     setTimeout(() => {
       showCheckIcon.value = false;
     }, 1000);
-
-    console.log('Link copied to clipboard');
   } catch (error) {
     console.error('Error copying link:', error);
   }

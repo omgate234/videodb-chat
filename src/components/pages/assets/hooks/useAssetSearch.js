@@ -27,7 +27,6 @@ export function useAssetSearch(assets) {
    * Handle item selection from search
    */
   const handleSelectItem = (item) => {
-    console.log('Selected item:', item);
     searchQuery.value = item.name || '';
   };
 

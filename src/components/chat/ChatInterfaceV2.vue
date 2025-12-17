@@ -338,24 +338,16 @@ watch(
     if (navState.currentPage === 'chat') {
       if (newParams?.sessionId) {
         if (sessionId.value !== newParams.sessionId) {
-          console.log('[ChatInterfaceV2] Setting sessionId to:', newParams.sessionId);
           sessionId.value = newParams.sessionId;
 
           if (!uploadSimulator.isMockSession(newParams.sessionId)) {
-            console.log('[ChatInterfaceV2] Loading real session:', newParams.sessionId);
             loadSession(newParams.sessionId);
           } else {
             const mockSession = uploadSimulator.getMockSession(newParams.sessionId);
             if (mockSession?.isExistingSession) {
-              console.log(
-                '[ChatInterfaceV2] Returning to existing session with upload, reloading session data'
-              );
               // This is an existing session with upload - reload it to get the real conversations
               loadSession(newParams.sessionId);
             } else {
-              console.log(
-                '[ChatInterfaceV2] Pure mock session detected, clearing real agent conversations'
-              );
               Object.keys(agentConversations).forEach((key) => delete agentConversations[key]);
             }
           }
@@ -367,7 +359,6 @@ watch(
       if (newParams?.sessionId && uploadSimulator.isMockSession(newParams.sessionId)) {
         const mockSession = uploadSimulator.getMockSession(newParams.sessionId);
         if (!mockSession?.isExistingSession) {
-          console.log('[ChatInterfaceV2] Pure mock session detected, navigating to chat');
           if (actions?.goToChat) {
             actions.goToChat(newParams.sessionId);
           }
@@ -377,7 +368,6 @@ watch(
 
     if (navState.currentPage === 'collection') {
       if (sessionId.value) {
-        console.log('[ChatInterfaceV2] Resetting sessionId on collection page navigation');
         sessionId.value = null;
       }
       if (newParams?.id) {
@@ -394,7 +384,6 @@ watch(
   () => navState.currentPage,
   (newPage) => {
     if (newPage !== 'chat' && sessionId.value) {
-      console.log('[ChatInterfaceV2] Resetting sessionId because leaving chat page');
       sessionId.value = null;
       Object.keys(agentConversations).forEach((key) => delete agentConversations[key]);
     }
@@ -429,7 +418,6 @@ watch(chatAttachments, async (newAttachments) => {
           throw Error('Upload failed');
         }
       } catch (e) {
-        console.log('something went wrong', e);
         attachment.upload_status = 'error';
       }
     }
@@ -552,7 +540,6 @@ const scrollToLatestUserMessage = () => {
 };
 
 watch(chatLoading, (val) => {
-  console.log('chatLoading', val);
   if (val) {
     scrollToLatestUserMessage();
   }
@@ -643,7 +630,6 @@ const handleUpdateSessionName = async ({ sessionId: _sessionId, name }) => {
     if (sessionIndex !== -1) {
       sessions.value[sessionIndex] = { ...sessions.value[sessionIndex], name: previousName };
     }
-    console.error('Error renaming session:', error?.message || error);
   }
 };
 
@@ -673,7 +659,6 @@ const handleUpdateCollectionName = async ({ collectionId, name }) => {
         name: previousName,
       };
     }
-    console.error('Error renaming collection:', error?.message || error);
   }
 };
 
@@ -703,7 +688,6 @@ const promptDeleteCollection = async (collection) => {
       showDeleteCollectionErrorModal.value = true;
       return;
     }
-    console.error('Unexpected error deleting collection:', error);
   }
 };
 
@@ -743,14 +727,8 @@ const handleAddMessage = async ({
       generateImageUrl,
       generateAudioUrl,
       navigateToSession: (sessionId) => {
-        console.log('[ChatInterfaceV2] Navigation callback from upload simulator:', sessionId);
         if (actions?.goToChat) {
           actions.goToChat(sessionId);
-          console.log(
-            '[ChatInterfaceV2] Navigation triggered. New navState:',
-            navState.currentPage,
-            navState.activeParams
-          );
         }
       },
       currentSessionId: sessionId.value, // Pass current session ID
@@ -761,7 +739,6 @@ const handleAddMessage = async ({
   }
 
   if (reset_session) {
-    console.log('[ChatInterfaceV2] Resetting sessionId as requested by upload simulator');
     sessionId.value = null;
   }
 
@@ -778,7 +755,6 @@ const handleAddMessage = async ({
     if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
       collectionId.value = activeCollectionId;
     }
-    console.log('[ChatInterfaceV2] Using existing session:', sessionId.value);
   }
 
   const content = [];
@@ -850,7 +826,6 @@ const chatAddMessage = async (messageData) => {
     actions.goToChat(sessionId.value);
   }
 
-  console.log('Message added via chatAddMessage', messageData);
   scrollToLatestUserMessage();
 };
 
@@ -882,7 +857,6 @@ const handleUpload = async (uploadData) => {
       uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
     }
   } catch (error) {
-    console.error('Error uploading media:', error?.message || error);
     uploadNotificationsRef.value.updateUploadStatus(uploadId, 'error');
   }
 };
@@ -899,8 +873,18 @@ const chatContext = {
   chatLoading,
   conversations: computed(() => {
     const currentSessionId = sessionId.value;
-    const isMock = currentSessionId && uploadSimulator.isMockSession(currentSessionId);
+
     const realConvs = agentConversations || {};
+    const validatedRealConvs = {};
+
+    Object.entries(realConvs).forEach(([convId, conv]) => {
+      const firstMessage = Object.values(conv)[0];
+      if (firstMessage?.session_id === currentSessionId) {
+        validatedRealConvs[convId] = conv;
+      }
+    });
+
+    const isMock = currentSessionId && uploadSimulator.isMockSession(currentSessionId);
     const mockConvs = isMock ? uploadSimulator.getMockConversations(currentSessionId) : {};
 
     const mockSession = uploadSimulator.getMockSession(currentSessionId);
@@ -933,31 +917,26 @@ const chatContext = {
 
       if (isLoading) {
         // Still loading - return empty to show loading state
-        console.log('[ChatInterfaceV2] Waiting for session to load before showing conversations');
         return {};
       }
 
       // Session loaded - merge and sort real and mock conversations
       const mockForSession = uploadSimulator.getMockConversations(currentSessionId);
       if (mockForSession && Object.keys(mockForSession).length > 0) {
-        console.log(
-          '[ChatInterfaceV2] Merging and sorting mock upload conversations with existing session'
-        );
-        return mergeSortedConversations(realConvs, mockForSession);
+        return mergeSortedConversations(validatedRealConvs, mockForSession);
       }
     }
 
-    if (Object.keys(realConvs).length > 0) {
-      return realConvs;
+    if (Object.keys(validatedRealConvs).length > 0) {
+      return validatedRealConvs;
     }
 
     const mockForCurrentSession = uploadSimulator.getMockConversations(currentSessionId);
     if (mockForCurrentSession && Object.keys(mockForCurrentSession).length > 0) {
-      console.log('[ChatInterfaceV2] Showing mock conversations during transition to real session');
       return mockForCurrentSession;
     }
 
-    return realConvs;
+    return validatedRealConvs;
   }),
   messageHandlers,
   addMessage,

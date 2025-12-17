@@ -390,13 +390,11 @@ const handleAssetSelect = (asset) => {
   } else {
     // Select
 
-    console.log('>>>adding asset', asset);
     selectedAssets.value.push(asset);
   }
 };
 
 const handleSelect = () => {
-  console.log('>>>selected assets', selectedAssets.value);
   emit('select', [...selectedAssets.value]);
   emit('close');
 };

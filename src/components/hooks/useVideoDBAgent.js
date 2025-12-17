@@ -411,7 +411,6 @@ const uploadMedia = async (uploadData) => {
         `${httpUrl}/videodb/collection/${collectionId}/video/${videoId}/generate_stream?${params.toString()}`,
       );
       const data = await response.json();
-      console.log(data)
       if (!response.ok) {
         const message = data?.message || "Failed to generate video stream URL";
         throw new Error(message);
@@ -553,7 +552,7 @@ const uploadMedia = async (uploadData) => {
       fetchPastMessages = false;
     }
     if (debug) console.log("debug :videodb-chat session loading", sessionId);
-    
+
     session.sessionId = sessionId;
     Object.keys(conversations).forEach((key) => delete conversations[key]);
 
@@ -561,7 +560,14 @@ const uploadMedia = async (uploadData) => {
       session.isLoadingSession = false;
     } else {
       session.isLoadingSession = true;
+
+      const fetchedForSessionId = sessionId;
+
       fetchSession(sessionId).then((res) => {
+        if (session.sessionId !== fetchedForSessionId) {
+          if (debug) console.log("debug :videodb-chat ignoring stale session response", fetchedForSessionId);
+          return;
+        }
         if (debug) console.log("debug :videodb-chat session loaded", res);
         if (res.status === "success") {
           session.videoId = res.data.video_id || null;
@@ -583,8 +589,11 @@ const uploadMedia = async (uploadData) => {
         }
         session.isLoadingSession = false;
       }).catch((error) => {
-        console.error("Error loading session:", error);
-        session.isLoadingSession = false;
+        // --- OPTIONAL FIX IN CATCH BLOCK ---
+        if (session.sessionId === fetchedForSessionId) {
+          console.error("Error loading session:", error);
+          session.isLoadingSession = false;
+        }
       });
     }
   };
@@ -981,11 +990,6 @@ const uploadMedia = async (uploadData) => {
             sessions.value = sessions.value.sort(
               (a, b) => b.created_at - a.created_at,
             );
-
-            if (session.sessionId === null) {
-              session.sessionId = data.session_id;
-              session.isLoadingSession = false;
-            }
             
           });
       }
@@ -1005,9 +1009,6 @@ const uploadMedia = async (uploadData) => {
     if (debug) console.log("debug :videodb-chat socket emmited chat", event);
     if (session.isConnected) {
       const { conv_id: convId, msg_id: msgId, session_id: sessionId } = event;
-      console.log('[useVideoDBAgent] current chats', conversations)
-      console.log('[useVideoDBAgent] new chat', event);
-      console.log("[useVideoDBAgent] current sessionId", session.sessionId);
       if (session.sessionId !== sessionId) return;
 
       

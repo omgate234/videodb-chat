@@ -4,12 +4,10 @@
     <button
       type="button"
       class="vdb-c-flex vdb-c-w-fit vdb-c-items-center vdb-c-gap-8 vdb-c-bg-transparent vdb-c-text-left"
-      @click="toggle()"
+      @click="toggle && toggle()"
     >
       <!-- title: 16px / 500 -->
-      <span
-        class="vdb-c-w-fit vdb-c-text-[16px] vdb-c-font-medium vdb-c-text-kilvish-800"
-      >
+      <span class="vdb-c-w-fit vdb-c-text-[16px] vdb-c-font-medium vdb-c-text-kilvish-800">
         {{ step.title }}
       </span>
 
@@ -27,10 +25,7 @@
       ref="subStepsContainerEl"
       class="scrollbar-hidden vdb-c-flex vdb-c-max-h-[355px] vdb-c-flex-col vdb-c-gap-12 vdb-c-overflow-y-auto"
     >
-      <div
-        v-for="(process, processIndex) in step.processes"
-        :key="processIndex"
-      >
+      <div v-for="(process, processIndex) in step.processes" :key="processIndex">
         <div
           class="scrollbar-hidden vdb-c-relative vdb-c-inline-flex vdb-c-max-w-[65vw] vdb-c-items-center vdb-c-gap-6 vdb-c-self-start vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-bg-[#EFEFEF] vdb-c-px-20 vdb-c-py-4 md:vdb-c-max-w-[50vw]"
           :class="{
@@ -48,9 +43,7 @@
           />
 
           <!-- left: fixed name -->
-          <span
-            class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-text-kilvish-900"
-          >
+          <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-text-kilvish-900">
             {{ process.process_name }}
           </span>
 
@@ -74,28 +67,28 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted } from "vue";
-import ChevronDown from "../../icons/ChevronDown.vue";
-import TargetIcon from "../../icons/TargetIcon.vue";
-import ShuffleIcon from "../../icons/ShuffleIcon.vue";
-import QuoteIcon from "../../icons/QuoteIcon.vue";
-import CountdownTimerIcon from "../../icons/CountdownTimerIcon.vue";
-import CrossCircledIcon from "../../icons/CrossCircledIcon.vue";
-import MixerHorizontalIcon from "../../icons/MixerHorizontalIcon.vue";
-import CircleBackslashIcon from "../../icons/CircleBackslashIcon.vue";
-import CursorTextIcon from "../../icons/CursorTextIcon.vue";
-import ActivityLogIcon from "../../icons/ActivityLogIcon.vue";
-import RowsIcon from "../../icons/RowsIcon.vue";
-import SearchIcon from "../../icons/SearchIcon.vue";
-import ObjectIcon from "../../icons/ObjectIcon.vue";
+import { ref, watch, nextTick, onMounted } from 'vue';
+import ChevronDown from '../../icons/ChevronDown.vue';
+import TargetIcon from '../../icons/TargetIcon.vue';
+import ShuffleIcon from '../../icons/ShuffleIcon.vue';
+import QuoteIcon from '../../icons/QuoteIcon.vue';
+import CountdownTimerIcon from '../../icons/CountdownTimerIcon.vue';
+import CrossCircledIcon from '../../icons/CrossCircledIcon.vue';
+import MixerHorizontalIcon from '../../icons/MixerHorizontalIcon.vue';
+import CircleBackslashIcon from '../../icons/CircleBackslashIcon.vue';
+import CursorTextIcon from '../../icons/CursorTextIcon.vue';
+import ActivityLogIcon from '../../icons/ActivityLogIcon.vue';
+import RowsIcon from '../../icons/RowsIcon.vue';
+import SearchIcon from '../../icons/SearchIcon.vue';
+import ObjectIcon from '../../icons/ObjectIcon.vue';
 
 const props = defineProps({
   step: { type: Object, required: true },
   index: { type: Number, required: true },
   status: { type: String, required: true },
   activeIndex: { type: Number, required: true },
-  isExpanded: { type: Boolean, required: true },
-  toggle: { type: Function, required: true },
+  isExpanded: { type: Boolean, default: false },
+  toggle: { type: Function, default: () => {} },
 });
 
 const subStepsContainerEl = ref(null);
@@ -131,7 +124,7 @@ const scrollSubStepsToBottom = () => {
   const el = subStepsContainerEl.value;
   if (!el) return;
   try {
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   } catch (e) {
     el.scrollTop = el.scrollHeight;
   }
@@ -139,7 +132,7 @@ const scrollSubStepsToBottom = () => {
 
 const queueAutoScroll = () => {
   nextTick(() => {
-    if (typeof requestAnimationFrame === "function") {
+    if (typeof requestAnimationFrame === 'function') {
       requestAnimationFrame(scrollSubStepsToBottom);
     } else {
       scrollSubStepsToBottom();
@@ -155,7 +148,7 @@ watch(
       initShadows();
     }
   },
-  { immediate: false },
+  { immediate: false }
 );
 
 watch(
@@ -166,7 +159,7 @@ watch(
       initShadows();
     }
   },
-  { deep: true },
+  { deep: true }
 );
 
 onMounted(() => {
@@ -174,19 +167,18 @@ onMounted(() => {
 });
 
 const getProcessIcon = (rawName) => {
-  const name = (rawName || "").toString().toLowerCase().trim();
-  if (name.includes("searching")) return CountdownTimerIcon;
-  if (name.includes("search")) return SearchIcon;
-  if (name.includes("paraphrases")) return RowsIcon;
-  if (name.includes("paraphrasing")) return ShuffleIcon;
-  if (name.includes("paraphrase")) return QuoteIcon;
-  if (name.includes("intent")) return TargetIcon;
-  if (name.includes("diagnosis")) return ActivityLogIcon;
-  if (name.includes("joiner")) return MixerHorizontalIcon;
-  if (name.includes("empty")) return CircleBackslashIcon;
-  if (name.includes("query")) return CursorTextIcon;
-  if (name.includes("no") || name.includes("no result"))
-    return CrossCircledIcon;
+  const name = (rawName || '').toString().toLowerCase().trim();
+  if (name.includes('searching')) return CountdownTimerIcon;
+  if (name.includes('search')) return SearchIcon;
+  if (name.includes('paraphrases')) return RowsIcon;
+  if (name.includes('paraphrasing')) return ShuffleIcon;
+  if (name.includes('paraphrase')) return QuoteIcon;
+  if (name.includes('intent')) return TargetIcon;
+  if (name.includes('diagnosis')) return ActivityLogIcon;
+  if (name.includes('joiner')) return MixerHorizontalIcon;
+  if (name.includes('empty')) return CircleBackslashIcon;
+  if (name.includes('query')) return CursorTextIcon;
+  if (name.includes('no') || name.includes('no result')) return CrossCircledIcon;
   return ObjectIcon;
 };
 </script>
@@ -218,7 +210,7 @@ const getProcessIcon = (rawName) => {
 }
 
 .shadow-right::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   right: 0;

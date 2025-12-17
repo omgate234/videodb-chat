@@ -68,6 +68,8 @@
                 :index="index"
                 :status="status"
                 :active-index="activeIndex"
+                :is-expanded="step.type === 'process' ? isProcessExpanded(index) : undefined"
+                :toggle="step.type === 'process' ? () => toggleProcess(index) : undefined"
               />
 
               <!-- 2. String step -->

@@ -291,7 +291,6 @@ watch(
   () => props.active,
   (newValue) => {
     if (newValue) {
-      console.log('active', newValue);
       updatePosition();
     }
   },
@@ -302,7 +301,6 @@ watch(
   () => props.active,
   (val) => {
     if (val) {
-      console.log('active', val);
       window.addEventListener('resize', updatePosition);
     } else {
       window.removeEventListener('resize', updatePosition);

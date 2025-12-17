@@ -85,7 +85,7 @@
     <ShareSessionModal
       :is-open="showShareModal"
       :session-id="session.session_id"
-      :is-public="session.is_public"
+      :is-public="isPublic"
       :on-make-public="onMakePublic"
       @close="showShareModal = false"
     />
@@ -157,6 +157,10 @@ const isActive = computed(
 const shouldShowHoverState = computed(() => {
   if (isActive.value) return false;
   return hovered.value || (showOptions.value && !isEditing.value);
+});
+
+const isPublic = computed(() => {
+  return Boolean(props.session.is_public);
 });
 
 const getSessionDisplayName = () => {

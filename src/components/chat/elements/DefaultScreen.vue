@@ -15,8 +15,7 @@
             {
               'vdb-c-border-orange-100 vdb-c-bg-orange-50 hover:vdb-c-border hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]':
                 query.type === 'primary',
-              'vdb-c-border-roy vdb-c-bg-vdb-lightgrey hover:vdb-c-bg-roy':
-                query.type === 'muted',
+              'vdb-c-border-roy vdb-c-bg-vdb-lightgrey hover:vdb-c-bg-roy': query.type === 'muted',
               'vdb-c-bg-orange hover:vdb-c-bg-orange-600': query.type === 'cta',
             },
           ]"
@@ -49,11 +48,7 @@
               v-else
               class="query-card-icon"
               :fill="
-                query.type === 'cta'
-                  ? '#FFFFFF'
-                  : query.type === 'muted'
-                    ? '#2D2D2D'
-                    : '#EC5B16'
+                query.type === 'cta' ? '#FFFFFF' : query.type === 'muted' ? '#2D2D2D' : '#EC5B16'
               "
             />
           </div>
@@ -75,25 +70,18 @@
     </div>
 
     <!-- Demo/Preview Videos -->
-    <div
-      class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-12"
-      v-if="enableVideoView"
-    >
+    <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-12" v-if="enableVideoView">
       <!-- Divider -->
       <div class="vdb-c-mt-12 vdb-c-h-1 vdb-c-w-full vdb-c-bg-[#EFEFEF]"></div>
 
       <!-- Headers -->
-      <div
-        class="vdb-c-text-base vdb-c-font-normal vdb-c-text-vdb-darkishgrey md:vdb-c-text-xl"
-      >
+      <div class="vdb-c-text-base vdb-c-font-normal vdb-c-text-vdb-darkishgrey md:vdb-c-text-xl">
         <!-- Demo Videos Header -->
         <div v-if="showDemoVideos">
           <div
             class="vdb-c-mb-12 vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-gap-4 md:vdb-c-mb-16"
           >
-            <span
-              class="vdb-c-w-1/2 vdb-c-text-lg vdb-c-font-semibold md:vdb-c-text-xl"
-            >
+            <span class="vdb-c-w-1/2 vdb-c-text-lg vdb-c-font-semibold md:vdb-c-text-xl">
               See agents in action:
             </span>
 
@@ -104,17 +92,13 @@
                   @click="
                     $emit(
                       'view-all-videos-click',
-                      'https://www.youtube.com/playlist?list=PLhxAMFLSSK039xl1UgcZmoFLnb-qNRYQw',
+                      'https://www.youtube.com/playlist?list=PLhxAMFLSSK039xl1UgcZmoFLnb-qNRYQw'
                     )
                   "
                 >
                   <div class="vdb-c-text-sm vdb-c-font-medium">
-                    <span class="vdb-c-hidden md:vdb-c-block">
-                      Watch more demos</span
-                    >
-                    <span class="vdb-c-block vdb-c-text-xs md:vdb-c-hidden">
-                      More Demos
-                    </span>
+                    <span class="vdb-c-hidden md:vdb-c-block"> Watch more demos</span>
+                    <span class="vdb-c-block vdb-c-text-xs md:vdb-c-hidden"> More Demos </span>
                   </div>
                   <ExternalLinkIcon class="vdb-c-hidden md:vdb-c-inline" />
                 </div>
@@ -138,12 +122,8 @@
                 @click="$emit('view-all-videos-click')"
                 class="!vdb-c-px-8 !vdb-c-py-10"
               >
-                <div
-                  class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-gap-6"
-                >
-                  <div class="vdb-c-text-xs vdb-c-font-medium md:vdb-c-text-sm">
-                    View all
-                  </div>
+                <div class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-gap-6">
+                  <div class="vdb-c-text-xs vdb-c-font-medium md:vdb-c-text-sm">View all</div>
                   <ChevronRightCircled class="vdb-c-hidden md:vdb-c-block" />
                 </div>
               </Button>
@@ -195,10 +175,7 @@
       </div>
 
       <!-- Videos Loader -->
-      <div
-        v-else
-        class="vdb-c-grid vdb-c-w-full vdb-c-grid-cols-12 vdb-c-gap-24"
-      >
+      <div v-else class="vdb-c-grid vdb-c-w-full vdb-c-grid-cols-12 vdb-c-gap-24">
         <div
           v-for="(item, index) in [1, 2, 3, 4]"
           :key="`post-loading-${index}`"
@@ -212,19 +189,19 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed } from 'vue';
 
-import VideoCard from "../../collection/VideoCard.vue";
-import AudioCard from "../../collection/AudioCard.vue";
-import ImageCard from "../../collection/ImageCard.vue";
-import VideoCardLoader from "../../collection/VideoCardLoader.vue";
+import VideoCard from '../../collection/VideoCard.vue';
+import AudioCard from '../../collection/AudioCard.vue';
+import ImageCard from '../../collection/ImageCard.vue';
+import VideoCardLoader from '../../collection/VideoCardLoader.vue';
 
-import Button from "../../buttons/Button.vue";
+import Button from '../../buttons/Button.vue';
 
-import ChevronRightCircled from "../../icons/ChevronRightCircled.vue";
-import ExternalLinkIcon from "../../icons/ExternalLink.vue";
-import QuestionMark from "../../icons/QuestionMark.vue";
-import StarIcon from "../../icons/Star.vue";
+import ChevronRightCircled from '../../icons/ChevronRightCircled.vue';
+import ExternalLinkIcon from '../../icons/ExternalLink.vue';
+import QuestionMark from '../../icons/QuestionMark.vue';
+import StarIcon from '../../icons/Star.vue';
 
 const props = defineProps({
   actionCardQueries: {
@@ -259,18 +236,16 @@ const props = defineProps({
   },
 });
 
-console.log(props.isContentLoading, props.previewMedia);
-
 const collectionName = computed(() => props.collectionData?.name);
 
 defineEmits([
-  "query-card-click",
-  "video-click",
-  "view-all-videos-click",
-  "upload-button-click",
-  "delete-video",
-  "delete-audio",
-  "delete-image",
+  'query-card-click',
+  'video-click',
+  'view-all-videos-click',
+  'upload-button-click',
+  'delete-video',
+  'delete-audio',
+  'delete-image',
 ]);
 </script>
 

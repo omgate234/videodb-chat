@@ -382,9 +382,7 @@ const handleFilterUpdate = (updatedFilterState) => {
   Object.assign(filterState, updatedFilterState);
 };
 
-const handleVideoClick = (video) => {
-  console.log('Video clicked:', video);
-};
+const handleVideoClick = (video) => {};
 
 const handleStartEditing = (asset) => {
   editingAssetId.value = asset.id;

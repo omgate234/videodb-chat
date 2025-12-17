@@ -13,14 +13,14 @@
           name="precision"
           value="exact"
           label="Exact"
-          :checked="precision === 'exact'"
+          :model-value="precision"
           @update:model-value="$emit('update:precision', $event)"
         />
         <RadioInput
           name="precision"
           value="wide"
           label="Wide"
-          :checked="precision === 'wide'"
+          :model-value="precision"
           @update:model-value="$emit('update:precision', $event)"
         />
       </div>

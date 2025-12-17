@@ -257,7 +257,6 @@ watch(
   () => props.isOpen,
   (newValue) => {
     if (newValue) {
-      console.log('>>> item opened', props.item);
     }
   }
 );

@@ -64,7 +64,6 @@ const updatePosition = () => {
         .querySelector('[data-compid="see-more-button"]')
         .getBoundingClientRect();
 
-      console.log(rect);
       const gap = 8;
       position.value = {
         top: rect.top,
@@ -91,7 +90,6 @@ watch(
   () => props.isOpen,
   (newValue) => {
     if (newValue) {
-      console.log('isOpen', newValue);
       updatePosition();
     }
   },
@@ -102,7 +100,6 @@ watch(
   () => props.isOpen,
   (val) => {
     if (val) {
-      console.log('isOpen', val);
       window.addEventListener('resize', updatePosition);
     } else {
       window.removeEventListener('resize', updatePosition);

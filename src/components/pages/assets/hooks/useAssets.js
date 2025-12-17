@@ -160,7 +160,6 @@ export function useAssets(context) {
   const getImageUrl = async (collectionId, imageId) => {
     if (!generateImageUrl) return null;
     const result = await generateImageUrl(collectionId, imageId);
-    console.log('>>> result', result);
     return result?.url || null;
   };
 

@@ -407,7 +407,6 @@ const handleAssetSelect = (asset) => {
 };
 
 const handleSelect = () => {
-  console.log('>>>selected assets', selectedAssets.value);
   emit('select', [...selectedAssets.value]);
   emit('close');
 };

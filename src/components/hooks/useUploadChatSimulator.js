@@ -149,16 +149,10 @@ export function useUploadChatSimulator() {
     };
 
     if (useExistingSession) {
-      console.log('[UploadSimulator] Using existing session:', sessionId);
-      console.log('[UploadSimulator] Mock upload conversation added to existing session with', files.length, 'files');
       // No navigation needed - stay in current session
     } else {
       // Navigate to the mock session immediately after creating it
-      console.log('[UploadSimulator] Mock session created:', sessionId);
-      console.log('[UploadSimulator] Mock conversation created with', files.length, 'files');
-      
       if (navigateToSession) {
-        console.log('[UploadSimulator] Triggering navigation to mock session');
         navigateToSession(sessionId);
       }
     }

@@ -488,7 +488,6 @@ onUnmounted(() => {
 });
 
 const handleUploadFromDevice = () => {
-  console.log('Upload from device clicked');
   // This is handled by the file input now
 };
 
@@ -511,7 +510,6 @@ const handleCollectionAssetsSelected = async (selectedAssets) => {
     activeCollectionData?.value?.id || activeCollectionData?.id || collectionIdRef?.value;
 
   for (const asset of selectedAssets) {
-    console.log(`>> handling ${asset.name} of type ${asset.type}`);
     if (!asset || !asset.type) {
       console.warn('Invalid asset skipped:', asset);
       continue;

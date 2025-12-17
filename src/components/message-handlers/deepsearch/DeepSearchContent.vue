@@ -513,8 +513,6 @@ const copyLink = async () => {
     setTimeout(() => {
       showCheckIcon.value = false;
     }, 1000);
-
-    console.log('Link copied to clipboard');
   } catch (error) {
     console.error('Error copying link:', error);
   }
@@ -612,8 +610,6 @@ const saveToCollection = async () => {
       collectionId: targetCollectionId,
       mediaType: 'video',
     });
-
-    console.log('Video added to collection');
   } catch (error) {
     console.error('Error adding to collection:', error);
   }
