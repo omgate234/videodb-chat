@@ -12,6 +12,7 @@
         class="video-player-wrapper vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-[12px] vdb-c-bg-black"
       >
         <VideoDBPlayer
+          :key="video.id + '-' + video.stream_url"
           :stream-url="video.stream_url"
           :default-controls="false"
           :default-overlay="false"

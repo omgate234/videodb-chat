@@ -310,6 +310,7 @@ const props = defineProps({
 const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
 const activeCollectionData = context?.activeCollectionData;
+const generateAudioUrl = context?.generateAudioUrl;
 
 const audioRef = ref(null);
 const isPlaying = ref(false);
@@ -324,8 +325,13 @@ const linkCopied = ref(false);
 const showMenu = ref(false);
 const menuButtonRef = ref(null);
 const menuPosition = ref(null);
+const fetchedAudioUrl = ref(null);
+const isFetchingUrl = ref(false);
 
 const audioUrl = computed(() => {
+  if (fetchedAudioUrl.value) {
+    return fetchedAudioUrl.value;
+  }
   return props.content?.audio?.audio_url || '';
 });
 
@@ -539,6 +545,26 @@ const handleClickOutside = (event) => {
   }
 };
 
+const fetchAudioUrl = async () => {
+  if (isFetchingUrl.value) return;
+
+  const audioIdValue = audioId.value;
+  const collectionIdValue = collectionId.value;
+
+  // Always fetch a fresh URL because existing URLs can expire (signed URLs with expiration)
+  if (generateAudioUrl && audioIdValue && collectionIdValue) {
+    isFetchingUrl.value = true;
+    try {
+      const result = await generateAudioUrl(collectionIdValue, audioIdValue);
+      fetchedAudioUrl.value = result?.url || null;
+    } catch (error) {
+      console.error('Error fetching audio URL:', error);
+    } finally {
+      isFetchingUrl.value = false;
+    }
+  }
+};
+
 watch(audioUrl, (newUrl) => {
   if (audioRef.value && newUrl) {
     audioRef.value.load();
@@ -547,11 +573,21 @@ watch(audioUrl, (newUrl) => {
   }
 });
 
+// Watch for changes in audioId or collectionId to refetch
+watch(
+  [audioId, collectionId],
+  () => {
+    fetchAudioUrl();
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   if (audioRef.value) {
     audioRef.value.volume = volume.value;
   }
+  fetchAudioUrl();
 });
 
 onBeforeUnmount(() => {

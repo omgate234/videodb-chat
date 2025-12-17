@@ -475,52 +475,61 @@ const cancelDeleteCollection = () => {
 const isLoadingAssets = ref(false);
 const activeCollectionVoices = ref(null);
 
+const fetchCollectionAssets = async (collectionId) => {
+  if (!collectionId) return;
+
+  isLoadingAssets.value = true;
+  try {
+    const [videosRes, audiosRes, imagesRes, voicesRes] = await Promise.all([
+      fetchCollectionVideos?.(collectionId) || Promise.resolve({ data: null }),
+      fetchCollectionAudios?.(collectionId) || Promise.resolve({ data: null }),
+      fetchCollectionImages?.(collectionId) || Promise.resolve({ data: null }),
+      fetchAssets?.({
+        collection_id: collectionId,
+        asset_type: 'voices',
+        page: 1,
+        page_size: 10000,
+      }) || Promise.resolve({ status: 'success', data: { assets: null } }),
+    ]);
+
+    if (activeCollectionVideos) {
+      activeCollectionVideos.value = videosRes?.data || null;
+    }
+    if (activeCollectionAudios) {
+      activeCollectionAudios.value = audiosRes?.data || null;
+    }
+    if (activeCollectionImages) {
+      activeCollectionImages.value = imagesRes?.data || null;
+    }
+    if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
+      activeCollectionVoices.value = voicesRes.data.data.assets;
+    } else {
+      activeCollectionVoices.value = null;
+    }
+  } catch (error) {
+    console.error('Error fetching collection assets:', error);
+  } finally {
+    isLoadingAssets.value = false;
+  }
+};
+
+// Watch for when user navigates to collection page OR when collection changes
 watch(
-  () => {
-    const collectionData = activeCollectionData?.value || activeCollectionData;
-    return collectionData?.id;
-  },
-  async (collectionId, oldCollectionId) => {
-    const isCollectionPage = navState?.currentPage === 'collection';
-    if (!isCollectionPage || !collectionId || collectionId === oldCollectionId) {
-      return;
-    }
+  () => ({
+    currentPage: navState?.currentPage,
+    collectionId: (activeCollectionData?.value || activeCollectionData)?.id,
+  }),
+  async (newState, oldState) => {
+    const isCollectionPage = newState.currentPage === 'collection';
+    const wasCollectionPage = oldState?.currentPage === 'collection';
+    const collectionChanged = newState.collectionId !== oldState?.collectionId;
+    const pageJustOpened = isCollectionPage && !wasCollectionPage;
 
-    isLoadingAssets.value = true;
-    try {
-      const [videosRes, audiosRes, imagesRes, voicesRes] = await Promise.all([
-        fetchCollectionVideos?.(collectionId) || Promise.resolve({ data: null }),
-        fetchCollectionAudios?.(collectionId) || Promise.resolve({ data: null }),
-        fetchCollectionImages?.(collectionId) || Promise.resolve({ data: null }),
-        fetchAssets?.({
-          collection_id: collectionId,
-          asset_type: 'voices',
-          page: 1,
-          page_size: 10000,
-        }) || Promise.resolve({ status: 'success', data: { assets: null } }),
-      ]);
-
-      if (activeCollectionVideos) {
-        activeCollectionVideos.value = videosRes?.data || null;
-      }
-      if (activeCollectionAudios) {
-        activeCollectionAudios.value = audiosRes?.data || null;
-      }
-      if (activeCollectionImages) {
-        activeCollectionImages.value = imagesRes?.data || null;
-      }
-      if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
-        activeCollectionVoices.value = voicesRes.data.data.assets;
-      } else {
-        activeCollectionVoices.value = null;
-      }
-    } catch (error) {
-      console.error('Error fetching collection assets:', error);
-    } finally {
-      isLoadingAssets.value = false;
+    if (isCollectionPage && newState.collectionId && (pageJustOpened || collectionChanged)) {
+      await fetchCollectionAssets(newState.collectionId);
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 const activeTab = ref('Video');
 const editingAssetId = ref(null);

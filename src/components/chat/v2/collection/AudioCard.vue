@@ -170,7 +170,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import { ref, onMounted, computed, nextTick, watch, inject } from 'vue';
 import NotificationCenter from '../../../chat/elements/NotificationCenter.vue';
 import DeleteModal from '../DeleteModal.vue';
 import CopyIcon from '../../../icons/CopyIcon.vue';
@@ -234,13 +234,21 @@ const props = defineProps({
   },
 });
 
+const context = inject('videodb-chat-context');
+const generateAudioUrl = context?.generateAudioUrl;
+
 onMounted(async () => {
-  if (props.getAudioUrl) {
-    // For voices, use audio_id instead of id
-    const audioId = props.item.type === 'voices' ? props.item.audio_id : props.item.id;
-    const collectionId = props.item.collection_id || props.item.collectionId;
-    const audioUrl = await props.getAudioUrl(collectionId, audioId);
-    url.value = audioUrl;
+  // For voices, use audio_id instead of id
+  const audioId = props.item.type === 'voices' ? props.item.audio_id : props.item.id;
+  const collectionId = props.item.collection_id || props.item.collectionId;
+
+  if (generateAudioUrl && collectionId && audioId) {
+    try {
+      const result = await generateAudioUrl(collectionId, audioId);
+      url.value = result?.url || null;
+    } catch (error) {
+      console.error('Error fetching audio URL:', error);
+    }
   }
 });
 

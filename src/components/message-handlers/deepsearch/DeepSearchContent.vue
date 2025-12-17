@@ -32,7 +32,7 @@
       <div class="vdb-c-flex vdb-c-flex-wrap vdb-c-justify-center vdb-c-gap-16">
         <VideoCard
           v-for="(video, index) in paginatedVideos"
-          :key="video.id + '-' + index"
+          :key="video.id + '-' + index + '-' + video.stream_url"
           :video="video"
           :call-api="callApi"
           :on-convert-to-reel="() => handleConvertToReelFromGrid(getOriginalIndex(index))"

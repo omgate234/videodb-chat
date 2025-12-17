@@ -191,6 +191,7 @@ const menuPosition = ref(null);
 const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
 const getVideoDownloadUrl = context?.getVideoDownloadUrl;
+const getDownloadUrlFromStream = context?.getDownloadUrlFromStream;
 const activeCollectionData = context?.activeCollectionData;
 
 const copyVideoLink = async () => {
@@ -257,15 +258,36 @@ const handleAddToCollection = async () => {
 };
 
 const handleDownload = async () => {
-  if (!getVideoDownloadUrl || !props.videoId || !props.collectionId) {
-    console.error('Download not available - missing videoId or collectionId');
-    showMenu.value = false;
+  showMenu.value = false;
+
+  if (getVideoDownloadUrl && props.videoId && props.collectionId) {
+    try {
+      const result = await getVideoDownloadUrl(props.collectionId, props.videoId);
+      if (result?.data && result?.data?.download_url) {
+        const link = document.createElement('a');
+        link.href = result.data.download_url;
+        link.download = `${props.videoName || 'video'}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        console.error('No download URL received');
+      }
+      return;
+    } catch (error) {
+      console.error('Error downloading video:', error);
+      return;
+    }
+  }
+
+  if (!getDownloadUrlFromStream || !props.streamUrl) {
+    console.error('Download not available - missing streamUrl or download function');
     return;
   }
 
   try {
-    const result = await getVideoDownloadUrl(props.collectionId, props.videoId);
-    if (result?.data && result?.data?.download_url) {
+    const result = await getDownloadUrlFromStream(props.streamUrl, props.videoName);
+    if (result?.status === 'success' && result?.data?.download_url) {
       const link = document.createElement('a');
       link.href = result.data.download_url;
       link.download = `${props.videoName || 'video'}.mp4`;
@@ -273,12 +295,10 @@ const handleDownload = async () => {
       link.click();
       document.body.removeChild(link);
     } else {
-      console.error('No download URL received');
+      console.error('No download URL received from stream');
     }
-    showMenu.value = false;
   } catch (error) {
-    console.error('Error downloading video:', error);
-    showMenu.value = false;
+    console.error('Error downloading video from stream:', error);
   }
 };
 

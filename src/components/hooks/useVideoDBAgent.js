@@ -117,6 +117,37 @@ export function useVideoDBAgent(config) {
   const getVideoDownloadUrl = async (collectionId, videoId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/video/${videoId}/download`);
 
+  const getDownloadUrlFromStream = async (streamUrl, name = null) => {
+    const res = {};
+    try {
+      const payload = { stream_url: streamUrl };
+      if (name) {
+        payload.name = name;
+      }
+
+      const response = await fetch(`${httpUrl}/videodb/download`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      res.status = "success";
+      res.data = data;
+    } catch (error) {
+      res.status = "error";
+      res.error = error;
+    }
+    return res;
+  };
+
   const fetchCollectionAudio = async (collectionId, audioId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/audio/${audioId}`);
   const fetchCollectionAudios = async (collectionId) =>
@@ -1071,6 +1102,7 @@ const uploadMedia = async (uploadData) => {
     deleteAudio,
     deleteImage,
     getVideoDownloadUrl,
+    getDownloadUrlFromStream,
     uploadMedia,
     uploadVideo,
     pollVideoUpload,

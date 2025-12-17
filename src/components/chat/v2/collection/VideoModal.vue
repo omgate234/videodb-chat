@@ -232,6 +232,7 @@ const showDeleteModal = ref(false);
 
 const context = inject('videodb-chat-context');
 const getVideoDownloadUrl = context?.getVideoDownloadUrl;
+const getDownloadUrlFromStream = context?.getDownloadUrlFromStream;
 
 watch(
   () => props.editingAssetId,
@@ -331,7 +332,7 @@ function handleCancelTitle() {
 }
 
 async function handleDownload() {
-  if (getVideoDownloadUrl) {
+  if (getVideoDownloadUrl && props.item.collection_id && props.item.id) {
     try {
       const result = await getVideoDownloadUrl(props.item.collection_id, props.item.id);
       if (result?.data && result?.data?.download_url) {
@@ -341,8 +342,25 @@ async function handleDownload() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        return;
+      }
+    } catch (error) {
+      console.error('Error downloading video from collection:', error);
+    }
+  }
+
+  if (getDownloadUrlFromStream && props.item.stream_url) {
+    try {
+      const result = await getDownloadUrlFromStream(props.item.stream_url, props.item.name);
+      if (result?.status === 'success' && result?.data?.download_url) {
+        const link = document.createElement('a');
+        link.href = result.data.download_url;
+        link.download = `${props.item.name || 'video'}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        console.error('No download URL received');
+        console.error('No download URL received from stream');
         if (notificationCenterRef.value) {
           notificationCenterRef.value.addNotification('Failed to get download URL', {
             type: 'error',
@@ -350,10 +368,15 @@ async function handleDownload() {
         }
       }
     } catch (error) {
-      console.error('Error downloading video:', error);
+      console.error('Error downloading video from stream:', error);
       if (notificationCenterRef.value) {
         notificationCenterRef.value.addNotification('Failed to download video', { type: 'error' });
       }
+    }
+  } else {
+    console.error('No download method available');
+    if (notificationCenterRef.value) {
+      notificationCenterRef.value.addNotification('Download not available', { type: 'error' });
     }
   }
 }

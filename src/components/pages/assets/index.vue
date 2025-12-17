@@ -193,7 +193,7 @@
 </template>
 
 <script setup>
-import { inject, computed, ref, reactive, onMounted, onBeforeUnmount } from 'vue';
+import { inject, computed, ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue';
 import LibraryIcon from '../../chat/v2/icons/LibraryIcon.vue';
 import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 import SearchInput from './SearchInput.vue';
@@ -223,6 +223,7 @@ const context = props.context || inject('videodb-chat-context');
 const configStatus = computed(() => context?.configStatus?.value ?? null);
 const isSetupComplete = computed(() => context?.isSetupComplete?.value ?? false);
 const collections = computed(() => context?.collections?.value || []);
+const navState = computed(() => context?.navState);
 
 const uploadDisabled = computed(
   () => !((configStatus?.value ?? null) !== null && isSetupComplete?.value)
@@ -337,6 +338,19 @@ const handleClickOutside = (event) => {
     activeDropdown.value = null;
   }
 };
+
+watch(
+  () => navState.value?.currentPage,
+  (newPage, oldPage) => {
+    const isAssetsPage = newPage === 'assets';
+    const wasAssetsPage = oldPage === 'assets';
+    const pageJustOpened = isAssetsPage && !wasAssetsPage;
+
+    if (pageJustOpened && isSetupComplete.value && collections.value.length > 0) {
+      loadAllAssets();
+    }
+  }
+);
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);

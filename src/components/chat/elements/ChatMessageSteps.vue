@@ -98,6 +98,17 @@
                 :is-expanded="isProcessExpanded(index)"
                 :toggle="() => toggleProcess(index)"
               />
+
+              <!-- 4. Code step (default handler) -->
+              <CodeSteps
+                v-else-if="step.type === 'code'"
+                :step="step"
+                :index="index"
+                :status="status"
+                :active-index="activeIndex"
+                :is-expanded="isCodeExpanded(index)"
+                :toggle="() => toggleCode(index)"
+              />
             </div>
           </div>
           <!-- /Steps -->
@@ -111,6 +122,7 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import ChevronDown from '../../icons/ChevronDown.vue';
 import ProcessSteps from './ProcessSteps.vue';
+import CodeSteps from './CodeSteps.vue';
 import { useVideoDBChat } from '../../../context.js';
 
 const props = defineProps({
@@ -136,6 +148,7 @@ const { stepActionHandlers } = useVideoDBChat();
 
 const isExpanded = ref(props.expanded);
 const expandedProcesses = ref(new Set());
+const expandedCode = ref(new Set());
 const lastStepsLength = ref(0);
 
 const displaySteps = computed(() => {
@@ -179,6 +192,19 @@ const toggleProcess = (i) => {
 };
 
 const isProcessExpanded = (i) => expandedProcesses.value.has(i);
+
+// Code expansion helpers
+const toggleCode = (i) => {
+  const next = new Set(expandedCode.value);
+  if (next.has(i)) {
+    next.delete(i);
+  } else {
+    next.add(i);
+  }
+  expandedCode.value = next;
+};
+
+const isCodeExpanded = (i) => expandedCode.value.has(i);
 
 // ---- timeline rail measurement ----
 const timelineEl = ref(null);
@@ -228,17 +254,22 @@ watch(
   }
 );
 
-// auto-open new process sections only
+// auto-open new process and code sections
 watch(
   () => displaySteps.value,
   (steps) => {
     const startIndex = lastStepsLength.value === 0 ? 0 : lastStepsLength.value;
-    const next = new Set(expandedProcesses.value);
+    const nextProcess = new Set(expandedProcesses.value);
+    const nextCode = new Set(expandedCode.value);
     for (let i = startIndex; i < steps.length; i++) {
       const s = steps[i];
-      if (s && typeof s === 'object' && s.type === 'process') next.add(i);
+      if (s && typeof s === 'object') {
+        if (s.type === 'process') nextProcess.add(i);
+        if (s.type === 'code') nextCode.add(i);
+      }
     }
-    expandedProcesses.value = next;
+    expandedProcesses.value = nextProcess;
+    expandedCode.value = nextCode;
     lastStepsLength.value = steps.length;
 
     measureRail();
@@ -256,8 +287,9 @@ watch(
   { immediate: true }
 );
 
-// re-measure when process sections toggle (heights change)
+// re-measure when process or code sections toggle (heights change)
 watch(expandedProcesses, measureRail, { deep: true });
+watch(expandedCode, measureRail, { deep: true });
 
 // also re-measure on window resize
 if (typeof window !== 'undefined') {
