@@ -32,6 +32,7 @@ import CensorReportHandler from '../message-handlers/CensorReportHandler.vue';
 import PromptClipContent from '../message-handlers/prompt_clip/PromptClipContent.vue';
 import SubtitlesContentHandler from '../message-handlers/SubtitlesContentHandler.vue';
 import DeleteIcon from '../icons/Delete3.vue';
+import AssetSelectorHandler from '../message-handlers/AssetSelectorHandler.vue';
 
 const props = defineProps({
   currentPage: {
@@ -362,6 +363,16 @@ watch(
       } else {
         sessionId.value = null;
       }
+    } else {
+      if (newParams?.sessionId && uploadSimulator.isMockSession(newParams.sessionId)) {
+        const mockSession = uploadSimulator.getMockSession(newParams.sessionId);
+        if (!mockSession?.isExistingSession) {
+          console.log('[ChatInterfaceV2] Pure mock session detected, navigating to chat');
+          if (actions?.goToChat) {
+            actions.goToChat(newParams.sessionId);
+          }
+        }
+      }
     }
 
     if (navState.currentPage === 'collection') {
@@ -440,6 +451,7 @@ registerMessageHandler('edit_stages', EditStagesHandler);
 registerMessageHandler('censor', CensorReportHandler);
 registerMessageHandler('prompt_clip', PromptClipContent);
 registerMessageHandler('subtitles', SubtitlesContentHandler);
+registerMessageHandler('asset_selector', AssetSelectorHandler);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
@@ -700,6 +712,7 @@ const handleAddMessage = async ({
   images = [],
   videos = [],
   audios = [],
+  voices = [],
   video_id = null,
   files = [],
   agents = [],
@@ -790,6 +803,7 @@ const handleAddMessage = async ({
     video_id: video_id,
     videos: videos,
     audios: audios,
+    voices: voices,
     images: images,
     additional_data: additionalInfo,
     from_event: from_event,

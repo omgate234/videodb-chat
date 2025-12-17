@@ -105,17 +105,17 @@ export function useAssetFilters(assets, selectedCollection, activeTab, sortState
           Video: 'video',
           Audio: 'audio',
           Images: 'image',
-          Voices: 'voice',
+          Voices: 'voices',
         };
         if (typeMap[activeTab.value] && asset.type !== typeMap[activeTab.value]) {
           return false;
         }
 
-        // Duration Check
-        if (!checkDuration(asset, filterState)) return false;
+        // Duration Check (skip for voices)
+        if (asset.type !== 'voices' && !checkDuration(asset, filterState)) return false;
 
-        // Size Check
-        if (!checkFileSize(asset, filterState)) return false;
+        // Size Check (skip for voices)
+        if (asset.type !== 'voices' && !checkFileSize(asset, filterState)) return false;
 
         return true;
       });

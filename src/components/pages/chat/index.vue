@@ -149,6 +149,14 @@
       :on-make-public="makeSessionPublic"
       @close="showShareModal = false"
     />
+
+    <UploadModal
+      :showUploadDialog="showUploadModal"
+      :collections="collectionsList"
+      :defaultSelectedCollectionId="breadcrumbCollectionId"
+      @cancel-upload="handleCancelUpload"
+      @upload="handleUploadWrapper"
+    />
   </div>
 </template>
 
@@ -159,6 +167,7 @@ import ShowMoreChatInput from '../collection/components/ShowMoreChatInput.vue';
 import ChatMessageContainer from '../../chat/ChatMessageContainer.vue';
 import SetupScreen from '../../chat/elements/SetupScreen.vue';
 import ShareSessionModal from '../../chat/v2/ShareSessionModal.vue';
+import UploadModal from '../../chat/v2/UploadModal.vue';
 import ShareIcon from '../../icons/Share.vue';
 import FolderIcon from '../../chat/v2/icons/FolderIcon.vue';
 import ChevronRightIcon from '../../chat/v2/icons/ChevronRightIcon.vue';
@@ -203,11 +212,16 @@ const {
   showChatInput = true,
   chatInputPlaceholder = 'Ask Director',
   isLoadingSession,
+  handleUpload,
+  collections,
 } = injectedContext || {};
 
 const chatWindowRef = ref(null);
 const isScrolled = injectedContext?.isScrolled || ref(false);
 const showShareModal = ref(false);
+const showUploadModal = ref(false);
+
+const collectionsList = computed(() => collections?.value || []);
 
 const showLoadingState = computed(() => {
   return (
@@ -312,7 +326,21 @@ const openShareModal = () => {
 };
 
 const handleUploadClick = () => {
-  // Placeholder for future upload panel; intentionally left empty.
+  showUploadModal.value = true;
+};
+
+const handleCancelUpload = () => {
+  showUploadModal.value = false;
+};
+
+const handleUploadWrapper = async (uploadData) => {
+  showUploadModal.value = false;
+
+  try {
+    await handleUpload?.(uploadData);
+  } catch (error) {
+    console.error('Error uploading file:', error);
+  }
 };
 </script>
 

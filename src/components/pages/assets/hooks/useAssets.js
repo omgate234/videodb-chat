@@ -15,6 +15,7 @@ export function useAssets(context) {
   const fetchCollectionVideos = context?.fetchCollectionVideos;
   const fetchCollectionAudios = context?.fetchCollectionAudios;
   const fetchCollectionImages = context?.fetchCollectionImages;
+  const fetchAssets = context?.fetchAssets;
   const generateImageUrl = context?.generateImageUrl;
   const generateAudioUrl = context?.generateAudioUrl;
   const deleteVideo = context?.deleteVideo;
@@ -37,13 +38,15 @@ export function useAssets(context) {
       const hasVideos = typeof fetchCollectionVideos === 'function';
       const hasAudios = typeof fetchCollectionAudios === 'function';
       const hasImages = typeof fetchCollectionImages === 'function';
+      const hasFetchAssets = typeof fetchAssets === 'function';
 
       // At least one fetch function must be available
-      if (!hasVideos && !hasAudios && !hasImages) {
+      if (!hasVideos && !hasAudios && !hasImages && !hasFetchAssets) {
         console.warn('No asset fetch functions are available', {
           fetchCollectionVideos: typeof fetchCollectionVideos,
           fetchCollectionAudios: typeof fetchCollectionAudios,
           fetchCollectionImages: typeof fetchCollectionImages,
+          fetchAssets: typeof fetchAssets,
         });
         assets.value = [];
         return;
@@ -87,6 +90,27 @@ export function useAssets(context) {
               .catch((err) => {
                 console.error(`Error fetching images for collection ${collection.id}:`, err);
                 return { type: 'image', data: [] };
+              })
+          );
+        }
+
+        if (hasFetchAssets) {
+          fetchPromises.push(
+            fetchAssets({
+              collection_id: collection.id,
+              asset_type: 'voices',
+              page: 1,
+              page_size: 10000,
+            })
+              .then((r) => {
+                if (r.status === 'success' && r.data?.data?.assets) {
+                  return { type: 'voices', data: r.data.data.assets || [] };
+                }
+                return { type: 'voices', data: [] };
+              })
+              .catch((err) => {
+                console.error(`Error fetching voices for collection ${collection.id}:`, err);
+                return { type: 'voices', data: [] };
               })
           );
         }

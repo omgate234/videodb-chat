@@ -11,7 +11,7 @@
     <div class="vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12">
       <!-- Selection Checkbox -->
       <div
-        v-if="enabledSelection"
+        v-if="enabledSelection && selectionMode === 'checkbox'"
         class="selection-checkbox vdb-c-absolute vdb-c-left-4 vdb-c-top-4 vdb-c-z-20 vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-rounded-[7px] vdb-c-border vdb-c-border-solid vdb-c-transition-all"
         :class="
           isSelected
@@ -21,6 +21,14 @@
         @click.stop="handleSelect"
       >
         <CheckIcon v-if="isSelected" class="vdb-c-h-12 vdb-c-w-12" style="stroke: white" />
+      </div>
+      <!-- Selection Radio Button -->
+      <div
+        v-if="enabledSelection && selectionMode === 'radio'"
+        class="selection-radio vdb-c-absolute vdb-c-left-4 vdb-c-top-4 vdb-c-z-20 vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-transition-all"
+        @click.stop="handleSelect"
+      >
+        <div class="radio-checkmark" :class="{ 'radio-checkmark--selected': isSelected }"></div>
       </div>
       <div
         v-if="item.stream_url"
@@ -250,6 +258,15 @@ const props = defineProps({
   isSelected: {
     type: Boolean,
     default: false,
+  },
+  selectionMode: {
+    type: String,
+    default: 'checkbox',
+    validator: (value) => ['checkbox', 'radio'].includes(value),
+  },
+  selectionName: {
+    type: String,
+    default: '',
   },
   disableOptions: {
     type: Boolean,
@@ -512,6 +529,26 @@ function handleSelect() {
     0px 47px 28px rgba(0, 0, 0, 0.03),
     0px 83px 33px rgba(0, 0, 0, 0.01),
     0px 130px 36px rgba(0, 0, 0, 0);
+}
+
+/* Radio Button Styles */
+.radio-checkmark {
+  width: 20px;
+  height: 20px;
+  background-color: #ffffff;
+  border: 1px solid #b9b9b9;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.radio-checkmark--selected {
+  border-color: #ec5b16;
+  border-width: 5px;
+}
+
+.selection-radio:hover .radio-checkmark {
+  border-color: #ec5b16;
 }
 
 @keyframes pulse {

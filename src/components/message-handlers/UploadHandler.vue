@@ -83,7 +83,7 @@
         />
         <AudioFileDisplay
           class="vdb-c-p-12"
-          v-else-if="file.type === 'audio'"
+          v-else-if="file.type === 'audio' || file.type === 'voices'"
           :file="file"
           :full-width="true"
         />

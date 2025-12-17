@@ -17,7 +17,7 @@
         ]"
       >
         <video-card
-          v-if="item.type !== 'audio' && item.type !== 'image'"
+          v-if="item.type !== 'audio' && item.type !== 'image' && item.type !== 'voices'"
           :item="item"
           :index="index"
           :handle-add-message="handleAddMessage"
@@ -30,7 +30,7 @@
         />
 
         <AudioCard
-          v-else-if="item.type === 'audio'"
+          v-else-if="item.type === 'audio' || item.type === 'voices'"
           :item="item"
           :index="index"
           :get-audio-url="getAudioUrl"

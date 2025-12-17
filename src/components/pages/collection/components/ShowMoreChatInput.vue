@@ -24,7 +24,7 @@
             @remove="removeFile(index)"
           />
           <AudioFileDisplay
-            v-else-if="file.type === 'audio'"
+            v-else-if="file.type === 'audio' || file.type === 'voices'"
             :file="file"
             @remove="removeFile(index)"
           />
@@ -598,9 +598,12 @@ const handleCollectionAssetsSelected = async (selectedAssets) => {
     });
 
     // Create display file with fallback for name
+    // Normalize type: voices -> voices (keep as is), others -> lowercase
+    const normalizedType = asset.type === 'voices' ? 'voices' : asset.type.toLowerCase();
+
     const displayFile = {
       id: fileId,
-      type: asset.type.toLowerCase(), // Ensure lowercase: video, audio, image
+      type: normalizedType,
       name: asset.name || asset.title || `Untitled ${asset.type}`,
       url: null,
       isFromDevice: false,
@@ -625,8 +628,24 @@ const handleSend = () => {
   // Prepare files for sending (raw File objects from device uploads)
   const filesToSend = uploadedFiles.value.map((f) => f.file);
 
-  // Prepare collection assets as uploaded_files
-  const uploadedFilesFromCollection = collectionAssets.value.map((a) => a.asset);
+  // Prepare collection assets - separate by type
+  const videos = [];
+  const audios = [];
+  const voices = [];
+  const uploadedFilesFromCollection = [];
+
+  collectionAssets.value.forEach((a) => {
+    const asset = a.asset;
+    uploadedFilesFromCollection.push(asset);
+
+    if (asset.type === 'video') {
+      videos.push(asset);
+    } else if (asset.type === 'audio') {
+      audios.push(asset);
+    } else if (asset.type === 'voices') {
+      voices.push(asset);
+    }
+  });
 
   const additionalInfo =
     selectedAgent.value?.name === 'Search'
@@ -637,13 +656,25 @@ const handleSend = () => {
       : null;
 
   if (context?.handleAddMessage) {
-    context.handleAddMessage({
+    const messageData = {
       text: inputText.value,
       agents: selectedAgent.value ? [selectedAgent.value.name] : [],
       files: filesToSend,
       uploaded_files: uploadedFilesFromCollection,
       additionalInfo: additionalInfo,
-    });
+    };
+
+    if (videos.length > 0) {
+      messageData.videos = videos;
+    }
+    if (audios.length > 0) {
+      messageData.audios = audios;
+    }
+    if (voices.length > 0) {
+      messageData.voices = voices;
+    }
+
+    context.handleAddMessage(messageData);
   }
 
   displayFiles.value.forEach((file) => {

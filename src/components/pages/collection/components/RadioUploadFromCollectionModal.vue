@@ -73,7 +73,14 @@
         <!-- Asset Grid -->
         <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col vdb-c-overflow-hidden">
           <div
-            v-if="filteredAssets.length === 0"
+            v-if="isLoadingAssets && filteredAssets.length === 0"
+            class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-12 vdb-c-py-60 vdb-c-text-center"
+          >
+            <EmptyFolderIcon />
+            <p class="vdb-c-font-medium vdb-c-text-vdb-darkishgrey">Loading assets...</p>
+          </div>
+          <div
+            v-else-if="!isLoadingAssets && filteredAssets.length === 0"
             class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-12 vdb-c-py-60 vdb-c-text-center"
           >
             <EmptyFolderIcon />
@@ -105,16 +112,7 @@
                 :get-audio-url="getAudioUrl"
                 :enabled-selection="true"
                 :is-selected="isAssetSelected(asset)"
-                :disable-options="true"
-                @select="handleAssetSelect"
-              />
-              <ImageCard
-                v-else-if="asset.type === 'image'"
-                :item="asset"
-                :index="index"
-                :get-image-url="getImageUrl"
-                :enabled-selection="true"
-                :is-selected="isAssetSelected(asset)"
+                :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
                 :disable-options="true"
                 @select="handleAssetSelect"
               />
@@ -125,6 +123,7 @@
                 :get-audio-url="getAudioUrl"
                 :enabled-selection="true"
                 :is-selected="isAssetSelected(asset)"
+                :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
                 :disable-options="true"
                 @select="handleAssetSelect"
               />
@@ -153,7 +152,7 @@
               : 'vdb-c-bg-[#EC5B16] vdb-c-text-white hover:vdb-c-bg-[#D94E14]',
           ]"
         >
-          Select
+          {{ props.singleSelection ? 'Select' : 'Select' }}
         </button>
       </div>
     </div>
@@ -171,7 +170,6 @@ import FilterDropdown from '../../assets/FilterDropdown.vue';
 import EmptyFolderIcon from '../../../chat/v2/icons/EmptyFolderIcon.vue';
 import VideoCard from '../../../chat/v2/collection/VideoCard.vue';
 import AudioCard from '../../../chat/v2/collection/AudioCard.vue';
-import ImageCard from '../../../chat/v2/collection/ImageCard.vue';
 import { useAssetSearch } from '../../assets/hooks/useAssetSearch.js';
 import { useAssetFilters } from '../../assets/hooks/useAssetFilters.js';
 
@@ -183,6 +181,10 @@ const props = defineProps({
   context: {
     type: Object,
     default: undefined,
+  },
+  singleSelection: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -206,13 +208,15 @@ const collectionName = computed(() => {
 });
 
 // State for voices
-const activeCollectionVoices = ref(null);
+const activeCollectionVoices = ref([]);
+const isLoadingAssets = ref(false);
 
 // Fetch voices when modal opens
 watch(
   () => props.isOpen,
   async (isOpen) => {
     if (isOpen && fetchAssets) {
+      isLoadingAssets.value = true;
       const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
       if (collectionId) {
         try {
@@ -230,16 +234,21 @@ watch(
         } catch (error) {
           console.error('Error fetching voices:', error);
           activeCollectionVoices.value = [];
+        } finally {
+          isLoadingAssets.value = false;
         }
+      } else {
+        isLoadingAssets.value = false;
       }
     } else if (!isOpen) {
-      activeCollectionVoices.value = null;
+      activeCollectionVoices.value = [];
+      isLoadingAssets.value = false;
     }
   },
   { immediate: true }
 );
 
-// Combine videos, audios, images, and voices into a single array
+// Combine videos, audios, and voices into a single array (no images)
 const combinedAssets = computed(() => {
   const assets = [];
   const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
@@ -247,7 +256,6 @@ const combinedAssets = computed(() => {
 
   const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
   const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
-  const images = activeCollectionImages?.value || activeCollectionImages || [];
   const voices = activeCollectionVoices?.value || [];
 
   if (Array.isArray(videos)) {
@@ -267,17 +275,6 @@ const combinedAssets = computed(() => {
         ...audio,
         type: 'audio',
         collectionId: collectionId || audio.collection_id,
-        collectionName: collectionNameValue,
-      });
-    });
-  }
-
-  if (Array.isArray(images)) {
-    images.forEach((image) => {
-      assets.push({
-        ...image,
-        type: 'image',
-        collectionId: collectionId || image.collection_id,
         collectionName: collectionNameValue,
       });
     });
@@ -380,18 +377,32 @@ const isAssetSelected = (asset) => {
 
 // Handle asset selection
 const handleAssetSelect = (asset) => {
-  const index = selectedAssets.value.findIndex(
-    (selected) => selected.id === asset.id && selected.type === asset.type
-  );
+  if (props.singleSelection) {
+    // Radio mode: only one selection allowed
+    const index = selectedAssets.value.findIndex(
+      (selected) => selected.id === asset.id && selected.type === asset.type
+    );
 
-  if (index !== -1) {
-    // Deselect
-    selectedAssets.value.splice(index, 1);
+    if (index !== -1) {
+      // Deselect if already selected
+      selectedAssets.value = [];
+    } else {
+      // Select this asset and deselect others
+      selectedAssets.value = [asset];
+    }
   } else {
-    // Select
+    // Checkbox mode: multiple selections allowed
+    const index = selectedAssets.value.findIndex(
+      (selected) => selected.id === asset.id && selected.type === asset.type
+    );
 
-    console.log('>>>adding asset', asset);
-    selectedAssets.value.push(asset);
+    if (index !== -1) {
+      // Deselect
+      selectedAssets.value.splice(index, 1);
+    } else {
+      // Select
+      selectedAssets.value.push(asset);
+    }
   }
 };
 

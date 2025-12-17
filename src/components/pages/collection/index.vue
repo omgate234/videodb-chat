@@ -89,7 +89,7 @@
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-gap-[10px]"
         >
-          <AssetTabs :tabs="['Video', 'Audio', 'Images']" v-model="activeTab" />
+          <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
           <div class="vdb-c-flex-1"></div>
           <SearchInput
             :items="combinedAssets.filter((asset) => asset.type === activeTab.toLowerCase())"
@@ -291,6 +291,7 @@ const {
   fetchCollectionVideos,
   fetchCollectionAudios,
   fetchCollectionImages,
+  fetchAssets,
   navState,
   actions,
   generateImageUrl,
@@ -323,10 +324,16 @@ const handleUploadWrapper = async (uploadData) => {
     await context?.handleUpload(uploadData);
     const collectionId = currentCollection.value?.id;
     if (collectionId) {
-      const [videosRes, audiosRes, imagesRes] = await Promise.all([
+      const [videosRes, audiosRes, imagesRes, voicesRes] = await Promise.all([
         fetchCollectionVideos?.(collectionId) || Promise.resolve({ data: null }),
         fetchCollectionAudios?.(collectionId) || Promise.resolve({ data: null }),
         fetchCollectionImages?.(collectionId) || Promise.resolve({ data: null }),
+        fetchAssets?.({
+          collection_id: collectionId,
+          asset_type: 'voices',
+          page: 1,
+          page_size: 10000,
+        }) || Promise.resolve({ status: 'success', data: { assets: null } }),
       ]);
 
       if (activeCollectionVideos) {
@@ -337,6 +344,11 @@ const handleUploadWrapper = async (uploadData) => {
       }
       if (activeCollectionImages) {
         activeCollectionImages.value = imagesRes?.data || null;
+      }
+      if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
+        activeCollectionVoices.value = voicesRes.data.data.assets;
+      } else {
+        activeCollectionVoices.value = null;
       }
     }
   } catch (error) {
@@ -461,6 +473,7 @@ const cancelDeleteCollection = () => {
 
 // Assets section state
 const isLoadingAssets = ref(false);
+const activeCollectionVoices = ref(null);
 
 watch(
   () => {
@@ -475,10 +488,16 @@ watch(
 
     isLoadingAssets.value = true;
     try {
-      const [videosRes, audiosRes, imagesRes] = await Promise.all([
+      const [videosRes, audiosRes, imagesRes, voicesRes] = await Promise.all([
         fetchCollectionVideos?.(collectionId) || Promise.resolve({ data: null }),
         fetchCollectionAudios?.(collectionId) || Promise.resolve({ data: null }),
         fetchCollectionImages?.(collectionId) || Promise.resolve({ data: null }),
+        fetchAssets?.({
+          collection_id: collectionId,
+          asset_type: 'voices',
+          page: 1,
+          page_size: 10000,
+        }) || Promise.resolve({ status: 'success', data: { assets: null } }),
       ]);
 
       if (activeCollectionVideos) {
@@ -489,6 +508,11 @@ watch(
       }
       if (activeCollectionImages) {
         activeCollectionImages.value = imagesRes?.data || null;
+      }
+      if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
+        activeCollectionVoices.value = voicesRes.data.data.assets;
+      } else {
+        activeCollectionVoices.value = null;
       }
     } catch (error) {
       console.error('Error fetching collection assets:', error);
@@ -548,6 +572,7 @@ const combinedAssets = computed(() => {
   const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
   const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
   const images = activeCollectionImages?.value || activeCollectionImages || [];
+  const voices = activeCollectionVoices?.value || [];
 
   // Add videos
   if (Array.isArray(videos)) {
@@ -580,6 +605,18 @@ const combinedAssets = computed(() => {
         ...image,
         type: 'image',
         collectionId: collectionId || image.collection_id,
+        collectionName,
+      });
+    });
+  }
+
+  // Add voices
+  if (Array.isArray(voices)) {
+    voices.forEach((voice) => {
+      assets.push({
+        ...voice,
+        type: 'voices',
+        collectionId: collectionId || voice.collection_id,
         collectionName,
       });
     });
@@ -622,11 +659,13 @@ const totalFilesCount = computed(() => {
   const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
   const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
   const images = activeCollectionImages?.value || activeCollectionImages || [];
+  const voices = activeCollectionVoices?.value || [];
 
   return (
     (Array.isArray(videos) ? videos.length : 0) +
     (Array.isArray(audios) ? audios.length : 0) +
-    (Array.isArray(images) ? images.length : 0)
+    (Array.isArray(images) ? images.length : 0) +
+    (Array.isArray(voices) ? voices.length : 0)
   );
 });
 

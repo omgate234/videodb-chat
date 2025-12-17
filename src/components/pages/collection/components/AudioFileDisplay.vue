@@ -80,7 +80,7 @@ defineProps({
   file: {
     type: Object,
     required: true,
-    validator: (file) => file.type === 'audio' && file.name,
+    validator: (file) => (file.type === 'audio' || file.type === 'voices') && file.name,
   },
   focused: {
     type: Boolean,
