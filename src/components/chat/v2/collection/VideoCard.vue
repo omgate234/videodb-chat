@@ -157,7 +157,7 @@
           :class="
             (index + 1) % 4 === 0 ? 'vdb-c-left-full vdb-c-translate-x-[-100%]' : 'vdb-c-left-0'
           "
-          class="menu-dropdown vdb-c-absolute vdb-c-top-full vdb-c-z-[1000] vdb-c-w-full vdb-c-min-w-[180px] vdb-c-cursor-pointer vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
+          class="menu-dropdown vdb-c-absolute vdb-c-left-[calc(100%+4px)] vdb-c-top-[-8px] vdb-c-z-[1000] vdb-c-w-full vdb-c-min-w-[180px] vdb-c-cursor-pointer vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
         >
           <li
             class="menu-item vdb-c-flex vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"

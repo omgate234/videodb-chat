@@ -103,7 +103,7 @@
         <!-- Copy Asset ID (shown when videoId exists) -->
         <li
           v-if="videoId"
-          class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-[#efefef] vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
+          class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-[#efefef]"
           @click.stop="copyAssetId"
         >
           <CopyIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" />
