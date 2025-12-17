@@ -1,7 +1,39 @@
 <template>
+  <!-- Loading State -->
+  <div
+    v-if="isLoadingCollections"
+    class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-bg-white"
+  >
+    <div class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-p-[40px]">
+      <div
+        class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[20px] vdb-c-border-2 vdb-c-border-solid vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-[82px] vdb-c-py-[32px]"
+      >
+        <div class="vdb-c-flex vdb-c-w-[268px] vdb-c-flex-col vdb-c-items-center vdb-c-gap-[20px]">
+          <div class="vdb-c-h-[40px] vdb-c-w-[40px] vdb-c-overflow-clip">
+            <SpinnerIcon />
+          </div>
+          <div
+            class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[14px] vdb-c-text-center"
+          >
+            <p
+              class="vdb-c-w-full vdb-c-text-[18px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1E1E1E]"
+            >
+              Loading your collections...
+            </p>
+            <p
+              class="vdb-c-w-full vdb-c-text-[16px] vdb-c-font-normal vdb-c-leading-[20px] vdb-c-text-[#969696]"
+            >
+              Give us a moment
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Empty State -->
   <div
-    v-if="shouldShowEmptyState"
+    v-else-if="shouldShowEmptyState"
     class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-bg-white"
   >
     <!-- Outer Container with 40px padding -->
@@ -76,7 +108,7 @@
 
   <!-- Collections View -->
   <div
-    v-else
+    v-else-if="!isLoadingCollections"
     class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-bg-white"
   >
     <!-- Header -->
@@ -178,6 +210,7 @@
         <div class="collections-grid vdb-c-w-full vdb-c-grow">
           <!-- Create New Collection Card -->
           <button
+            v-if="!searchQuery.trim()"
             @click="handleCreateCollection"
             @mouseenter="hoveredNewCollectionButton = true"
             @mouseleave="hoveredNewCollectionButton = false"
@@ -205,7 +238,7 @@
 
           <!-- Collection Cards -->
           <div
-            v-for="collection in displayedCollections"
+            v-for="(collection, index) in displayedCollections"
             :key="collection.id"
             @mouseenter="hoveredCollectionId = collection.id"
             @mouseleave="hoveredCollectionId = null"
@@ -276,6 +309,10 @@
 
                   <!-- Collection Options Menu -->
                   <CollectionOptionsMenu
+                    :show-on-right="
+                      searchQuery.trim() ? (index + 1) % 4 === 0 : (index + 2) % 4 === 0
+                    "
+                    :show-on-bottom="isInLastRow(index)"
                     :is-open="activeOptionsCollectionId === collection.id"
                     :collection="collection"
                     @close="activeOptionsCollectionId = null"
@@ -332,6 +369,7 @@ import DeleteCollectionModal from './DeleteCollectionModal.vue';
 import UploadModal from '../../chat/v2/UploadModal.vue';
 import UploadFileIcon from '../../chat/v2/icons/UploadFileIcon.vue';
 import AddIcon from '../../chat/v2/icons/AddIcon.vue';
+import SpinnerIcon from '../../chat/v2/icons/SpinnerIcon.vue';
 
 const props = defineProps({
   context: {
@@ -354,7 +392,8 @@ const showUploadModal = ref(false);
 const newlyCreatedCollectionId = ref(null);
 const hoveredNewCollectionButton = ref(false);
 
-const collections = computed(() => context?.collections?.value || []);
+const collectionsRaw = computed(() => context?.collections?.value);
+const collections = computed(() => collectionsRaw.value || []);
 const configStatus = computed(() => context?.configStatus?.value);
 const isSetupComplete = computed(() => {
   return (
@@ -364,9 +403,19 @@ const isSetupComplete = computed(() => {
   );
 });
 
-const shouldShowEmptyState = computed(() => {
+const isLoadingCollections = computed(() => {
   if (!isSetupComplete.value) {
     return true;
+  }
+  if (collectionsRaw.value === null || collectionsRaw.value === undefined) {
+    return true;
+  }
+  return false;
+});
+
+const shouldShowEmptyState = computed(() => {
+  if (isLoadingCollections.value) {
+    return false;
   }
   return collections.value.length === 0;
 });
@@ -385,6 +434,17 @@ const userName = computed(() => {
 
 const isEditing = (collectionId) => {
   return editingCollectionId.value === collectionId;
+};
+
+const isInLastRow = (index) => {
+  const totalItems = displayedCollections.value.length;
+  const hasCreateButton = !searchQuery.value.trim();
+  const totalGridItems = hasCreateButton ? totalItems + 1 : totalItems;
+  const itemsPerRow = 4;
+  const totalRows = Math.ceil(totalGridItems / itemsPerRow);
+  const lastRowStartIndex = (totalRows - 1) * itemsPerRow;
+  const adjustedIndex = hasCreateButton ? index + 1 : index;
+  return adjustedIndex >= lastRowStartIndex;
 };
 
 const handleCreateCollection = () => {
@@ -530,7 +590,7 @@ const handleUploadWrapper = async (uploadData) => {
 <style scoped>
 .collections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 300px));
   gap: 20px;
   align-content: start;
 }

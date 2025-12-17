@@ -82,7 +82,7 @@ export function useVideoDBAgent(config) {
   });
   const configStatus = ref(null);
 
-  const collections = ref([]);
+  const collections = ref(null);
   const sessions = ref([]);
   const sessionsSorted = computed(() => {
     return [...sessions.value].sort((a, b) => b.created_at - a.created_at);
@@ -487,13 +487,17 @@ const uploadMedia = async (uploadData) => {
       Object.values(val).every((value) => value === true)
     ) {
       fetchCollections().then((res) => {
-
         if (Array.isArray(res.data) && res.data.length > 0) {
           const defaultCollection = res.data[0];
           activeCollectionData.value = defaultCollection;
           session.collectionId = defaultCollection.id;
           collections.value = [defaultCollection, ...res.data.slice(1)];
+        } else {
+          collections.value = [];
         }
+      }).catch((error) => {
+        if (debug) console.error("debug :videodb-chat error fetching collections", error);
+        collections.value = [];
       });
       fetchSessions().then((res) => {
         sessions.value = res.data;

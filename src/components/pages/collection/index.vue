@@ -498,6 +498,9 @@ const fetchCollectionAssets = async (collectionId) => {
       }) || Promise.resolve({ status: 'success', data: { assets: null } }),
     ]);
 
+    if (collectionId !== activeCollectionData?.value?.id) {
+      return;
+    }
     if (activeCollectionVideos) {
       activeCollectionVideos.value = videosRes?.data || null;
     }
@@ -531,12 +534,11 @@ watch(
     const collectionChanged = newState.collectionId !== oldState?.collectionId;
     const pageJustOpened = isCollectionPage && !wasCollectionPage;
 
+    if (collectionChanged) {
+      showMore.value = false;
+    }
     if (isCollectionPage && newState.collectionId && (pageJustOpened || collectionChanged)) {
       await fetchCollectionAssets(newState.collectionId);
-
-      if (collectionChanged) {
-        showMore.value = false;
-      }
     }
   },
   { immediate: true, deep: true }
