@@ -3,6 +3,7 @@
     class="vdb-c-flex vdb-c-h-screen vdb-c-w-full vdb-c-flex-col vdb-c-overflow-hidden vdb-c-bg-white"
   >
     <header
+      v-if="showHeader"
       class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-between vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
     >
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
@@ -210,6 +211,7 @@ const {
   sessions,
   selectedCollectionId,
   showChatInput = true,
+  showHeader = true,
   chatInputPlaceholder = 'Ask Director',
   isLoadingSession,
   handleUpload,
