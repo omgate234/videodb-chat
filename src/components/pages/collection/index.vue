@@ -748,7 +748,9 @@ const handleDeleteImage = async (image) => {
 };
 
 const handleVideoClick = (video) => {
-  console.log('Video clicked:', video);
+  if (handleAddMessage) {
+    handleAddMessage({ text: video.name, video_id: video.id, from_event: true });
+  }
 };
 
 const handleStartEditing = (asset) => {
