@@ -174,6 +174,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  isFullScreen: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const { playing, togglePlay, showElements } = useVideoDBPlayer();
@@ -206,9 +210,10 @@ const toggleMenu = async () => {
   if (showMenu.value && menuButtonRef.value) {
     await nextTick();
     const rect = menuButtonRef.value.getBoundingClientRect();
+    const menuWidth = 200;
     menuPosition.value = {
       top: rect.bottom + 8,
-      left: rect.left,
+      left: props.isFullScreen ? rect.right - menuWidth : rect.left,
     };
   }
 };

@@ -47,8 +47,11 @@
         </div>
       </div>
 
-      <!-- Duration -->
-      <div class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]">
+      <!-- Duration (hidden for Images and Voices) -->
+      <div
+        v-if="showDurationSort"
+        class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]"
+      >
         <TitleWithTooltip title="Duration" tooltip-text="" />
         <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
           <RadioInput
@@ -62,27 +65,6 @@
             name="sort"
             value="long_short"
             label="Long to Short"
-            :model-value="modelValue"
-            @update:model-value="updateSort"
-          />
-        </div>
-      </div>
-
-      <!-- File size -->
-      <div class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]">
-        <TitleWithTooltip title="File size" tooltip-text="" />
-        <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
-          <RadioInput
-            name="sort"
-            value="small_large"
-            label="Small to Large"
-            :model-value="modelValue"
-            @update:model-value="updateSort"
-          />
-          <RadioInput
-            name="sort"
-            value="large_small"
-            label="Large to Small"
             :model-value="modelValue"
             @update:model-value="updateSort"
           />
@@ -104,13 +86,20 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  activeTab: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['toggle', 'update:modelValue']);
 
-// Check if any sort option is selected
 const hasActiveSort = computed(() => {
   return Boolean(props.modelValue);
+});
+
+const showDurationSort = computed(() => {
+  return props.activeTab !== 'Images' && props.activeTab !== 'Voices';
 });
 
 const updateSort = (value) => {

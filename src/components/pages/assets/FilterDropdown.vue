@@ -56,37 +56,6 @@
             />
           </div>
         </div>
-
-        <!-- File Size -->
-        <div>
-          <p
-            class="vdb-c-mb-4 vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-          >
-            File Size
-          </p>
-          <div class="vdb-c-px-10">
-            <CheckboxOption
-              label="< 10 MB"
-              :checked="modelValue.size_less_10"
-              @change="(checked) => updateFilter('size_less_10', checked)"
-            />
-            <CheckboxOption
-              label="10-100 MB"
-              :checked="modelValue.size_10_100"
-              @change="(checked) => updateFilter('size_10_100', checked)"
-            />
-            <CheckboxOption
-              label="100-500 MB"
-              :checked="modelValue.size_100_500"
-              @change="(checked) => updateFilter('size_100_500', checked)"
-            />
-            <CheckboxOption
-              label="> 500 MB"
-              :checked="modelValue.size_more_500"
-              @change="(checked) => updateFilter('size_more_500', checked)"
-            />
-          </div>
-        </div>
       </div>
     </div>
   </div>

@@ -24,26 +24,11 @@ export function useAssetFilters(assets, selectedCollection, activeTab, sortState
     const hasDurFilter = Object.keys(state).some((k) => k.startsWith('dur_') && state[k]);
     if (!hasDurFilter) return true;
 
-    const d = asset.duration || 0;
+    const d = asset.length || asset.duration || 0;
     if (state.dur_less_1 && d < 60) return true;
     if (state.dur_1_15 && d >= 60 && d <= 900) return true;
     if (state.dur_15_30 && d > 900 && d <= 1800) return true;
     if (state.dur_more_30 && d > 1800) return true;
-    return false;
-  }
-
-  /**
-   * Check if asset matches file size filters
-   */
-  function checkFileSize(asset, state) {
-    const hasSizeFilter = Object.keys(state).some((k) => k.startsWith('size_') && state[k]);
-    if (!hasSizeFilter) return true;
-
-    const sizeMB = (asset.size || asset.file_size || 0) / (1024 * 1024);
-    if (state.size_less_10 && sizeMB < 10) return true;
-    if (state.size_10_100 && sizeMB >= 10 && sizeMB <= 100) return true;
-    if (state.size_100_500 && sizeMB > 100 && sizeMB <= 500) return true;
-    if (state.size_more_500 && sizeMB > 500) return true;
     return false;
   }
 
@@ -67,18 +52,9 @@ export function useAssetFilters(assets, selectedCollection, activeTab, sortState
     // Duration sorting
     if (sortValue === 'short_long' || sortValue === 'long_short') {
       sorted.sort((a, b) => {
-        const durationA = a.duration || 0;
-        const durationB = b.duration || 0;
+        const durationA = a.length || a.duration || 0;
+        const durationB = b.length || b.duration || 0;
         return sortValue === 'short_long' ? durationA - durationB : durationB - durationA;
-      });
-    }
-
-    // File size sorting
-    if (sortValue === 'small_large' || sortValue === 'large_small') {
-      sorted.sort((a, b) => {
-        const sizeA = a.size || a.file_size || 0;
-        const sizeB = b.size || b.file_size || 0;
-        return sortValue === 'small_large' ? sizeA - sizeB : sizeB - sizeA;
       });
     }
 
@@ -111,11 +87,8 @@ export function useAssetFilters(assets, selectedCollection, activeTab, sortState
           return false;
         }
 
-        // Duration Check (skip for voices)
-        if (asset.type !== 'voices' && !checkDuration(asset, filterState)) return false;
-
-        // Size Check (skip for voices)
-        if (asset.type !== 'voices' && !checkFileSize(asset, filterState)) return false;
+        // Duration Check (skip for voices and images)
+        if (asset.type !== 'voices' && asset.type !== 'image' && !checkDuration(asset, filterState)) return false;
 
         return true;
       });

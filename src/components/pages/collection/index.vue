@@ -162,12 +162,13 @@
             <div ref="sortRef">
               <SortDropdown
                 :is-open="activeDropdown === 'sort'"
+                :active-tab="activeTab"
                 v-model="sortState"
                 @toggle="toggleDropdown('sort')"
               />
             </div>
 
-            <div ref="filterRef">
+            <div v-if="activeTab !== 'Images' && activeTab !== 'Voices'" ref="filterRef">
               <FilterDropdown
                 :is-open="activeDropdown === 'filter'"
                 :model-value="filterState"
@@ -532,22 +533,22 @@ watch(
 
     if (isCollectionPage && newState.collectionId && (pageJustOpened || collectionChanged)) {
       await fetchCollectionAssets(newState.collectionId);
+
+      if (collectionChanged) {
+        showMore.value = false;
+      }
     }
   },
   { immediate: true, deep: true }
 );
 const activeTab = ref('Video');
 const editingAssetId = ref(null);
-const sortState = ref({});
+const sortState = ref('');
 const filterState = reactive({
   dur_less_1: false,
   dur_1_15: false,
   dur_15_30: false,
   dur_more_30: false,
-  size_less_10: false,
-  size_10_100: false,
-  size_100_500: false,
-  size_more_500: false,
 });
 
 // Dropdown Management
