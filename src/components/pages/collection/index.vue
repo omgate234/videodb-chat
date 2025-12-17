@@ -364,10 +364,8 @@ const currentCollectionArray = computed(() => {
 });
 
 const currentCollection = computed(() => {
-  if (activeCollectionData?.value) {
-    return activeCollectionData.value;
-  }
-  return activeCollectionData || null;
+  const collection = activeCollectionData?.value ?? activeCollectionData;
+  return collection || null;
 });
 
 const collectionName = computed(() => {
@@ -385,7 +383,8 @@ watch(
     if (!isEditing.value && newName) {
       editingName.value = newName || '';
     }
-  }
+  },
+  { immediate: true }
 );
 
 watch(
@@ -421,6 +420,9 @@ const handleSave = () => {
       return;
     }
     if (handleUpdateCollectionName && currentCollection.value?.id) {
+      if (currentCollection.value) {
+        currentCollection.value.name = trimmed;
+      }
       handleUpdateCollectionName({
         collectionId: currentCollection.value.id,
         name: trimmed,
