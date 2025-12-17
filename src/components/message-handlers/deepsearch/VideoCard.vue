@@ -175,8 +175,20 @@
         <DownloadIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" fill="#1e1e1e" />
         <span class="vdb-c-flex-shrink-0">Download</span>
       </li>
+
+      <!-- Meta Info -->
+      <li
+        class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
+        @click.stop="handleMetaInfo"
+      >
+        <MetaInfoIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" fill="#1e1e1e" />
+        <span class="vdb-c-flex-shrink-0">View meta info</span>
+      </li>
     </ul>
   </Teleport>
+
+  <!-- Meta Info Modal -->
+  <MetaInfoModal :show-modal="showMetaInfoModal" :video="props.video" @close="closeMetaInfoModal" />
 </template>
 
 <script setup>
@@ -191,6 +203,8 @@ import RotateIcon from '../../chat/v2/icons/deep-search/RotateIcon.vue';
 import DownloadIcon from '../../chat/v2/icons/deep-search/DownloadIcon.vue';
 import PlayIcon from '../../icons/play.vue';
 import CheckIcon from '../../chat/v2/icons/CheckIcon.vue';
+import MetaInfoIcon from '../../chat/v2/icons/deep-search/MetaInfoIcon.vue';
+import MetaInfoModal from '../../modals/MetaInfoModal.vue';
 
 const props = defineProps({
   video: {
@@ -221,6 +235,7 @@ const showMenu = ref(false);
 const menuButtonRef = ref(null);
 const menuPosition = ref(null);
 const showCheckIcon = ref(false);
+const showMetaInfoModal = ref(false);
 
 const formatDuration = (seconds) => {
   const mins = Math.floor(seconds / 60);
@@ -344,6 +359,15 @@ const handleDownload = async () => {
     console.error('Error downloading:', error);
   }
   showMenu.value = false;
+};
+
+const handleMetaInfo = () => {
+  showMenu.value = false;
+  showMetaInfoModal.value = true;
+};
+
+const closeMetaInfoModal = () => {
+  showMetaInfoModal.value = false;
 };
 </script>
 

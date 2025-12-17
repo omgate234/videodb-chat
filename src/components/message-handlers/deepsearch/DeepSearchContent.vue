@@ -239,7 +239,7 @@
 
           <!-- Download -->
           <button
-            @click="downloadVideo"
+            @click="downloadClip"
             class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
           >
             <DownloadIcon fill="#1e1e1e" />
@@ -251,6 +251,13 @@
             class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
           >
             <AddToFolderIcon fill="#1e1e1e" />
+          </button>
+
+          <button
+            @click="openMetaInfoModal"
+            class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+          >
+            <MetaInfoIcon fill="#1e1e1e" />
           </button>
         </div>
       </div>
@@ -268,6 +275,13 @@
         />
       </div>
     </template>
+
+    <!-- Meta Info Modal -->
+    <MetaInfoModal
+      :show-modal="showMetaInfoModal"
+      :video="selectedVideoForMetaInfo"
+      @close="closeMetaInfoModal"
+    />
   </div>
 </template>
 
@@ -288,6 +302,8 @@ import LoadingIcon from '../../chat/v2/icons/deep-search/LoadingIcon.vue';
 import CheckIcon from '../../chat/v2/icons/CheckIcon.vue';
 import NavigationButton from '../../chat/v2/collection/NavigationButton.vue';
 import PaginationButton from '../../chat/v2/collection/PaginationButton.vue';
+import MetaInfoIcon from '../../chat/v2/icons/deep-search/MetaInfoIcon.vue';
+import MetaInfoModal from '../../modals/MetaInfoModal.vue';
 
 const props = defineProps({
   content: {
@@ -303,6 +319,7 @@ const props = defineProps({
 const context = inject('videodb-chat-context');
 const getVideoDownloadUrl = context?.getVideoDownloadUrl;
 const generateVideoStream = context?.generateVideoStream;
+const getDownloadUrlFromStream = context?.getDownloadUrlFromStream;
 const callApi = props.callApi || context?.callApi;
 const handleAddMessage = context?.handleAddMessage;
 const handleUpload = context?.handleUpload;
@@ -330,6 +347,8 @@ const videoStates = ref(
 const editingIndex = ref(null);
 const isGeneratingStream = ref(false);
 const showCheckIcon = ref(false);
+const showMetaInfoModal = ref(false);
+const selectedVideoForMetaInfo = ref(null);
 
 const itemsPerPage = 8;
 const currentPage = ref(1);
@@ -558,33 +577,28 @@ const handleConvertToReelFromGrid = (index) => {
 
 const downloadVideo = async () => {
   const currentVideo = internalVideos.value[editingIndex.value];
+  const streamUrl = currentVideo.stream_url;
+  const videoName = currentVideo.name || 'video';
 
-  const videoId = currentVideo.video_id || currentVideo.id;
-  const collectionId = currentVideo.collection_id;
-
-  if (!getVideoDownloadUrl || !videoId || !collectionId) {
-    console.error('Download not available - missing videoId or collectionId', {
-      collectionId,
-      videoId,
-      hasFunction: !!getVideoDownloadUrl,
-    });
+  if (!getDownloadUrlFromStream || !streamUrl) {
+    console.error('Download not available - missing streamUrl or download function');
     return;
   }
 
   try {
-    const result = await getVideoDownloadUrl(collectionId, videoId);
-    if (result?.data && result?.data?.download_url) {
+    const result = await getDownloadUrlFromStream(streamUrl, videoName);
+    if (result?.status === 'success' && result?.data?.download_url) {
       const link = document.createElement('a');
       link.href = result.data.download_url;
-      link.download = `${currentVideo.name || 'video'}.mp4`;
+      link.download = `${videoName}.mp4`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } else {
-      console.error('No download URL received', result);
+      console.error('No download URL received from stream');
     }
   } catch (error) {
-    console.error('Error downloading video:', error);
+    console.error('Error downloading video from stream:', error);
   }
 };
 
@@ -613,6 +627,18 @@ const saveToCollection = async () => {
   } catch (error) {
     console.error('Error adding to collection:', error);
   }
+};
+
+const openMetaInfoModal = () => {
+  if (editingIndex.value !== null) {
+    selectedVideoForMetaInfo.value = internalVideos.value[editingIndex.value];
+    showMetaInfoModal.value = true;
+  }
+};
+
+const closeMetaInfoModal = () => {
+  showMetaInfoModal.value = false;
+  selectedVideoForMetaInfo.value = null;
 };
 
 watch(
