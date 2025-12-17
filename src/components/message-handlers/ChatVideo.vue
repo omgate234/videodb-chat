@@ -45,6 +45,7 @@
                     :collection-id="content.video.collection_id"
                     :is-hovered="isHovered"
                     :show-overlay-menu="showOverlayMenu"
+                    :is-full-screen="isFullScreen"
                   />
                 </template>
                 <template #controls>
@@ -79,6 +80,7 @@
                 :collection-id="content.video.collection_id"
                 :is-hovered="isHovered"
                 :show-overlay-menu="showOverlayMenu"
+                :is-full-screen="isFullScreen"
               />
             </template>
             <template #controls>

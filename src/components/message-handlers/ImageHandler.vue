@@ -58,7 +58,7 @@
             <div
               :class="[
                 'vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-20 vdb-c-flex vdb-c-gap-[4px] vdb-c-rounded-full vdb-c-border vdb-c-border-white-40 vdb-c-bg-[rgba(128,128,128,0.3)] vdb-c-p-[4px] vdb-c-backdrop-blur-[23.438px] vdb-c-transition-opacity vdb-c-duration-300',
-                isHovered ? 'vdb-c-opacity-100' : 'vdb-c-opacity-0',
+                isHovered ? 'vdb-c-opacity-100' : 'vdb-c-opacity-100',
               ]"
               style="mix-blend-mode: luminosity; border-width: 0.656px"
             >
@@ -111,6 +111,8 @@
       :is-open="showImageModal"
       :image-url="content.image?.url || ''"
       :image-name="content.image?.name || ''"
+      :image-id="imageId"
+      :collection-id="collectionId"
       @close="showImageModal = false"
     />
 
