@@ -121,6 +121,7 @@
             @delete-video="handleDeleteVideo"
             @delete-image="handleDeleteImage"
             @delete-audio="handleDeleteAudio"
+            @delete-voice="handleDeleteVoice"
             @start-editing="handleStartEditing"
             @save-editing="handleSaveEditing"
             @cancel-editing="handleCancelEditing"
@@ -199,6 +200,7 @@
             @delete-video="handleDeleteVideo"
             @delete-image="handleDeleteImage"
             @delete-audio="handleDeleteAudio"
+            @delete-voice="handleDeleteVoice"
             @start-editing="handleStartEditing"
             @save-editing="handleSaveEditing"
             @cancel-editing="handleCancelEditing"
@@ -299,6 +301,7 @@ const {
   deleteVideo,
   deleteAudio,
   deleteImage,
+  deleteVoice,
 } = context || {};
 
 const showMore = ref(false);
@@ -747,6 +750,28 @@ const handleDeleteImage = async (image) => {
   }
 };
 
+const handleDeleteVoice = async (voice) => {
+  if (deleteVoice && voice.collectionId && voice.id) {
+    try {
+      await deleteVoice(voice.collectionId, voice.id);
+      const collectionId = currentCollection.value?.id;
+      if (collectionId && fetchAssets) {
+        const voicesRes = await fetchAssets({
+          collection_id: collectionId,
+          asset_type: 'voices',
+          page: 1,
+          page_size: 10000,
+        });
+        if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
+          activeCollectionVoices.value = voicesRes.data.data.assets;
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting voice:', error);
+    }
+  }
+};
+
 const handleVideoClick = (video) => {
   if (handleAddMessage) {
     handleAddMessage({ text: video.name, video_id: video.id, from_event: true });
@@ -784,6 +809,11 @@ const handleSaveEditing = async ({ assetId, name }) => {
       });
     } else if (asset.type === 'image') {
       result = await context.callApi(`/videodb/collection/${collectionId}/image/${assetId}`, {
+        method: 'PATCH',
+        payload: { name: name },
+      });
+    } else if (asset.type === 'voices') {
+      result = await context.callApi(`/videodb/collection/${collectionId}/voice/${assetId}`, {
         method: 'PATCH',
         payload: { name: name },
       });

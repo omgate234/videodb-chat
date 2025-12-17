@@ -909,6 +909,33 @@ const uploadMedia = async (uploadData) => {
     }
   };
 
+  const deleteVoice = async (collectionId, voiceId) => {
+    if (!collectionId || !voiceId) {
+      throw new Error("Collection ID and Voice ID are required.");
+    }
+
+    try {
+      const response = await fetch(
+        `${httpUrl}/videodb/collection/${collectionId}/voice/${voiceId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to delete the voice.");
+      }
+
+      return data;
+    } catch (error) {
+      console.error(`Failed to delete voice ${voiceId}:`, error);
+      throw error;
+    }
+  };
+
   const updateMessageReaction = async (msgId, reaction) => {
     if (!session.sessionId) {
       throw new Error("No active session.");
@@ -1101,6 +1128,7 @@ const uploadMedia = async (uploadData) => {
     deleteVideo,
     deleteAudio,
     deleteImage,
+    deleteVoice,
     getVideoDownloadUrl,
     getDownloadUrlFromStream,
     uploadMedia,

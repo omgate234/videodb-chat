@@ -163,6 +163,7 @@
     :editing-asset-id="editingAssetId"
     @close="showAudioModal = false"
     @delete-audio="$emit('delete-audio', $event)"
+    @delete-voice="$emit('delete-voice', $event)"
     @start-editing="$emit('start-editing', $event)"
     @save-editing="$emit('save-editing', $event)"
     @cancel-editing="$emit('cancel-editing')"
@@ -254,6 +255,7 @@ onMounted(async () => {
 
 const emit = defineEmits([
   'delete-audio',
+  'delete-voice',
   'audio-click',
   'menu-click',
   'start-editing',
@@ -415,7 +417,11 @@ function handleDelete() {
 
 function handleConfirmDelete() {
   showDeleteModal.value = false;
-  emit('delete-audio', props.item);
+  if (props.item.type === 'voices') {
+    emit('delete-voice', props.item);
+  } else {
+    emit('delete-audio', props.item);
+  }
 }
 
 function handleSelect() {

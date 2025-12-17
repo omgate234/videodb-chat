@@ -174,6 +174,7 @@
           @delete-video="handleDeleteVideo"
           @delete-image="handleDeleteImage"
           @delete-audio="handleDeleteAudio"
+          @delete-voice="handleDeleteVoice"
           @start-editing="handleStartEditing"
           @save-editing="handleSaveEditing"
           @cancel-editing="handleCancelEditing"
@@ -371,6 +372,7 @@ const {
   handleDeleteVideo,
   handleDeleteAudio,
   handleDeleteImage,
+  handleDeleteVoice,
   loadAllAssets,
 } = useAssets(context);
 
@@ -440,8 +442,17 @@ const handleSaveEditing = async ({ assetId, name }) => {
           payload: { name: name },
         }
       );
+    } else if (asset.type === 'voices') {
+      result = await context.callApi(
+        `/videodb/collection/${asset.collectionId || asset.collection_id}/voice/${assetId}`,
+        {
+          method: 'PATCH',
+          payload: { name: name },
+        }
+      );
     }
 
+    console.log('>>> result', result);
     if (result?.status === 'success') {
       // API call successful, name is already updated optimistically
       editingAssetId.value = null;

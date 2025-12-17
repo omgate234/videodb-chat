@@ -21,6 +21,7 @@ export function useAssets(context) {
   const deleteVideo = context?.deleteVideo;
   const deleteAudio = context?.deleteAudio;
   const deleteImage = context?.deleteImage;
+  const deleteVoice = context?.deleteVoice;
 
   // Track the current request to avoid race conditions
   let currentRequestId = 0;
@@ -217,6 +218,21 @@ export function useAssets(context) {
     }
   };
 
+  /**
+   * Delete a voice asset
+   */
+  const handleDeleteVoice = async (voice) => {
+    if (deleteVoice && voice.collectionId && voice.id) {
+      try {
+        await deleteVoice(voice.collectionId, voice.id);
+        await loadAllAssets();
+      } catch (error) {
+        console.error('Error deleting voice:', error);
+        throw error;
+      }
+    }
+  };
+
   // Watch dependency changes internally so the component doesn't have to
   watch(
     [collections, isSetupComplete],
@@ -237,5 +253,6 @@ export function useAssets(context) {
     handleDeleteVideo,
     handleDeleteAudio,
     handleDeleteImage,
+    handleDeleteVoice,
   };
 }

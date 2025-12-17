@@ -36,6 +36,7 @@
           :get-audio-url="getAudioUrl"
           :editing-asset-id="editingAssetId"
           @delete-audio="$emit('delete-audio', $event)"
+          @delete-voice="$emit('delete-voice', $event)"
           @start-editing="$emit('start-editing', $event)"
           @save-editing="$emit('save-editing', $event)"
           @cancel-editing="$emit('cancel-editing')"
@@ -194,6 +195,7 @@ defineEmits([
   'video-click',
   'delete-video',
   'delete-audio',
+  'delete-voice',
   'delete-image',
   'start-editing',
   'save-editing',

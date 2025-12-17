@@ -181,6 +181,7 @@ const props = defineProps({
 const emit = defineEmits([
   'close',
   'delete-audio',
+  'delete-voice',
   'start-editing',
   'save-editing',
   'cancel-editing',
@@ -229,7 +230,8 @@ watch(
 
 onMounted(async () => {
   if (props.getAudioUrl) {
-    const audioUrl = await props.getAudioUrl(props.item.collection_id, props.item.id);
+    const audioId = props.item.type === 'voices' ? props.item.audio_id : props.item.id;
+    const audioUrl = await props.getAudioUrl(props.item.collection_id, audioId);
     url.value = audioUrl;
   }
 });
@@ -343,7 +345,11 @@ const handleConfirmDelete = () => {
     audio.value.pause();
     playing.value = false;
   }
-  emit('delete-audio', props.item);
+  if (props.item.type === 'voices') {
+    emit('delete-voice', props.item);
+  } else {
+    emit('delete-audio', props.item);
+  }
   handleClose();
 };
 </script>
