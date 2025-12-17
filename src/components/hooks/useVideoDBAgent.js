@@ -411,7 +411,8 @@ const uploadMedia = async (uploadData) => {
         `${httpUrl}/videodb/collection/${collectionId}/video/${videoId}/generate_stream?${params.toString()}`,
       );
       const data = await response.json();
-      if (!response.ok || data?.success !== true) {
+      console.log(data)
+      if (!response.ok) {
         const message = data?.message || "Failed to generate video stream URL";
         throw new Error(message);
       }
@@ -456,10 +457,13 @@ const uploadMedia = async (uploadData) => {
       Object.values(val).every((value) => value === true)
     ) {
       fetchCollections().then((res) => {
-        const defaultCollection = res.data[0];
-        activeCollectionData.value = defaultCollection;
-        session.collectionId = defaultCollection.id;
-        collections.value = [defaultCollection, ...res.data.slice(1)];
+
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          const defaultCollection = res.data[0];
+          activeCollectionData.value = defaultCollection;
+          session.collectionId = defaultCollection.id;
+          collections.value = [defaultCollection, ...res.data.slice(1)];
+        }
       });
       fetchSessions().then((res) => {
         sessions.value = res.data;

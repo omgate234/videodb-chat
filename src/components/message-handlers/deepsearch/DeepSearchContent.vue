@@ -146,6 +146,7 @@
         <div class="vdb-c-flex vdb-c-w-fit vdb-c-flex-col vdb-c-items-center vdb-c-gap-[10px]">
           <div class="vdb-c-relative vdb-c-h-full vdb-c-w-[480px]">
             <ChatVideo
+              :key="`${internalVideos[editingIndex]?.video_id || internalVideos[editingIndex]?.id}-${internalVideos[editingIndex].stream_url}`"
               :show-loading="false"
               class="vdb-c-h-full vdb-c-w-full"
               v-if="internalVideos[editingIndex].stream_url"
@@ -431,8 +432,7 @@ const updateStreamUrl = async (index) => {
   try {
     isGeneratingStream.value = true;
     const result = await generateVideoStream(collectionId, videoId, state.start, state.end);
-
-    if (result?.status === 'success' && result?.data?.stream_url) {
+    if (result?.data?.stream_url) {
       // Update internal video state with new stream URL and times
       internalVideos.value[index].stream_url = result.data.stream_url;
       internalVideos.value[index].start = state.start;

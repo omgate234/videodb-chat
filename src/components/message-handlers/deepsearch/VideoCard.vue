@@ -137,7 +137,7 @@
     >
       <!-- Copy Link -->
       <li
-        class="menu-item vdb-c-flex vdb-c-aspect-square vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e] hover:vdb-c-bg-[#efefef]"
+        class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
         @click.stop="handleCopyLink"
       >
         <CheckIcon
@@ -150,7 +150,7 @@
 
       <!-- Add to Collection -->
       <li
-        class="menu-item vdb-c-flex vdb-c-aspect-square vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e] hover:vdb-c-bg-[#efefef]"
+        class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
         @click.stop="handleAddToCollection"
       >
         <FolderIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" stroke-color="#1E1E1E" />
@@ -159,7 +159,7 @@
 
       <!-- Convert to Reel -->
       <li
-        class="menu-item vdb-c-flex vdb-c-aspect-square vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e] hover:vdb-c-bg-[#efefef]"
+        class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
         @click.stop="handleConvertToReel"
       >
         <RotateIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" fill="#1e1e1e" />
@@ -168,7 +168,7 @@
 
       <!-- Download -->
       <li
-        class="menu-item vdb-c-flex vdb-c-aspect-square vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e] hover:vdb-c-bg-[#efefef]"
+        class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
         @click.stop="handleDownload"
       >
         <DownloadIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" fill="#1e1e1e" />
