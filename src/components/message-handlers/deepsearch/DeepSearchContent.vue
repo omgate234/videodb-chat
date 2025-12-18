@@ -36,6 +36,7 @@
           v-for="(video, index) in paginatedVideos"
           :key="video.id + '-' + index + '-' + video.stream_url"
           :video="video"
+          :index="index"
           :call-api="callApi"
           :on-convert-to-reel="() => handleConvertToReelFromGrid(getOriginalIndex(index))"
           @edit="startEditing(getOriginalIndex(index))"

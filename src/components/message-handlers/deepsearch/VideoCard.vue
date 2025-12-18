@@ -223,6 +223,10 @@ const props = defineProps({
     type: Function,
     default: null,
   },
+  index: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const emit = defineEmits(['edit']);
@@ -253,9 +257,10 @@ const toggleMenu = async () => {
   if (showMenu.value && menuButtonRef.value) {
     await nextTick();
     const rect = menuButtonRef.value.getBoundingClientRect();
+    const isEveryFourth = (props.index + 1) % 4 === 0;
     menuPosition.value = {
       top: rect.bottom + 8,
-      left: rect.left,
+      left: isEveryFourth ? rect.right - 200 : rect.left,
     };
   }
 };
