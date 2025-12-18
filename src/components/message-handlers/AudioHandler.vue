@@ -278,6 +278,9 @@
       </ul>
     </Teleport>
   </div>
+
+  <!-- Notification Center -->
+  <NotificationCenter ref="notificationCenterRef" />
 </template>
 
 <script setup>
@@ -295,6 +298,7 @@ import CopyIcon from '../chat/v2/icons/CopyIcon.vue';
 import FolderIcon from '../chat/v2/icons/FolderIcon.vue';
 import DownloadIcon from '../chat/v2/icons/DownloadIcon.vue';
 import LoadingMessage from './elements/LoadingMessage.vue';
+import NotificationCenter from '../chat/elements/NotificationCenter.vue';
 
 const props = defineProps({
   content: {
@@ -327,6 +331,7 @@ const menuButtonRef = ref(null);
 const menuPosition = ref(null);
 const fetchedAudioUrl = ref(null);
 const isFetchingUrl = ref(false);
+const notificationCenterRef = ref(null);
 
 const audioUrl = computed(() => {
   if (fetchedAudioUrl.value) {
@@ -457,11 +462,13 @@ const copyAudioLink = async () => {
     const link = audioUrl.value || window.location.href;
     await navigator.clipboard.writeText(link);
     linkCopied.value = true;
+    notificationCenterRef.value?.addNotification('Audio link copied');
     setTimeout(() => {
       linkCopied.value = false;
     }, 2000);
   } catch (err) {
     console.error('Failed to copy link:', err);
+    notificationCenterRef.value?.addNotification('Failed to copy link', { type: 'error' });
   }
 };
 
@@ -481,9 +488,11 @@ const copyAssetId = async () => {
   if (!audioId.value) return;
   try {
     await navigator.clipboard.writeText(audioId.value);
+    notificationCenterRef.value?.addNotification('Audio ID copied');
     showMenu.value = false;
   } catch (err) {
     console.error('Failed to copy asset ID:', err);
+    notificationCenterRef.value?.addNotification('Failed to copy ID', { type: 'error' });
   }
 };
 
@@ -518,9 +527,12 @@ const handleAddToCollection = async () => {
 const handleDownload = async () => {
   if (!audioUrl.value) {
     console.error('Download not available - missing audioUrl');
+    notificationCenterRef.value?.addNotification('Download not available', { type: 'error' });
     showMenu.value = false;
     return;
   }
+
+  notificationCenterRef.value?.addNotification('Downloading audio...');
 
   try {
     const link = document.createElement('a');
@@ -529,9 +541,11 @@ const handleDownload = async () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    notificationCenterRef.value?.addNotification('Audio download started');
     showMenu.value = false;
   } catch (error) {
     console.error('Error downloading audio:', error);
+    notificationCenterRef.value?.addNotification('Failed to download audio', { type: 'error' });
     showMenu.value = false;
   }
 };

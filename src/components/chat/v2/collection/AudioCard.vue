@@ -395,19 +395,19 @@ function handleCancel() {
 
 function handleDownload() {
   if (url.value) {
+    notificationCenterRef.value?.addNotification('Downloading audio...');
     const link = document.createElement('a');
     link.href = url.value;
     link.download = `${props.item.name || 'audio'}.mp3`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    notificationCenterRef.value?.addNotification('Audio download started');
   } else {
     console.error('No audio URL available');
-    if (notificationCenterRef.value) {
-      notificationCenterRef.value.addNotification('Audio not available for download', {
-        type: 'error',
-      });
-    }
+    notificationCenterRef.value?.addNotification('Audio not available for download', {
+      type: 'error',
+    });
   }
 }
 
@@ -419,8 +419,10 @@ function handleConfirmDelete() {
   showDeleteModal.value = false;
   if (props.item.type === 'voices') {
     emit('delete-voice', props.item);
+    notificationCenterRef.value?.addNotification('Voice deleted successfully', { type: 'error' });
   } else {
     emit('delete-audio', props.item);
+    notificationCenterRef.value?.addNotification('Audio deleted successfully', { type: 'error' });
   }
 }
 

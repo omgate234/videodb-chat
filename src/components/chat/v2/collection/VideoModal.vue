@@ -332,6 +332,8 @@ function handleCancelTitle() {
 }
 
 async function handleDownload() {
+  notificationCenterRef.value?.addNotification('Downloading video...');
+
   if (getVideoDownloadUrl && props.item.collection_id && props.item.id) {
     try {
       const result = await getVideoDownloadUrl(props.item.collection_id, props.item.id);
@@ -342,10 +344,13 @@ async function handleDownload() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        notificationCenterRef.value?.addNotification('Video download started');
         return;
       }
     } catch (error) {
       console.error('Error downloading video from collection:', error);
+      notificationCenterRef.value?.addNotification('Failed to download video', { type: 'error' });
+      return;
     }
   }
 
@@ -359,25 +364,20 @@ async function handleDownload() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        notificationCenterRef.value?.addNotification('Video download started');
       } else {
         console.error('No download URL received from stream');
-        if (notificationCenterRef.value) {
-          notificationCenterRef.value.addNotification('Failed to get download URL', {
-            type: 'error',
-          });
-        }
+        notificationCenterRef.value?.addNotification('Failed to get download URL', {
+          type: 'error',
+        });
       }
     } catch (error) {
       console.error('Error downloading video from stream:', error);
-      if (notificationCenterRef.value) {
-        notificationCenterRef.value.addNotification('Failed to download video', { type: 'error' });
-      }
+      notificationCenterRef.value?.addNotification('Failed to download video', { type: 'error' });
     }
   } else {
     console.error('No download method available');
-    if (notificationCenterRef.value) {
-      notificationCenterRef.value.addNotification('Download not available', { type: 'error' });
-    }
+    notificationCenterRef.value?.addNotification('Download not available', { type: 'error' });
   }
 }
 
@@ -388,6 +388,7 @@ function handleDelete() {
 function handleConfirmDelete() {
   showDeleteModal.value = false;
   emit('delete-video', props.item);
+  notificationCenterRef.value?.addNotification('Video deleted successfully', { type: 'error' });
   handleClose();
 }
 </script>

@@ -131,6 +131,9 @@
       </ul>
     </Teleport>
   </div>
+
+  <!-- Notification Center -->
+  <NotificationCenter ref="notificationCenterRef" />
 </template>
 
 <script setup>
@@ -144,6 +147,7 @@ import TickIcon from '../../chat/v2/icons/video-player/TickIcon.vue';
 import CopyIcon from '../../chat/v2/icons/CopyIcon.vue';
 import FolderIcon from '../../chat/v2/icons/FolderIcon.vue';
 import DownloadIcon from '../../chat/v2/icons/DownloadIcon.vue';
+import NotificationCenter from '../../chat/elements/NotificationCenter.vue';
 
 const props = defineProps({
   videoName: {
@@ -185,6 +189,7 @@ const linkCopied = ref(false);
 const showMenu = ref(false);
 const menuButtonRef = ref(null);
 const menuPosition = ref(null);
+const notificationCenterRef = ref(null);
 
 const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
@@ -197,11 +202,13 @@ const copyVideoLink = async () => {
     const link = `https://console.videodb.io/player?url=${encodeURIComponent(props.streamUrl)}`;
     await navigator.clipboard.writeText(link);
     linkCopied.value = true;
+    notificationCenterRef.value?.addNotification('Video link copied');
     setTimeout(() => {
       linkCopied.value = false;
     }, 2000);
   } catch (err) {
     console.error('Failed to copy link:', err);
+    notificationCenterRef.value?.addNotification('Failed to copy link', { type: 'error' });
   }
 };
 
@@ -222,9 +229,11 @@ const copyAssetId = async () => {
   if (!props.videoId) return;
   try {
     await navigator.clipboard.writeText(props.videoId);
+    notificationCenterRef.value?.addNotification('Video ID copied');
     showMenu.value = false;
   } catch (err) {
     console.error('Failed to copy asset ID:', err);
+    notificationCenterRef.value?.addNotification('Failed to copy ID', { type: 'error' });
   }
 };
 
@@ -258,6 +267,7 @@ const handleAddToCollection = async () => {
 
 const handleDownload = async () => {
   showMenu.value = false;
+  notificationCenterRef.value?.addNotification('Downloading video...');
 
   if (getVideoDownloadUrl && props.videoId && props.collectionId) {
     try {
@@ -269,18 +279,24 @@ const handleDownload = async () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        notificationCenterRef.value?.addNotification('Video download started');
       } else {
         console.error('No download URL received');
+        notificationCenterRef.value?.addNotification('Failed to get download URL', {
+          type: 'error',
+        });
       }
       return;
     } catch (error) {
       console.error('Error downloading video:', error);
+      notificationCenterRef.value?.addNotification('Failed to download video', { type: 'error' });
       return;
     }
   }
 
   if (!getDownloadUrlFromStream || !props.streamUrl) {
     console.error('Download not available - missing streamUrl or download function');
+    notificationCenterRef.value?.addNotification('Download not available', { type: 'error' });
     return;
   }
 
@@ -293,11 +309,14 @@ const handleDownload = async () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      notificationCenterRef.value?.addNotification('Video download started');
     } else {
       console.error('No download URL received from stream');
+      notificationCenterRef.value?.addNotification('Failed to get download URL', { type: 'error' });
     }
   } catch (error) {
     console.error('Error downloading video from stream:', error);
+    notificationCenterRef.value?.addNotification('Failed to download video', { type: 'error' });
   }
 };
 

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="video-card vdb-c-flex vdb-c-w-[240px] vdb-c-cursor-pointer vdb-c-flex-col vdb-c-items-start vdb-c-gap-8 vdb-c-transition-all vdb-c-duration-300"
+    class="video-card vdb-c-flex vdb-c-w-full vdb-c-min-w-[240px] vdb-c-cursor-pointer vdb-c-flex-col vdb-c-items-start vdb-c-gap-8 vdb-c-transition-all vdb-c-duration-300"
     :class="{ 'video-card--hovered': isHovered }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -189,6 +189,9 @@
 
   <!-- Meta Info Modal -->
   <MetaInfoModal :show-modal="showMetaInfoModal" :video="props.video" @close="closeMetaInfoModal" />
+
+  <!-- Notification Center -->
+  <NotificationCenter ref="notificationCenterRef" />
 </template>
 
 <script setup>
@@ -205,6 +208,7 @@ import PlayIcon from '../../icons/play.vue';
 import CheckIcon from '../../chat/v2/icons/CheckIcon.vue';
 import MetaInfoIcon from '../../chat/v2/icons/deep-search/MetaInfoIcon.vue';
 import MetaInfoModal from '../../modals/MetaInfoModal.vue';
+import NotificationCenter from '../../chat/elements/NotificationCenter.vue';
 
 const props = defineProps({
   video: {
@@ -236,6 +240,7 @@ const menuButtonRef = ref(null);
 const menuPosition = ref(null);
 const showCheckIcon = ref(false);
 const showMetaInfoModal = ref(false);
+const notificationCenterRef = ref(null);
 
 const formatDuration = (seconds) => {
   const mins = Math.floor(seconds / 60);
@@ -265,6 +270,7 @@ const handleMenuMouseLeave = () => {
 const handleCopyLink = async () => {
   if (!props.video.stream_url) {
     console.error('Copy link not available - missing stream URL');
+    notificationCenterRef.value?.addNotification('Video link not available', { type: 'error' });
     showMenu.value = false;
     return;
   }
@@ -275,11 +281,13 @@ const handleCopyLink = async () => {
     );
 
     showCheckIcon.value = true;
+    notificationCenterRef.value?.addNotification('Video link copied');
     setTimeout(() => {
       showCheckIcon.value = false;
     }, 1000);
   } catch (error) {
     console.error('Error copying link:', error);
+    notificationCenterRef.value?.addNotification('Failed to copy link', { type: 'error' });
   }
   showMenu.value = false;
 };
@@ -321,9 +329,12 @@ const handleConvertToReel = () => {
 const handleDownload = async () => {
   if (!props.video.stream_url) {
     console.error('Download not available - missing stream URL');
+    notificationCenterRef.value?.addNotification('Download not available', { type: 'error' });
     showMenu.value = false;
     return;
   }
+
+  notificationCenterRef.value?.addNotification('Downloading video...');
 
   try {
     const clipName = `${props.video.name || 'clip'}_${props.video.start}-${props.video.end}`;
@@ -344,8 +355,10 @@ const handleDownload = async () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        notificationCenterRef.value?.addNotification('Video download started');
       } else {
         console.error('No download URL received', downloadResult);
+        notificationCenterRef.value?.addNotification('Failed to download video', { type: 'error' });
       }
     } else {
       const link = document.createElement('a');
@@ -354,9 +367,11 @@ const handleDownload = async () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      notificationCenterRef.value?.addNotification('Video download started');
     }
   } catch (error) {
     console.error('Error downloading:', error);
+    notificationCenterRef.value?.addNotification('Failed to download video', { type: 'error' });
   }
   showMenu.value = false;
 };

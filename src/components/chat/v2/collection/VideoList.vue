@@ -58,7 +58,7 @@
 
     <!-- Pagination -->
     <div
-      v-if="showPagination"
+      v-if="showPagination && totalPages > 1"
       class="vdb-c-mt-20 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-8"
     >
       <NavigationButton

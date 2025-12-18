@@ -1,6 +1,6 @@
 <template>
   <div
-    class="vdb-c-pointer-events-none vdb-c-fixed vdb-c-left-1/2 vdb-c-top-20 vdb-c-z-50 vdb-c-flex -vdb-c-translate-x-1/2 vdb-c-flex-col vdb-c-gap-10"
+    class="vdb-c-pointer-events-none vdb-c-fixed vdb-c-left-1/2 vdb-c-top-20 vdb-c-z-[2147483647] vdb-c-flex -vdb-c-translate-x-1/2 vdb-c-flex-col vdb-c-gap-10"
   >
     <TransitionGroup name="notification" tag="div" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-10">
       <div

@@ -3,6 +3,20 @@
     <header
       class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-end vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
     >
+      <div
+        v-if="showMore"
+        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-gap-[6px] vdb-c-pl-[10px]"
+      >
+        <HeavyFolderIcon
+          :stroke-color="'#1E1E1E'"
+          class="vdb-c-h-[24px] vdb-c-w-[24px] vdb-c-shrink-0"
+        />
+        <h1
+          class="vdb-c-whitespace-nowrap vdb-c-text-[16px] vdb-c-font-semibold vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey"
+        >
+          {{ collectionName || 'Collection' }}
+        </h1>
+      </div>
       <SearchInput
         v-if="showMore"
         :items="combinedAssets"
@@ -12,7 +26,7 @@
       />
       <PrimaryButton :disabled="uploadDisabled" @click="handleUploadClick">
         <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
-        <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">Upload</span>
+        <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">Upload file</span>
       </PrimaryButton>
     </header>
     <div
@@ -266,6 +280,7 @@ import NotificationCenter from '../../chat/elements/NotificationCenter.vue';
 import ErrorIcon from '../../chat/v2/icons/ErrorIcon.vue';
 import UploadModal from '../../chat/v2/UploadModal.vue';
 import AddIcon from '../../chat/v2/icons/AddIcon.vue';
+import HeavyFolderIcon from '../../chat/v2/icons/HeavyFolderIcon.vue';
 
 const props = defineProps({
   context: {

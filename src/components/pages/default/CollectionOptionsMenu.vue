@@ -3,7 +3,7 @@
     v-if="isOpen"
     :class="[
       showOnRight ? 'vdb-c-right-0' : 'vdb-c-left-0',
-      showOnBottom ? 'vdb-c-bottom-[calc(100%+4px)]' : 'vdb-c-top-[calc(100%+4px)]',
+      showOnBottom ? 'vdb-c-bottom-[calc(100%)]' : 'vdb-c-top-[calc(100%)]',
     ]"
     class="vdb-c-absolute vdb-c-z-50 vdb-c-flex vdb-c-min-w-[200px] vdb-c-flex-col vdb-c-gap-[4px] vdb-c-rounded-12 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-shadow-[0px_23px_6px_0px_rgba(0,0,0,0),0px_15px_6px_0px_rgba(0,0,0,0.01),0px_8px_5px_0px_rgba(0,0,0,0.02),0px_4px_4px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.03)]"
     @click.stop

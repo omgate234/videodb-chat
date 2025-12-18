@@ -145,6 +145,9 @@
       </ul>
     </Teleport>
   </div>
+
+  <!-- Notification Center -->
+  <NotificationCenter ref="notificationCenterRef" />
 </template>
 
 <script setup>
@@ -156,6 +159,7 @@ import ThreeDotsIcon from '../chat/v2/icons/image-handler/ThreeDotsIcon.vue';
 import CopyIcon from '../chat/v2/icons/CopyIcon.vue';
 import FolderIcon from '../chat/v2/icons/FolderIcon.vue';
 import SimpleImageModal from './image-handler/SimpleImageModal.vue';
+import NotificationCenter from '../chat/elements/NotificationCenter.vue';
 
 const props = defineProps({
   content: {
@@ -181,6 +185,7 @@ const showMenu = ref(false);
 const menuButtonRef = ref(null);
 const showImageModal = ref(false);
 const menuPosition = ref(null);
+const notificationCenterRef = ref(null);
 
 const imageId = computed(() => {
   return props.content?.image?.image_id || props.content?.image?.id || null;
@@ -197,14 +202,19 @@ const handleZoom = () => {
 const handleDownload = () => {
   const imageUrl = props.content?.image?.url;
   if (imageUrl) {
+    notificationCenterRef.value?.addNotification('Downloading image...');
     const link = document.createElement('a');
     link.href = imageUrl;
     link.download = `${props.content?.image?.name || 'image'}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    notificationCenterRef.value?.addNotification('Image download started');
   } else {
     console.error('No image URL available');
+    notificationCenterRef.value?.addNotification('Image not available for download', {
+      type: 'error',
+    });
   }
 };
 
@@ -224,9 +234,11 @@ const copyAssetId = async () => {
   if (!imageId.value) return;
   try {
     await navigator.clipboard.writeText(imageId.value);
+    notificationCenterRef.value?.addNotification('Image ID copied');
     showMenu.value = false;
   } catch (err) {
     console.error('Failed to copy asset ID:', err);
+    notificationCenterRef.value?.addNotification('Failed to copy ID', { type: 'error' });
   }
 };
 

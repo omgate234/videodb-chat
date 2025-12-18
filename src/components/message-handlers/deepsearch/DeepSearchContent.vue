@@ -29,7 +29,9 @@
       </div>
 
       <!-- Video Grid -->
-      <div class="vdb-c-flex vdb-c-flex-wrap vdb-c-justify-center vdb-c-gap-16">
+      <div
+        class="vdb-c-grid vdb-c-w-full vdb-c-grid-cols-4 vdb-c-flex-wrap vdb-c-items-start vdb-c-justify-center vdb-c-gap-16"
+      >
         <VideoCard
           v-for="(video, index) in paginatedVideos"
           :key="video.id + '-' + index + '-' + video.stream_url"

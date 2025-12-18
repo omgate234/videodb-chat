@@ -157,7 +157,7 @@
           :class="
             (index + 1) % 4 === 0 ? 'vdb-c-left-full vdb-c-translate-x-[-100%]' : 'vdb-c-left-0'
           "
-          class="menu-dropdown vdb-c-absolute vdb-c-left-[calc(100%+4px)] vdb-c-top-[-8px] vdb-c-z-[1000] vdb-c-w-full vdb-c-min-w-[180px] vdb-c-cursor-pointer vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
+          class="menu-dropdown vdb-c-absolute vdb-c-left-[calc(100%)] vdb-c-top-[-8px] vdb-c-z-[1000] vdb-c-w-full vdb-c-min-w-[180px] vdb-c-cursor-pointer vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
         >
           <li
             class="menu-item vdb-c-flex vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
@@ -410,29 +410,26 @@ function handleCancel() {
 
 async function handleDownload() {
   if (getVideoDownloadUrl) {
+    notificationCenterRef.value?.addNotification('Downloading video...');
     try {
       const result = await getVideoDownloadUrl(props.item.collection_id, props.item.id);
       if (result?.data && result?.data?.download_url) {
-        // Create a temporary link element and trigger download
         const link = document.createElement('a');
         link.href = result?.data?.download_url;
-        link.download = `${props.item.name || 'video'}.mp4`; // Default filename
+        link.download = `${props.item.name || 'video'}.mp4`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        notificationCenterRef.value?.addNotification('Video download started');
       } else {
         console.error('No download URL received');
-        if (notificationCenterRef.value) {
-          notificationCenterRef.value.addNotification('Failed to get download URL', {
-            type: 'error',
-          });
-        }
+        notificationCenterRef.value?.addNotification('Failed to get download URL', {
+          type: 'error',
+        });
       }
     } catch (error) {
       console.error('Error downloading video:', error);
-      if (notificationCenterRef.value) {
-        notificationCenterRef.value.addNotification('Failed to download video', { type: 'error' });
-      }
+      notificationCenterRef.value?.addNotification('Failed to download video', { type: 'error' });
     }
   }
 }
@@ -444,6 +441,7 @@ function handleDelete() {
 function handleConfirmDelete() {
   showDeleteModal.value = false;
   emit('delete-video', props.item);
+  notificationCenterRef.value?.addNotification('Video deleted successfully', { type: 'error' });
 }
 
 function handleSelect() {

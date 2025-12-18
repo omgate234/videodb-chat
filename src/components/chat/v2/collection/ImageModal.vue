@@ -254,18 +254,18 @@ const handleCancelTitle = () => {
 
 const handleDownload = async () => {
   if (url.value) {
+    notificationCenterRef.value?.addNotification('Downloading image...');
     const link = document.createElement('a');
     link.href = url.value;
     link.download = `${props.item.name || 'image'}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    notificationCenterRef.value?.addNotification('Image download started');
   } else {
-    if (notificationCenterRef.value) {
-      notificationCenterRef.value.addNotification('Image not available for download', {
-        type: 'error',
-      });
-    }
+    notificationCenterRef.value?.addNotification('Image not available for download', {
+      type: 'error',
+    });
   }
 };
 
@@ -276,6 +276,7 @@ const handleDelete = () => {
 const handleConfirmDelete = () => {
   showDeleteModal.value = false;
   emit('delete-image', props.item);
+  notificationCenterRef.value?.addNotification('Image deleted successfully', { type: 'error' });
   handleClose();
 };
 </script>

@@ -80,7 +80,6 @@
           >
             <div
               class="vdb-c-uploaded-files-container vdb-c-flex vdb-c-max-h-[156px] vdb-c-flex-col vdb-c-gap-[6px] vdb-c-overflow-y-auto"
-              style="scrollbar-gutter: stable"
             >
               <template v-for="(file, index) in displayFiles" :key="file.id || index">
                 <VideoFileDisplay
@@ -454,26 +453,29 @@ watch(
 
 <style>
 /* Scrollbar styles for files container */
+.vdb-c-uploaded-files-container {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
 .vdb-c-uploaded-files-container::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .vdb-c-uploaded-files-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f3f4f6;
+  border-radius: 999px;
 }
 
 .vdb-c-uploaded-files-container::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
+  background: #d1d5db;
   border-radius: 999px;
 }
 
 .vdb-c-uploaded-files-container::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db;
-}
-
-.vdb-c-uploaded-files-container {
-  scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
+  background: #9ca3af;
 }
 
 /* Scrollbar styles for collections dropdown */
