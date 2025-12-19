@@ -87,16 +87,16 @@
           Cancel
         </button>
         <button
-          :disabled="!canSubmit"
+          :disabled="!canSubmit || isCreating"
           class="vdb-c-rounded-[8px] vdb-c-px-[16px] vdb-c-py-[12px] vdb-c-text-[14px] vdb-c-font-semibold vdb-c-text-white"
           :class="
-            canSubmit
+            canSubmit && !isCreating
               ? 'vdb-c-bg-[#EC5B16] hover:vdb-c-bg-[#d94e14]'
               : 'vdb-c-cursor-not-allowed vdb-c-bg-[#969696]'
           "
           @click="handleCreate"
         >
-          {{ isFirstCollection ? 'Next' : 'Create' }}
+          {{ isCreating ? 'Creating...' : isFirstCollection ? 'Next' : 'Create' }}
         </button>
       </footer>
     </div>
@@ -117,6 +117,10 @@ const props = defineProps({
     default: false,
   },
   isFirstCollection: {
+    type: Boolean,
+    default: false,
+  },
+  isCreating: {
     type: Boolean,
     default: false,
   },

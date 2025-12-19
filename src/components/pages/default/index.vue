@@ -96,14 +96,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Create Collection Modal -->
-    <CreateCollectionModal
-      :showDialog="showCreateCollectionModal"
-      :isFirstCollection="shouldShowEmptyState"
-      @cancel="handleCancel"
-      @create="handleCreate"
-    />
   </div>
 
   <!-- Collections View -->
@@ -267,16 +259,16 @@
               </div>
 
               <!-- Collection Content -->
-              <div class="vdb-c-flex vdb-c-grow vdb-c-items-center vdb-c-gap-[8px]">
+              <div class="vdb-c-min-w-0 vdb-c-flex vdb-c-grow vdb-c-items-center vdb-c-gap-[8px]">
                 <div
-                  class="vdb-c-flex vdb-c-grow vdb-c-flex-col vdb-c-items-start vdb-c-justify-center"
+                  class="vdb-c-min-w-0 vdb-c-flex vdb-c-grow vdb-c-flex-col vdb-c-items-start vdb-c-justify-center"
                 >
                   <template v-if="isEditing(collection.id)">
                     <input
                       :id="`edit-input-${collection.id}`"
                       v-model="editingName"
                       type="text"
-                      class="vdb-selection-orange vdb-c-w-full vdb-c-truncate vdb-c-bg-[#F7F7F7] vdb-c-px-6 vdb-c-py-2 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E] vdb-c-outline-none focus:vdb-c-border-vdb-darkorange"
+                      class="vdb-selection-orange vdb-c-w-full vdb-c-truncate vdb-c-bg-[#F7F7F7] vdb-c-px-6 vdb-c-py-2 vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E] vdb-c-outline-none focus:vdb-c-border-vdb-darkorange"
                       @click.stop
                       @keydown.enter.prevent="handleSaveEdit"
                       @keydown.esc.stop="handleCancelEdit"
@@ -285,7 +277,7 @@
                   </template>
                   <template v-else>
                     <p
-                      class="vdb-c-w-full vdb-c-overflow-hidden vdb-c-text-ellipsis vdb-c-whitespace-nowrap vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E]"
+                      class="vdb-c-w-full vdb-c-overflow-hidden vdb-c-text-ellipsis vdb-c-whitespace-nowrap vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E]"
                       @dblclick.stop="handleStartEditing(collection)"
                       title="Double-click to rename"
                     >
@@ -327,31 +319,31 @@
         </div>
       </div>
     </div>
-
-    <!-- Create Collection Modal -->
-    <CreateCollectionModal
-      :showDialog="showCreateCollectionModal"
-      :isFirstCollection="shouldShowEmptyState"
-      @cancel="handleCancel"
-      @create="handleCreate"
-    />
-
-    <!-- Delete Collection Modal -->
-    <DeleteCollectionModal
-      :is-open="showDeleteModal"
-      @close="showDeleteModal = false"
-      @confirm="handleConfirmDelete"
-    />
-
-    <!-- Upload Modal -->
-    <UploadModal
-      :showUploadDialog="showUploadModal"
-      :collections="collections"
-      :defaultSelectedCollectionId="newlyCreatedCollectionId"
-      @cancel-upload="handleCancelUpload"
-      @upload="handleUploadWrapper"
-    />
   </div>
+
+  <!-- GLOBAL MODALS (Outside conditional blocks) -->
+  <CreateCollectionModal
+    :showDialog="showCreateCollectionModal"
+    :isFirstCollection="collections.length === 0"
+    :isCreating="isCreatingCollection"
+    @cancel="handleCancel"
+    @create="handleCreate"
+  />
+
+  <DeleteCollectionModal
+    :is-open="showDeleteModal"
+    @close="showDeleteModal = false"
+    @confirm="handleConfirmDelete"
+  />
+
+  <UploadModal
+    :showUploadDialog="showUploadModal"
+    :collections="collections"
+    :defaultSelectedCollectionId="newlyCreatedCollectionId"
+    :isCreatingCollection="isCreatingCollection"
+    @cancel-upload="handleCancelUpload"
+    @upload="handleUploadWrapper"
+  />
 </template>
 
 <script setup>
@@ -391,6 +383,7 @@ const collectionToDelete = ref(null);
 const showUploadModal = ref(false);
 const newlyCreatedCollectionId = ref(null);
 const hoveredNewCollectionButton = ref(false);
+const isCreatingCollection = ref(false);
 
 const collectionsRaw = computed(() => context?.collections?.value);
 const collections = computed(() => collectionsRaw.value || []);
@@ -456,20 +449,27 @@ const handleCancel = () => {
 };
 
 const handleCreate = async (newCollection) => {
-  const wasEmptyState = shouldShowEmptyState.value || collections.value.length === 0;
-  showCreateCollectionModal.value = false;
+  const isFirstCollection = collections.value.length === 0;
+
   try {
+    isCreatingCollection.value = true;
+
     const createdCollection = await context?.createCollection(
       newCollection.name,
       newCollection.description || ' '
     );
 
-    if (wasEmptyState) {
-      newlyCreatedCollectionId.value = createdCollection?.id;
+    showCreateCollectionModal.value = false;
+
+    if (isFirstCollection && createdCollection?.id) {
+      newlyCreatedCollectionId.value = createdCollection.id;
+      await nextTick();
       showUploadModal.value = true;
     }
   } catch (error) {
     console.error('Error creating collection:', error?.message || error);
+  } finally {
+    isCreatingCollection.value = false;
   }
 };
 
@@ -522,7 +522,10 @@ const handleSaveEdit = async () => {
   }
 
   try {
-    await context?.updateCollection(editingCollectionId.value, { name: trimmed });
+    await context?.handleUpdateCollectionName({
+      collectionId: editingCollectionId.value,
+      name: trimmed,
+    });
     editingCollectionId.value = null;
     editingName.value = '';
   } catch (error) {

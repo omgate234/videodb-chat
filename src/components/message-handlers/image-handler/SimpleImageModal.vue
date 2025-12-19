@@ -2,12 +2,12 @@
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-[1000] vdb-c-flex vdb-c-flex-col vdb-c-bg-[#3D3D3D]"
+      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-[1000] vdb-c-flex vdb-c-h-screen vdb-c-flex-col vdb-c-overflow-hidden vdb-c-bg-[#3D3D3D]"
       @click.self="handleClose"
     >
       <!-- Top Bar with Title and Close Button -->
       <div
-        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-px-24 vdb-c-py-20"
+        class="vdb-c-flex vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-between vdb-c-px-24 vdb-c-py-20"
       >
         <!-- Left: Close Button and Title -->
         <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-16">
@@ -55,18 +55,30 @@
           </button>
           <!-- Download Button -->
           <button
-            class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all hover:vdb-c-bg-[rgba(0,0,0,0.6)]"
-            @click.stop="handleDownload"
-            title="Download"
+            class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all"
+            :class="[
+              onSharePage
+                ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                : 'hover:vdb-c-bg-[rgba(0,0,0,0.6)]',
+            ]"
+            @click.stop="!onSharePage && handleDownload()"
+            :disabled="onSharePage"
+            :title="onSharePage ? 'Not available on shared page' : 'Download'"
           >
             <DownloadIcon class="vdb-c-h-16-667 vdb-c-w-16-667" />
           </button>
           <!-- Three Dots Button -->
           <div ref="menuButtonRef">
             <button
-              class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all hover:vdb-c-bg-[rgba(0,0,0,0.6)]"
-              @click.stop="toggleMenu"
-              title="More options"
+              class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all"
+              :class="[
+                onSharePage
+                  ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                  : 'hover:vdb-c-bg-[rgba(0,0,0,0.6)]',
+              ]"
+              @click.stop="!onSharePage && toggleMenu()"
+              :disabled="onSharePage"
+              :title="onSharePage ? 'Not available on shared page' : 'More options'"
             >
               <ThreeDotsIcon class="vdb-c-h-16-667 vdb-c-w-16-667" />
             </button>
@@ -76,10 +88,10 @@
 
       <!-- Image Display Container -->
       <div
-        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-px-48 vdb-c-pb-48"
+        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-px-48 vdb-c-pb-48"
       >
         <div
-          class="vdb-c-relative vdb-c-flex vdb-c-max-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-rounded-12"
+          class="vdb-c-relative vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center"
           @mouseenter="isHovered = true"
           @mouseleave="isHovered = false"
         >
@@ -160,6 +172,7 @@ const emit = defineEmits(['close']);
 const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
 const activeCollectionData = context?.activeCollectionData;
+const onSharePage = context?.onSharePage || false;
 
 const isHovered = ref(false);
 const showMenu = ref(false);
@@ -171,6 +184,7 @@ const handleClose = () => {
 };
 
 const handleDownload = () => {
+  if (onSharePage) return;
   if (props.imageUrl) {
     const link = document.createElement('a');
     link.href = props.imageUrl;
@@ -184,6 +198,7 @@ const handleDownload = () => {
 };
 
 const toggleMenu = async () => {
+  if (onSharePage) return;
   showMenu.value = !showMenu.value;
   if (showMenu.value && menuButtonRef.value) {
     await nextTick();
@@ -196,7 +211,7 @@ const toggleMenu = async () => {
 };
 
 const copyAssetId = async () => {
-  if (!props.imageId) return;
+  if (onSharePage || !props.imageId) return;
   try {
     await navigator.clipboard.writeText(props.imageId);
     showMenu.value = false;
@@ -206,6 +221,7 @@ const copyAssetId = async () => {
 };
 
 const handleAddToCollection = async () => {
+  if (onSharePage) return;
   if (!handleUpload || !props.imageUrl) {
     console.error('handleUpload or imageUrl not available');
     showMenu.value = false;

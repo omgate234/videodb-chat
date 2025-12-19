@@ -87,10 +87,11 @@
           >
             <div class="vdb-c-group vdb-c-relative">
               <button
-                @click="handleConvertToVertical"
+                @click="!onSharePage && handleConvertToVertical()"
+                :disabled="onSharePage || content.status === 'progress'"
                 :class="[
                   'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam',
-                  content.status === 'progress'
+                  onSharePage || content.status === 'progress'
                     ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
                     : '',
                 ]"
@@ -102,13 +103,17 @@
               <div
                 class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
-                Convert to Vertical
+                {{ onSharePage ? 'Not available on shared page' : 'Convert to Vertical' }}
               </div>
             </div>
             <div class="vdb-c-group vdb-c-relative">
               <button
-                @click="handleDownloadStream"
-                class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam"
+                @click="!onSharePage && handleDownloadStream()"
+                :disabled="onSharePage"
+                :class="[
+                  'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150',
+                  onSharePage ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50' : 'hover:vdb-c-bg-pam',
+                ]"
               >
                 <DownloadIcon
                   className="vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 group-hover:vdb-c-text-white"
@@ -117,16 +122,16 @@
               <div
                 class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
-                Download
+                {{ onSharePage ? 'Not available on shared page' : 'Download' }}
               </div>
             </div>
             <div class="vdb-c-group vdb-c-relative">
               <button
-                :disabled="content.status === 'progress'"
-                @click="handleFindSimilar"
+                :disabled="onSharePage || content.status === 'progress'"
+                @click="!onSharePage && handleFindSimilar()"
                 :class="[
                   'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam',
-                  content.status === 'progress'
+                  onSharePage || content.status === 'progress'
                     ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
                     : '',
                 ]"
@@ -138,20 +143,16 @@
               <div
                 class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
-                Find Similar Content
+                {{ onSharePage ? 'Not available on shared page' : 'Find Similar Content' }}
               </div>
             </div>
             <div class="vdb-c-group vdb-c-relative">
               <button
-                :disabled="
-                  !videoMetadata || Object.keys(videoMetadata).length === 0
-                "
-                @click="openEditModal"
+                :disabled="onSharePage || !videoMetadata || Object.keys(videoMetadata).length === 0"
+                @click="!onSharePage && openEditModal()"
                 :class="[
                   'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#F7F7F7] vdb-c-p-[5px] vdb-c-text-[#242424] vdb-c-transition-colors vdb-c-duration-150 hover:vdb-c-bg-pam',
-                  !videoMetadata
-                    ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
-                    : '',
+                  onSharePage || !videoMetadata ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50' : '',
                 ]"
               >
                 <MediaEditIcon
@@ -161,7 +162,7 @@
               <div
                 class="vdb-c-tooltip-shadow vdb-c-absolute vdb-c-right-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-mr-10 vdb-c-hidden vdb-c--translate-y-1/2 vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-[14px] vdb-c-text-black group-hover:vdb-c-inline"
               >
-                Edit Meta Information
+                {{ onSharePage ? 'Not available on shared page' : 'Edit Meta Information' }}
               </div>
             </div>
             <EditMetadataModal
@@ -177,8 +178,7 @@
           v-if="content.video?.text"
           class="vdb-c-p-16 vdb-c-pt-0 vdb-c-text-sm vdb-c-text-kilvish-800"
         >
-          <span class="vdb-c-font-[500]">Summary: </span
-          >{{ content.video?.text }}
+          <span class="vdb-c-font-[500]">Summary: </span>{{ content.video?.text }}
         </p>
       </div>
 
@@ -193,17 +193,14 @@
         </div>
       </div>
 
-      <div
-        v-else-if="content.status === 'not_generated'"
-        class="vdb-c-flex vdb-c-flex-col"
-      ></div>
+      <div v-else-if="content.status === 'not_generated'" class="vdb-c-flex vdb-c-flex-col"></div>
     </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import { useVideoDBChat } from "../../../context.js";
+import { ref, computed, watch } from 'vue';
+import { useVideoDBChat } from '../../../context.js';
 import {
   VideoDBPlayer,
   TimeCode,
@@ -212,15 +209,15 @@ import {
   PlayPauseButton,
   FullScreenButton,
   ProgressBar,
-} from "@videodb/player-vue";
-import ResetIcon from "../../icons/Reset.vue";
-import RotateIcon from "../../icons/Rotate.vue";
-import DownloadIcon from "../../icons/Download.vue";
-import MediaEditIcon from "../../icons/MediaEdit.vue";
-import FindSimilarIcon from "../../icons/FindSimilar.vue";
-import "@videodb/player-vue/dist/style.css";
-import VideoTrimmer from "../elements/VideoTrimmer.vue";
-import EditMetadataModal from "../../modals/EditMetadataModal.vue";
+} from '@videodb/player-vue';
+import ResetIcon from '../../icons/Reset.vue';
+import RotateIcon from '../../icons/Rotate.vue';
+import DownloadIcon from '../../icons/Download.vue';
+import MediaEditIcon from '../../icons/MediaEdit.vue';
+import FindSimilarIcon from '../../icons/FindSimilar.vue';
+import '@videodb/player-vue/dist/style.css';
+import VideoTrimmer from '../elements/VideoTrimmer.vue';
+import EditMetadataModal from '../../modals/EditMetadataModal.vue';
 
 const props = defineProps({
   content: { type: Object, required: true },
@@ -248,15 +245,13 @@ const handleFullScreenChange = async () => {
 const playerRef = ref(null);
 
 const hasEditor = computed(() => {
-  return props.content?.agent_name === "deepsearch";
+  return props.content?.agent_name === 'deepsearch';
 });
 
-const videoMetadata = computed(
-  () => props.content?.video?.metadata?.source ?? null,
-);
+const videoMetadata = computed(() => props.content?.video?.metadata?.source ?? null);
 const showEditModal = ref(false);
 const openEditModal = () => {
-  if (!videoMetadata.value) return;
+  if (onSharePage || !videoMetadata.value) return;
   showEditModal.value = true;
 };
 const handleSaveMeta = () => {
@@ -266,11 +261,9 @@ const handleSaveMeta = () => {
 
 // trim range (draggable handles)
 const initialVideo = props.content?.video || {};
-const initialStart =
-  typeof initialVideo.start === "number" ? initialVideo.start : 0;
-const initialEnd = typeof initialVideo.end === "number" ? initialVideo.end : 0;
-const initialLen =
-  typeof initialVideo.length === "number" ? initialVideo.length : null;
+const initialStart = typeof initialVideo.start === 'number' ? initialVideo.start : 0;
+const initialEnd = typeof initialVideo.end === 'number' ? initialVideo.end : 0;
+const initialLen = typeof initialVideo.length === 'number' ? initialVideo.length : null;
 const paddedInitMin = Math.max(0, initialStart - 15);
 const paddedInitMax =
   initialLen !== null && isFinite(initialLen)
@@ -280,25 +273,23 @@ const minTime = ref(paddedInitMin);
 const maxTime = ref(paddedInitMax);
 const localStart = ref(initialStart);
 const localEnd = ref(initialEnd);
-const localStreamUrl = ref(initialVideo?.stream_url || "");
+const localStreamUrl = ref(initialVideo?.stream_url || '');
 const lastVideoId = ref(null);
 const usingGeneratedStream = ref(false);
 const usingWindowStream = ref(false);
 const segmentEnded = ref(false);
 
 // Window stream details
-const windowStreamUrl = computed(
-  () => props.content?.video?.metadata?.window_stream_url || "",
-);
+const windowStreamUrl = computed(() => props.content?.video?.metadata?.window_stream_url || '');
 const windowStart = computed(() => {
   const v = props.content?.video || {};
-  const start = typeof v.start === "number" ? v.start : 0;
+  const start = typeof v.start === 'number' ? v.start : 0;
   return Math.max(0, start - 15);
 });
 const windowEnd = computed(() => {
   const v = props.content?.video || {};
-  const end = typeof v.end === "number" ? v.end : 0;
-  const len = typeof v.length === "number" ? v.length : null;
+  const end = typeof v.end === 'number' ? v.end : 0;
+  const len = typeof v.length === 'number' ? v.length : null;
   const raw = end + 15;
   return len !== null && isFinite(len) ? Math.min(len, raw) : raw;
 });
@@ -345,12 +336,11 @@ watch(
     const v = props.content?.video || {};
     if (id && id !== lastVideoId.value) {
       lastVideoId.value = id;
-      const start = typeof v.start === "number" ? v.start : 0;
-      const end = typeof v.end === "number" ? v.end : 0;
-      const len = typeof v.length === "number" ? v.length : null;
+      const start = typeof v.start === 'number' ? v.start : 0;
+      const end = typeof v.end === 'number' ? v.end : 0;
+      const len = typeof v.length === 'number' ? v.length : null;
       const paddedMin = Math.max(0, start - 15);
-      const paddedMax =
-        len !== null && isFinite(len) ? Math.min(len, end + 15) : end + 15;
+      const paddedMax = len !== null && isFinite(len) ? Math.min(len, end + 15) : end + 15;
       minTime.value = paddedMin;
       maxTime.value = paddedMax;
       localStart.value = start;
@@ -358,10 +348,10 @@ watch(
       usingGeneratedStream.value = false;
       usingWindowStream.value = false;
       segmentEnded.value = false;
-      localStreamUrl.value = v.stream_url || "";
+      localStreamUrl.value = v.stream_url || '';
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 // If upstream start/end genuinely change (e.g., server edit), sync them
@@ -370,18 +360,17 @@ watch(
   ([start, end], [prevStart, prevEnd]) => {
     if (start !== prevStart || end !== prevEnd) {
       const v = props.content?.video || {};
-      const s = typeof start === "number" ? start : 0;
-      const e = typeof end === "number" ? end : 0;
-      const len = typeof v.length === "number" ? v.length : null;
+      const s = typeof start === 'number' ? start : 0;
+      const e = typeof end === 'number' ? end : 0;
+      const len = typeof v.length === 'number' ? v.length : null;
       const paddedMin = Math.max(0, s - 15);
-      const paddedMax =
-        len !== null && isFinite(len) ? Math.min(len, e + 15) : e + 15;
+      const paddedMax = len !== null && isFinite(len) ? Math.min(len, e + 15) : e + 15;
       minTime.value = paddedMin;
       maxTime.value = paddedMax;
       localStart.value = s;
       localEnd.value = e;
     }
-  },
+  }
 );
 
 // Don’t overwrite a generated/trimmed stream url with the original one
@@ -389,14 +378,13 @@ watch(
   () => props.content?.video?.stream_url,
   (s, prev) => {
     if (!usingGeneratedStream.value && !usingWindowStream.value && s !== prev) {
-      localStreamUrl.value = s || "";
+      localStreamUrl.value = s || '';
     }
-  },
+  }
 );
 
 // API from context and Send "Find Similar Content" message
-const { addMessage, generateVideoStream, activeCollectionData } =
-  useVideoDBChat();
+const { addMessage, generateVideoStream, activeCollectionData, onSharePage } = useVideoDBChat();
 
 // Debounced refresh of stream URL when trimmed range changes
 let debounceTimer = null;
@@ -407,7 +395,7 @@ watch(
     const video = props.content?.video;
     const collectionId = activeCollectionData?.value?.id;
     if (!video?.id || !collectionId) return;
-    if (typeof start !== "number" || typeof end !== "number") return;
+    if (typeof start !== 'number' || typeof end !== 'number') return;
     if (start >= end) return;
     // If selection is covered by the window stream, use it and simulate trimming
     if (selectionWithinWindow.value && windowStreamUrl.value) {
@@ -425,21 +413,21 @@ watch(
     // Outside window: fall back to generating a precise stream
     usingWindowStream.value = false;
     // Guard: ensure generateVideoStream is available (custom hooks may omit it)
-    if (typeof generateVideoStream !== "function") return;
+    if (typeof generateVideoStream !== 'function') return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
       const res = await generateVideoStream(collectionId, video.id, start, end);
-      if (res?.status === "success" && res?.data?.stream_url) {
+      if (res?.status === 'success' && res?.data?.stream_url) {
         usingGeneratedStream.value = true;
         localStreamUrl.value = res.data.stream_url;
       }
     }, 400);
-  },
+  }
 );
 // Reset trim and stream url to original values
 const handleResetTrim = () => {
   const v = props.content?.video || {};
-  if (typeof v.start === "number" && typeof v.end === "number") {
+  if (typeof v.start === 'number' && typeof v.end === 'number') {
     minTime.value = Math.max(0, v.start - 15);
     maxTime.value = Math.min(v.end + 15, v.length);
     localStart.value = v.start;
@@ -453,18 +441,18 @@ const handleResetTrim = () => {
   }
 };
 const handleFindSimilar = () => {
-  if (props.content?.status === "progress") return;
+  if (onSharePage || props.content?.status === 'progress') return;
   const video = props.content?.video || {};
-  const name = video?.name || "this";
+  const name = video?.name || 'this';
   addMessage?.({
     content: [
       {
-        type: "text",
+        type: 'text',
         text: `@deepsearch find me similar content like the one from ${name}`,
       },
     ],
     additional_data: {
-      ui_event: "more_like",
+      ui_event: 'more_like',
       join_data: {
         video_id: video?.id ?? null,
         start: video?.start ?? null,
@@ -481,19 +469,19 @@ const formatTime = (totalSeconds) => {
   const minutes = Math.floor((safeSeconds % 3600) / 60);
   const seconds = safeSeconds % 60;
   if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 };
 
 const handleConvertToVertical = () => {
-  if (props.content?.status === "progress") return;
+  if (onSharePage || props.content?.status === 'progress') return;
   const video = props.content?.video || {};
   const startStr = formatTime(localStart.value);
   const endStr = formatTime(localEnd.value);
-  const text = `@reel_maker, work on the video \`${video?.name ?? ""}\` from start: ${startStr} to end: ${endStr}`;
+  const text = `@reel_maker, work on the video \`${video?.name ?? ''}\` from start: ${startStr} to end: ${endStr}`;
   addMessage?.({
-    content: [{ type: "text", text }],
+    content: [{ type: 'text', text }],
     additional_data: {
       video_id: video?.id ?? null,
       start: video?.start ?? null,
@@ -503,11 +491,11 @@ const handleConvertToVertical = () => {
 };
 
 const handleDownloadStream = () => {
-  if (props.content?.status === "progress") return;
+  if (onSharePage || props.content?.status === 'progress') return;
   const video = props.content?.video || {};
-  const text = `@download download the selected stream from \`${video?.name ?? "the above video"}\``;
+  const text = `@download download the selected stream from \`${video?.name ?? 'the above video'}\``;
   addMessage?.({
-    content: [{ type: "text", text }],
+    content: [{ type: 'text', text }],
     additional_data: {
       video_id: video?.id ?? null,
       start: localStart.value,
@@ -546,7 +534,7 @@ const handlePlayerTimeUpdate = (evt) => {
   const instance = playerRef.value;
   if (!instance) return;
   const t =
-    (typeof instance.time === "number" ? instance.time : null) ??
+    (typeof instance.time === 'number' ? instance.time : null) ??
     (evt && (evt.detail?.time ?? evt.time)) ??
     0;
   const endRel = Number(clipEndRel.value) || 0;

@@ -995,6 +995,7 @@ const confirmDeleteImage = async () => {
 };
 
 const showCreateCollectionModal = ref(false);
+const isCreatingCollection = ref(false);
 
 const promptCreateCollection = async (newCollection) => {
   showCreateCollectionModal.value = false;

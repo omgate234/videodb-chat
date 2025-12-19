@@ -185,6 +185,10 @@ const props = defineProps({
     type: Object,
     default: undefined,
   },
+  preSelectedAssets: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['close', 'select']);
@@ -206,35 +210,79 @@ const collectionName = computed(() => {
   return collection?.name || 'Collection';
 });
 
-// State for voices
-const activeCollectionVoices = ref(null);
+const localVideos = ref(null);
+const localAudios = ref(null);
+const localImages = ref(null);
+const localVoices = ref(null);
 
-// Fetch voices when modal opens
 watch(
   () => props.isOpen,
   async (isOpen) => {
     if (isOpen && fetchAssets) {
       const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
       if (collectionId) {
+        // Fetch all asset types in parallel
         try {
-          const voicesRes = await fetchAssets({
-            collection_id: collectionId,
-            asset_type: 'voices',
-            page: 1,
-            page_size: 10000,
-          });
-          if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
-            activeCollectionVoices.value = voicesRes.data.data.assets;
+          const [videosRes, audiosRes, imagesRes, voicesRes] = await Promise.all([
+            fetchAssets({
+              collection_id: collectionId,
+              asset_type: 'video',
+              page: 1,
+              page_size: 10000,
+            }),
+            fetchAssets({
+              collection_id: collectionId,
+              asset_type: 'audio',
+              page: 1,
+              page_size: 10000,
+            }),
+            fetchAssets({
+              collection_id: collectionId,
+              asset_type: 'image',
+              page: 1,
+              page_size: 10000,
+            }),
+            fetchAssets({
+              collection_id: collectionId,
+              asset_type: 'voices',
+              page: 1,
+              page_size: 10000,
+            }),
+          ]);
+
+          localVideos.value =
+            videosRes?.status === 'success' && videosRes?.data?.data?.assets
+              ? videosRes.data.data.assets
+              : [];
+          localAudios.value =
+            audiosRes?.status === 'success' && audiosRes?.data?.data?.assets
+              ? audiosRes.data.data.assets
+              : [];
+          localImages.value =
+            imagesRes?.status === 'success' && imagesRes?.data?.data?.assets
+              ? imagesRes.data.data.assets
+              : [];
+
+          if (voicesRes?.status === 'success') {
+            const voicesData = voicesRes?.data?.data?.assets || voicesRes?.data?.assets || [];
+            localVoices.value = voicesData;
           } else {
-            activeCollectionVoices.value = [];
+            localVoices.value = [];
           }
         } catch (error) {
-          console.error('Error fetching voices:', error);
-          activeCollectionVoices.value = [];
+          console.error('Error fetching assets:', error);
+          localVideos.value = [];
+          localAudios.value = [];
+          localImages.value = [];
+          localVoices.value = [];
         }
       }
     } else if (!isOpen) {
-      activeCollectionVoices.value = null;
+      // Clear local state when modal closes
+      localVideos.value = null;
+      localAudios.value = null;
+      localImages.value = null;
+      localVoices.value = null;
     }
   },
   { immediate: true }
@@ -246,10 +294,14 @@ const combinedAssets = computed(() => {
   const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
   const collectionNameValue = collectionName.value;
 
-  const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
-  const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
-  const images = activeCollectionImages?.value || activeCollectionImages || [];
-  const voices = activeCollectionVoices?.value || [];
+  // Use local state (freshly fetched) if available, otherwise fall back to context
+  const videos =
+    localVideos.value ?? (activeCollectionVideos?.value || activeCollectionVideos || []);
+  const audios =
+    localAudios.value ?? (activeCollectionAudios?.value || activeCollectionAudios || []);
+  const images =
+    localImages.value ?? (activeCollectionImages?.value || activeCollectionImages || []);
+  const voices = localVoices.value ?? [];
 
   if (Array.isArray(videos)) {
     videos.forEach((video) => {
@@ -284,13 +336,17 @@ const combinedAssets = computed(() => {
     });
   }
 
-  if (Array.isArray(voices)) {
+  if (Array.isArray(voices) && voices.length > 0) {
     voices.forEach((voice) => {
       assets.push({
         ...voice,
+        id: voice.id || voice.voice_id,
         type: 'voices',
         collectionId: collectionId || voice.collection_id,
+        collection_id: collectionId || voice.collection_id,
         collectionName: collectionNameValue,
+        audio_id: voice.audio_id,
+        name: voice.name || 'Untitled Voice',
       });
     });
   }
@@ -396,11 +452,12 @@ const handleSelect = () => {
   emit('close');
 };
 
-// Reset selection when modal closes
 watch(
   () => props.isOpen,
   (newValue) => {
-    if (!newValue) {
+    if (newValue) {
+      selectedAssets.value = [...props.preSelectedAssets];
+    } else {
       selectedAssets.value = [];
     }
   }

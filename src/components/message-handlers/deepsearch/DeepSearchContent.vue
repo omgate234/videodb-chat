@@ -35,10 +35,16 @@
         <VideoCard
           v-for="(video, index) in paginatedVideos"
           :key="video.id + '-' + index + '-' + video.stream_url"
+          :ref="
+            (el) => {
+              if (el) gridVideoRefs[getOriginalIndex(index)] = el;
+            }
+          "
           :video="video"
           :index="index"
           :call-api="callApi"
           :on-convert-to-reel="() => handleConvertToReelFromGrid(getOriginalIndex(index))"
+          :on-video-play="() => handleVideoPlay(getOriginalIndex(index))"
           @edit="startEditing(getOriginalIndex(index))"
         />
       </div>
@@ -224,44 +230,100 @@
           class="vdb-c-mt-[18px] vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px] vdb-c-rounded-[40px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-p-[4px]"
         >
           <!-- Copy Link -->
-          <button
-            @click="copyLink"
-            class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
-          >
-            <CheckIcon v-if="showCheckIcon" class="vdb-c-text-[#1e1e1e]" />
-            <LinkIcon v-else fill="#1e1e1e" />
-          </button>
+          <div class="vdb-c-relative">
+            <Tooltip
+              :class="[
+                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                hoveredButton === 'copy' ? 'vdb-c-block' : 'vdb-c-hidden',
+              ]"
+              :text="showCheckIcon ? 'Copied!' : 'Copy Link'"
+            />
+            <button
+              @click="copyLink"
+              @mouseenter="hoveredButton = 'copy'"
+              @mouseleave="hoveredButton = null"
+              class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+            >
+              <CheckIcon v-if="showCheckIcon" class="vdb-c-text-[#1e1e1e]" />
+              <LinkIcon v-else fill="#1e1e1e" />
+            </button>
+          </div>
 
           <!-- Convert to Reel -->
-          <button
-            @click="convertToReel"
-            class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
-          >
-            <RotateIcon fill="#1e1e1e" />
-          </button>
+          <div class="vdb-c-relative">
+            <Tooltip
+              :class="[
+                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                hoveredButton === 'reel' ? 'vdb-c-block' : 'vdb-c-hidden',
+              ]"
+              text="Convert to Reel"
+            />
+            <button
+              @click="convertToReel"
+              @mouseenter="hoveredButton = 'reel'"
+              @mouseleave="hoveredButton = null"
+              class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+            >
+              <RotateIcon fill="#1e1e1e" />
+            </button>
+          </div>
 
           <!-- Download -->
-          <button
-            @click="downloadClip"
-            class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
-          >
-            <DownloadIcon fill="#1e1e1e" />
-          </button>
+          <div class="vdb-c-relative">
+            <Tooltip
+              :class="[
+                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                hoveredButton === 'download' ? 'vdb-c-block' : 'vdb-c-hidden',
+              ]"
+              text="Download"
+            />
+            <button
+              @click="downloadClip"
+              @mouseenter="hoveredButton = 'download'"
+              @mouseleave="hoveredButton = null"
+              class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+            >
+              <DownloadIcon fill="#1e1e1e" />
+            </button>
+          </div>
 
           <!-- Save to Collection -->
-          <button
-            @click="saveToCollection"
-            class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
-          >
-            <AddToFolderIcon fill="#1e1e1e" />
-          </button>
+          <div class="vdb-c-relative">
+            <Tooltip
+              :class="[
+                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                hoveredButton === 'save' ? 'vdb-c-block' : 'vdb-c-hidden',
+              ]"
+              text="Save to Collection"
+            />
+            <button
+              @click="saveToCollection"
+              @mouseenter="hoveredButton = 'save'"
+              @mouseleave="hoveredButton = null"
+              class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+            >
+              <AddToFolderIcon fill="#1e1e1e" />
+            </button>
+          </div>
 
-          <button
-            @click="openMetaInfoModal"
-            class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
-          >
-            <MetaInfoIcon fill="#1e1e1e" />
-          </button>
+          <!-- Meta Info -->
+          <div class="vdb-c-relative">
+            <Tooltip
+              :class="[
+                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                hoveredButton === 'meta' ? 'vdb-c-block' : 'vdb-c-hidden',
+              ]"
+              text="Meta Info"
+            />
+            <button
+              @click="openMetaInfoModal"
+              @mouseenter="hoveredButton = 'meta'"
+              @mouseleave="hoveredButton = null"
+              class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
+            >
+              <MetaInfoIcon fill="#1e1e1e" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -307,6 +369,7 @@ import NavigationButton from '../../chat/v2/collection/NavigationButton.vue';
 import PaginationButton from '../../chat/v2/collection/PaginationButton.vue';
 import MetaInfoIcon from '../../chat/v2/icons/deep-search/MetaInfoIcon.vue';
 import MetaInfoModal from '../../modals/MetaInfoModal.vue';
+import Tooltip from '../../chat/v2/elements/Tooltip.vue';
 
 const props = defineProps({
   content: {
@@ -352,6 +415,9 @@ const isGeneratingStream = ref(false);
 const showCheckIcon = ref(false);
 const showMetaInfoModal = ref(false);
 const selectedVideoForMetaInfo = ref(null);
+const hoveredButton = ref(null);
+const gridVideoRefs = ref({});
+const currentlyPlayingVideo = ref(null);
 
 const itemsPerPage = 8;
 const currentPage = ref(1);
@@ -642,6 +708,25 @@ const openMetaInfoModal = () => {
 const closeMetaInfoModal = () => {
   showMetaInfoModal.value = false;
   selectedVideoForMetaInfo.value = null;
+};
+
+const handleVideoPlay = (index) => {
+  const playingKey = `grid-${index}`;
+
+  if (currentlyPlayingVideo.value === playingKey) {
+    return;
+  }
+
+  currentlyPlayingVideo.value = playingKey;
+
+  Object.entries(gridVideoRefs.value).forEach(([idx, videoCardComponent]) => {
+    if (parseInt(idx) !== index) {
+      const gridPlayer = videoCardComponent?.playerRef;
+      if (gridPlayer?.playing) {
+        gridPlayer.pause();
+      }
+    }
+  });
 };
 
 watch(

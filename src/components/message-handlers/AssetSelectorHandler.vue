@@ -385,6 +385,7 @@ const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
 const handleAddMessage = context?.handleAddMessage;
 const uploadMedia = context?.uploadMedia;
+const onSharePage = context?.onSharePage || false;
 
 const collectionId = computed(() => {
   return props.content?.asset_selector?.collection_id || null;
@@ -413,6 +414,7 @@ const hasUploadedFiles = computed(() => fileInput.value.length > 0);
 const hasSelectedAsset = computed(() => selectedAssetFromLibrary.value !== null);
 
 const isInteractive = computed(() => {
+  if (onSharePage) return false;
   const isLastMessageInConv = props.currentMessageIndex === props.messageList.length - 1;
   return props.isLastConv && isLastMessageInConv;
 });

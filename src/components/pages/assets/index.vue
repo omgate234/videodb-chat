@@ -65,6 +65,7 @@
     <CreateCollectionModal
       :showDialog="showCreateCollectionModal"
       :isFirstCollection="shouldShowEmptyState"
+      :isCreating="isCreatingCollection"
       @cancel="handleCancelCreateCollection"
       @create="handleCreateCollectionFromEmpty"
     />
@@ -240,6 +241,7 @@ const shouldShowEmptyState = computed(() => {
 
 const showUploadModal = ref(false);
 const showCreateCollectionModal = ref(false);
+const isCreatingCollection = ref(false);
 const newlyCreatedCollectionId = ref(null);
 
 const handleUploadClick = () => {
@@ -279,12 +281,16 @@ const handleCancelCreateCollection = () => {
 
 const handleCreateCollectionFromEmpty = async (newCollection) => {
   const wasEmptyState = shouldShowEmptyState.value || collections.value.length === 0;
-  showCreateCollectionModal.value = false;
+
   try {
+    isCreatingCollection.value = true;
+
     const createdCollection = await context?.createCollection(
       newCollection.name,
       newCollection.description || ' '
     );
+
+    showCreateCollectionModal.value = false;
 
     if (wasEmptyState) {
       newlyCreatedCollectionId.value = createdCollection?.id;
@@ -292,6 +298,8 @@ const handleCreateCollectionFromEmpty = async (newCollection) => {
     }
   } catch (error) {
     console.error('Error creating collection:', error?.message || error);
+  } finally {
+    isCreatingCollection.value = false;
   }
 };
 

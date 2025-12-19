@@ -72,18 +72,30 @@
               </button>
               <!-- Download Button -->
               <button
-                class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all hover:vdb-c-bg-[rgba(0,0,0,0.6)]"
-                @click.stop="handleDownload"
-                title="Download"
+                class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all"
+                :class="[
+                  onSharePage
+                    ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                    : 'hover:vdb-c-bg-[rgba(0,0,0,0.6)]',
+                ]"
+                @click.stop="!onSharePage && handleDownload()"
+                :disabled="onSharePage"
+                :title="onSharePage ? 'Not available on shared page' : 'Download'"
               >
                 <DownloadIcon class="vdb-c-h-16-667 vdb-c-w-16-667" />
               </button>
               <!-- Three Dots Button -->
               <div ref="menuButtonRef">
                 <button
-                  class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all hover:vdb-c-bg-[rgba(0,0,0,0.6)]"
-                  @click.stop="toggleMenu"
-                  title="More options"
+                  class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[30px] vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-[5px] vdb-c-transition-all"
+                  :class="[
+                    onSharePage
+                      ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                      : 'hover:vdb-c-bg-[rgba(0,0,0,0.6)]',
+                  ]"
+                  @click.stop="!onSharePage && toggleMenu()"
+                  :disabled="onSharePage"
+                  :title="onSharePage ? 'Not available on shared page' : 'More options'"
                 >
                   <ThreeDotsIcon class="vdb-c-h-16-667 vdb-c-w-16-667" />
                 </button>
@@ -179,6 +191,7 @@ const props = defineProps({
 const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
 const activeCollectionData = context?.activeCollectionData;
+const onSharePage = context?.onSharePage || false;
 
 const isHovered = ref(false);
 const showMenu = ref(false);
@@ -200,6 +213,7 @@ const handleZoom = () => {
 };
 
 const handleDownload = () => {
+  if (onSharePage) return;
   const imageUrl = props.content?.image?.url;
   if (imageUrl) {
     notificationCenterRef.value?.addNotification('Downloading image...');
@@ -219,6 +233,7 @@ const handleDownload = () => {
 };
 
 const toggleMenu = async () => {
+  if (onSharePage) return;
   showMenu.value = !showMenu.value;
   if (showMenu.value && menuButtonRef.value) {
     await nextTick();
@@ -231,7 +246,7 @@ const toggleMenu = async () => {
 };
 
 const copyAssetId = async () => {
-  if (!imageId.value) return;
+  if (onSharePage || !imageId.value) return;
   try {
     await navigator.clipboard.writeText(imageId.value);
     notificationCenterRef.value?.addNotification('Image ID copied');
@@ -243,6 +258,7 @@ const copyAssetId = async () => {
 };
 
 const handleAddToCollection = async () => {
+  if (onSharePage) return;
   if (!handleUpload || !props.content?.image?.url) {
     console.error('handleUpload or imageUrl not available');
     showMenu.value = false;

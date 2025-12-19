@@ -8,6 +8,7 @@
     >
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
         <button
+          v-if="!onSharePage"
           type="button"
           class="vdb-c-flex vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-8 vdb-c-px-8 vdb-c-py-4 vdb-c-text-[15px] vdb-c-font-semibold vdb-c-leading-6 vdb-c-text-[#1E1E1E] vdb-c-transition-colors vdb-c-duration-200 hover:vdb-c-text-pam"
           :class="{
@@ -19,7 +20,9 @@
           <folder-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]" />
           <span class="vdb-c-truncate">{{ breadcrumbCollectionName || 'Collection' }}</span>
         </button>
-        <span v-if="breadcrumbSessionName" class="vdb-c-text-[15px] vdb-c-text-[#1E1E1E]"
+        <span
+          v-if="breadcrumbSessionName && !onSharePage"
+          class="vdb-c-text-[15px] vdb-c-text-[#1E1E1E]"
           ><chevron-right-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]"
         /></span>
         <span
@@ -216,6 +219,7 @@ const {
   isLoadingSession,
   handleUpload,
   collections,
+  onSharePage = false,
 } = injectedContext || {};
 
 const chatWindowRef = ref(null);

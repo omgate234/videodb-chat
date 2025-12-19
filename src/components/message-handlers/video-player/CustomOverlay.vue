@@ -1,7 +1,8 @@
 <template>
   <div class="vdb-c-absolute vdb-c-inset-0 vdb-c-flex vdb-c-flex-col">
-    <!-- Gradient Overlay (shown on hover) -->
+    <!-- Gradient Overlay (shown on hover, hidden in fullscreen) -->
     <div
+      v-if="!isFullScreen"
       :class="[
         'vdb-c-absolute vdb-c-inset-0 vdb-c-transition-opacity vdb-c-duration-300',
         showElements ? 'vdb-c-opacity-100' : 'vdb-c-opacity-0',
@@ -55,9 +56,13 @@
           linkCopied
             ? 'vdb-c-bg-white'
             : 'vdb-c-bg-[rgba(0,0,0,0.3)] hover:vdb-c-bg-[rgba(0,0,0,0.6)]',
+          onSharePage ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50' : '',
         ]"
-        @click="copyVideoLink"
-        :title="linkCopied ? 'Link Copied!' : 'Copy Link'"
+        @click="!onSharePage && copyVideoLink()"
+        :disabled="onSharePage"
+        :title="
+          onSharePage ? 'Not available on shared page' : linkCopied ? 'Link Copied!' : 'Copy Link'
+        "
       >
         <TickIcon v-if="linkCopied" class="vdb-c-h-20 vdb-c-w-20" />
         <CopyLinkIcon v-else class="vdb-c-h-20 vdb-c-w-20" />
@@ -67,8 +72,10 @@
       <div ref="menuButtonRef">
         <button
           class="vdb-c-flex vdb-c-size-[30px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[rgba(0,0,0,0.3)] vdb-c-p-5 vdb-c-transition-all hover:vdb-c-bg-[rgba(0,0,0,0.6)]"
-          @click.stop="toggleMenu"
-          title="Menu"
+          :class="[onSharePage ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50' : '']"
+          @click.stop="!onSharePage && toggleMenu()"
+          :disabled="onSharePage"
+          :title="onSharePage ? 'Not available on shared page' : 'Menu'"
         >
           <MenuIcon class="vdb-c-h-16-667 vdb-c-w-16-667" />
         </button>
@@ -196,8 +203,10 @@ const handleUpload = context?.handleUpload;
 const getVideoDownloadUrl = context?.getVideoDownloadUrl;
 const getDownloadUrlFromStream = context?.getDownloadUrlFromStream;
 const activeCollectionData = context?.activeCollectionData;
+const onSharePage = context?.onSharePage || false;
 
 const copyVideoLink = async () => {
+  if (onSharePage) return;
   try {
     const link = `https://console.videodb.io/player?url=${encodeURIComponent(props.streamUrl)}`;
     await navigator.clipboard.writeText(link);
@@ -213,6 +222,7 @@ const copyVideoLink = async () => {
 };
 
 const toggleMenu = async () => {
+  if (onSharePage) return;
   showMenu.value = !showMenu.value;
   if (showMenu.value && menuButtonRef.value) {
     await nextTick();
@@ -226,7 +236,7 @@ const toggleMenu = async () => {
 };
 
 const copyAssetId = async () => {
-  if (!props.videoId) return;
+  if (onSharePage || !props.videoId) return;
   try {
     await navigator.clipboard.writeText(props.videoId);
     notificationCenterRef.value?.addNotification('Video ID copied');
@@ -238,7 +248,7 @@ const copyAssetId = async () => {
 };
 
 const handleAddToCollection = async () => {
-  if (!handleUpload || !props.streamUrl) {
+  if (onSharePage || !handleUpload || !props.streamUrl) {
     console.error('handleUpload or streamUrl not available');
     showMenu.value = false;
     return;
@@ -266,6 +276,7 @@ const handleAddToCollection = async () => {
 };
 
 const handleDownload = async () => {
+  if (onSharePage) return;
   showMenu.value = false;
   notificationCenterRef.value?.addNotification('Downloading video...');
 

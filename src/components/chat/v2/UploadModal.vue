@@ -137,11 +137,14 @@
 
             <button
               @click.stop="toggleDropdown"
+              :disabled="isCreatingCollection && collections.length === 0"
               :class="[
                 'vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-p-[9px] vdb-c-transition-colors',
-                isDropdownOpen
-                  ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3]'
-                  : 'vdb-c-border-[#EFEFEF] vdb-c-bg-white hover:vdb-c-bg-[#F7F7F7]',
+                isCreatingCollection && collections.length === 0
+                  ? 'vdb-c-cursor-not-allowed vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-opacity-60'
+                  : isDropdownOpen
+                    ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3]'
+                    : 'vdb-c-border-[#EFEFEF] vdb-c-bg-white hover:vdb-c-bg-[#F7F7F7]',
               ]"
             >
               <FolderIcon
@@ -156,9 +159,11 @@
                 ]"
               >
                 {{
-                  selectedCollection
-                    ? collections.find((c) => c.id === selectedCollection)?.name
-                    : 'Select Collection'
+                  isCreatingCollection && collections.length === 0
+                    ? 'Creating collection...'
+                    : selectedCollection
+                      ? collections.find((c) => c.id === selectedCollection)?.name
+                      : 'Select Collection'
                 }}
               </span>
               <ChevronDownIcon
@@ -277,6 +282,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
     required: true,
+  },
+  isCreatingCollection: {
+    type: Boolean,
+    default: false,
   },
 });
 

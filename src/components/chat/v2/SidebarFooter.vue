@@ -3,7 +3,7 @@
     ref="footerRef"
     :style="{ width: `${width}px` }"
     :class="[
-      'vdb-c-fixed vdb-c-bottom-0 vdb-c-left-0 vdb-c-flex vdb-c-h-[73px] vdb-c-items-center vdb-c-justify-center vdb-c-bg-vdb-lightgrey vdb-c-p-6 hover:vdb-c-bg-[#EFEFEF]',
+      'vdb-c-fixed vdb-c-bottom-0 vdb-c-left-0 vdb-c-flex vdb-c-h-[73px] vdb-c-items-center vdb-c-justify-center vdb-c-bg-vdb-lightgrey hover:vdb-c-bg-[#EFEFEF]',
       { '!vdb-c-bg-[#FFE9D3]': active },
     ]"
   >
@@ -11,7 +11,7 @@
       v-if="user"
       @click="$emit('profile-click')"
       :class="[
-        'vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-px-8 vdb-c-py-6 vdb-c-transition-all vdb-c-duration-200',
+        'vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-px-14 vdb-c-py-12 vdb-c-transition-all vdb-c-duration-200',
         {
           'vdb-c-bg-[#FFE9D3]': active,
         },
@@ -265,6 +265,11 @@ const section1Buttons = computed(() => {
 const section2Buttons = computed(() => {
   return props.buttons.filter((button) => button.section === 2);
 });
+
+const isValidComponent = (component) => {
+  if (!component) return false;
+  return typeof component === 'object' || typeof component === 'function';
+};
 
 const handleButtonClick = (button) => {
   if (button.onClick) {

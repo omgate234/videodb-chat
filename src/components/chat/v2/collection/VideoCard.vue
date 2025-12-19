@@ -33,6 +33,7 @@
       <div
         v-if="item.stream_url"
         class="video-player-wrapper vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
+        @click.stop
       >
         <VideoDBPlayer
           :stream-url="item.stream_url"
@@ -68,6 +69,7 @@
       <div
         v-else
         class="video-thumbnail-wrapper vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-12 vdb-c-bg-black"
+        @click.stop
       >
         <div
           v-if="item.thumbnail_url"
@@ -83,7 +85,6 @@
 
         <div
           class="play-button vdb-c-absolute vdb-c-left-1/2 vdb-c-top-1/2 vdb-c-flex vdb-c-h-48 vdb-c-w-48 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all vdb-c-duration-300"
-          @click.stop="handleCardClick"
         >
           <PlayIcon class="vdb-c-h-20 vdb-c-w-20" />
         </div>
@@ -364,7 +365,7 @@ function handleCardClick() {
 
   // Set a timeout for single click
   clickTimeout = setTimeout(() => {
-    emit('video-click', props.item);
+    handleChatWithVideo();
   }, 200); // 200ms delay to detect double click
 }
 

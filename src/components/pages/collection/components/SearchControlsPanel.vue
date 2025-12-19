@@ -33,6 +33,7 @@
       />
       <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
         <RadioInput
+          v-if="!hideVideosOption"
           name="searchFor"
           value="videos"
           label="Videos"
@@ -65,6 +66,10 @@ defineProps({
     type: String,
     required: true,
     validator: (value) => ['videos', 'scenes'].includes(value),
+  },
+  hideVideosOption: {
+    type: Boolean,
+    default: false,
   },
 });
 

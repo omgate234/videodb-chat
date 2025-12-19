@@ -12,11 +12,13 @@
         class="video-player-wrapper vdb-c-relative vdb-c-w-full vdb-c-overflow-hidden vdb-c-rounded-[12px] vdb-c-bg-black"
       >
         <VideoDBPlayer
+          ref="playerRef"
           :key="video.id + '-' + video.stream_url"
           :stream-url="video.stream_url"
           :default-controls="false"
           :default-overlay="false"
           class="vdb-c-absolute vdb-c-left-0 vdb-c-top-0 vdb-c-h-full vdb-c-w-full vdb-c-rounded-[12px]"
+          @play="handlePlay"
         >
           <template #overlay>
             <BigCenterButton
@@ -26,8 +28,11 @@
             <!-- Three Dots Menu - Top Right -->
             <div
               ref="menuButtonRef"
-              class="three-dots-wrapper vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-10 vdb-c-cursor-pointer vdb-c-rounded-full vdb-c-border vdb-c-p-6 vdb-c-transition-all vdb-c-duration-300"
-              @click.stop="toggleMenu"
+              class="three-dots-wrapper vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-10 vdb-c-rounded-full vdb-c-border vdb-c-p-6 vdb-c-transition-all vdb-c-duration-300"
+              :class="[
+                onSharePage ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50' : 'vdb-c-cursor-pointer',
+              ]"
+              @click.stop="!onSharePage && toggleMenu()"
               @mouseenter="menuHovered = true"
               @mouseleave="
                 () => {
@@ -70,8 +75,11 @@
         <!-- Three Dots Menu - Top Right -->
         <div
           ref="menuButtonRef"
-          class="three-dots-wrapper vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-10 vdb-c-cursor-pointer vdb-c-rounded-full vdb-c-border vdb-c-p-6 vdb-c-transition-all vdb-c-duration-300"
-          @click.stop="toggleMenu"
+          class="three-dots-wrapper vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-10 vdb-c-rounded-full vdb-c-border vdb-c-p-6 vdb-c-transition-all vdb-c-duration-300"
+          :class="[
+            onSharePage ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50' : 'vdb-c-cursor-pointer',
+          ]"
+          @click.stop="!onSharePage && toggleMenu()"
           @mouseenter="menuHovered = true"
           @mouseleave="
             () => {
@@ -105,21 +113,28 @@
 
       <!-- Edit Button -->
       <button
-        @click="$emit('edit', video)"
+        @click="!onSharePage && $emit('edit', video)"
         @mouseenter="editHovered = true"
         @mouseleave="editHovered = false"
+        :disabled="onSharePage"
         :class="[
-          'vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-[4px] vdb-c-rounded-[6px] vdb-c-border vdb-c-py-[4px] vdb-c-pl-[4px] vdb-c-pr-[6px] vdb-c-transition-colors',
-          editHovered
-            ? 'vdb-c-border-[#ffcfa5] vdb-c-bg-[#ffe9d3]'
-            : 'vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7]',
+          'vdb-c-flex vdb-c-items-center vdb-c-gap-[4px] vdb-c-rounded-[6px] vdb-c-border vdb-c-py-[4px] vdb-c-pl-[4px] vdb-c-pr-[6px] vdb-c-transition-colors',
+          onSharePage
+            ? 'vdb-c-cursor-not-allowed vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-opacity-50'
+            : editHovered
+              ? 'vdb-c-cursor-pointer vdb-c-border-[#ffcfa5] vdb-c-bg-[#ffe9d3]'
+              : 'vdb-c-cursor-pointer vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7]',
         ]"
       >
-        <EditIcon :fill="editHovered ? '#821f0c' : '#1e1e1e'" />
+        <EditIcon :fill="onSharePage ? '#969696' : editHovered ? '#821f0c' : '#1e1e1e'" />
         <span
           :class="[
             'vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal',
-            editHovered ? 'vdb-c-text-[#821f0c]' : 'vdb-c-text-[#1e1e1e]',
+            onSharePage
+              ? 'vdb-c-text-[#969696]'
+              : editHovered
+                ? 'vdb-c-text-[#821f0c]'
+                : 'vdb-c-text-[#1e1e1e]',
           ]"
         >
           Edit
@@ -223,6 +238,10 @@ const props = defineProps({
     type: Function,
     default: null,
   },
+  onVideoPlay: {
+    type: Function,
+    default: null,
+  },
   index: {
     type: Number,
     default: 0,
@@ -235,6 +254,7 @@ const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
 const activeCollectionData = context?.activeCollectionData;
 const callApi = props.callApi || context?.callApi;
+const onSharePage = context?.onSharePage || false;
 
 const isHovered = ref(false);
 const editHovered = ref(false);
@@ -245,6 +265,7 @@ const menuPosition = ref(null);
 const showCheckIcon = ref(false);
 const showMetaInfoModal = ref(false);
 const notificationCenterRef = ref(null);
+const playerRef = ref(null);
 
 const formatDuration = (seconds) => {
   const mins = Math.floor(seconds / 60);
@@ -253,6 +274,7 @@ const formatDuration = (seconds) => {
 };
 
 const toggleMenu = async () => {
+  if (onSharePage) return;
   showMenu.value = !showMenu.value;
   if (showMenu.value && menuButtonRef.value) {
     await nextTick();
@@ -273,6 +295,7 @@ const handleMenuMouseLeave = () => {
 };
 
 const handleCopyLink = async () => {
+  if (onSharePage) return;
   if (!props.video.stream_url) {
     console.error('Copy link not available - missing stream URL');
     notificationCenterRef.value?.addNotification('Video link not available', { type: 'error' });
@@ -298,6 +321,7 @@ const handleCopyLink = async () => {
 };
 
 const handleAddToCollection = async () => {
+  if (onSharePage) return;
   if (!handleUpload || !props.video.stream_url) {
     console.error('Add to collection not available');
     showMenu.value = false;
@@ -325,6 +349,7 @@ const handleAddToCollection = async () => {
 };
 
 const handleConvertToReel = () => {
+  if (onSharePage) return;
   if (props.onConvertToReel) {
     props.onConvertToReel(props.video);
   }
@@ -332,6 +357,7 @@ const handleConvertToReel = () => {
 };
 
 const handleDownload = async () => {
+  if (onSharePage) return;
   if (!props.video.stream_url) {
     console.error('Download not available - missing stream URL');
     notificationCenterRef.value?.addNotification('Download not available', { type: 'error' });
@@ -389,6 +415,16 @@ const handleMetaInfo = () => {
 const closeMetaInfoModal = () => {
   showMetaInfoModal.value = false;
 };
+
+const handlePlay = () => {
+  if (props.onVideoPlay) {
+    props.onVideoPlay();
+  }
+};
+
+defineExpose({
+  playerRef,
+});
 </script>
 
 <style scoped>

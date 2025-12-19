@@ -121,12 +121,27 @@ export function useAssets(context) {
 
         // Process results and attach metadata
         const attachMeta = (items, type) =>
-          items.map((i) => ({
-            ...i,
-            type,
-            collectionId: collection.id,
-            collectionName: collection.name,
-          }));
+          items.map((i) => {
+            const baseAsset = {
+              ...i,
+              type,
+              collectionId: collection.id,
+              collection_id: collection.id,
+              collectionName: collection.name,
+            };
+            
+            // Special handling for voices
+            if (type === 'voices') {
+              return {
+                ...baseAsset,
+                id: i.id || i.voice_id,
+                audio_id: i.audio_id,
+                name: i.name || 'Untitled Voice',
+              };
+            }
+            
+            return baseAsset;
+          });
 
         // Combine all fetched asset types
         const allAssets = [];

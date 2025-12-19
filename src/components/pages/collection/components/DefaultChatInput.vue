@@ -153,6 +153,7 @@
     <UploadFromCollectionModal
       :is-open="showUploadFromCollectionModal"
       :context="context"
+      :pre-selected-assets="collectionAssets.map((a) => a.asset)"
       @close="showUploadFromCollectionModal = false"
       @select="handleCollectionAssetsSelected"
     />

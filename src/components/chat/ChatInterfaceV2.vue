@@ -150,6 +150,10 @@ const props = defineProps({
     type: Function,
     default: undefined,
   },
+  onSharePage: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([]);
@@ -790,18 +794,21 @@ const handleAddMessage = async ({
 
   await nextTick();
 
-  if (actions?.goToChat && sessionId.value) {
+  const isFromUploadCompletion = scroll_to_message;
+  const isOnChatPage = navState.currentPage === 'chat';
+
+  if (actions?.goToChat && sessionId.value && (!isFromUploadCompletion || isOnChatPage)) {
     actions.goToChat(sessionId.value);
   }
 
-  scrollToLatestUserMessage();
+  if (isOnChatPage) {
+    scrollToLatestUserMessage();
 
-  // If this is from upload completion, scroll again after a delay to ensure
-  // we scroll to the real message after mock conversation is replaced
-  if (scroll_to_message) {
-    setTimeout(() => {
-      scrollToLatestUserMessage();
-    }, 500);
+    if (scroll_to_message) {
+      setTimeout(() => {
+        scrollToLatestUserMessage();
+      }, 500);
+    }
   }
 };
 
@@ -822,11 +829,15 @@ const chatAddMessage = async (messageData) => {
   addMessage(messageData);
   taggedAgent.value = [];
 
-  if (actions?.goToChat && sessionId.value) {
+  const isOnChatPage = navState.currentPage === 'chat';
+
+  if (actions?.goToChat && sessionId.value && isOnChatPage) {
     actions.goToChat(sessionId.value);
   }
 
-  scrollToLatestUserMessage();
+  if (isOnChatPage) {
+    scrollToLatestUserMessage();
+  }
 };
 
 const handleUpload = async (uploadData) => {
@@ -1015,6 +1026,7 @@ const chatContext = {
   handleTagAgent,
   uploadSimulator,
   isLoadingSession,
+  onSharePage: props.onSharePage,
 };
 
 provide('videodb-chat', chatContext);

@@ -31,7 +31,7 @@
     </header>
     <div
       v-if="!showMore"
-      :class="[!hasAssets ? 'vdb-c-mb-[60px]' : '']"
+      :class="[!hasAssets && !isLoadingAssets ? 'vdb-c-mb-[60px]' : '']"
       class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[60px] vdb-c-p-[40px]"
     >
       <!-- Chat Input Section -->
@@ -96,7 +96,7 @@
       </div>
       <!-- Assets Section -->
       <div
-        v-if="hasAssets"
+        v-if="hasAssets || isLoadingAssets"
         class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[30px]"
       >
         <!-- Tabs and Search -->
@@ -110,6 +110,7 @@
             @select-item="handleSelectItem"
             @update:query="handleSearchQueryUpdate"
             :placeholder="`Search files in &quot;${collectionName}&quot;`"
+            :disabled="isLoadingAssets"
           />
         </div>
         <!-- Asset Grid -->
@@ -142,7 +143,7 @@
           />
           <!-- Show More Button -->
           <div
-            v-if="filteredAssets.length > 4"
+            v-if="filteredAssets.length > 4 && !isLoadingAssets"
             class="vdb-c-mt-20 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center"
           >
             <button
@@ -343,32 +344,7 @@ const handleUploadWrapper = async (uploadData) => {
     await context?.handleUpload(uploadData);
     const collectionId = currentCollection.value?.id;
     if (collectionId) {
-      const [videosRes, audiosRes, imagesRes, voicesRes] = await Promise.all([
-        fetchCollectionVideos?.(collectionId) || Promise.resolve({ data: null }),
-        fetchCollectionAudios?.(collectionId) || Promise.resolve({ data: null }),
-        fetchCollectionImages?.(collectionId) || Promise.resolve({ data: null }),
-        fetchAssets?.({
-          collection_id: collectionId,
-          asset_type: 'voices',
-          page: 1,
-          page_size: 10000,
-        }) || Promise.resolve({ status: 'success', data: { assets: null } }),
-      ]);
-
-      if (activeCollectionVideos) {
-        activeCollectionVideos.value = videosRes?.data || null;
-      }
-      if (activeCollectionAudios) {
-        activeCollectionAudios.value = audiosRes?.data || null;
-      }
-      if (activeCollectionImages) {
-        activeCollectionImages.value = imagesRes?.data || null;
-      }
-      if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
-        activeCollectionVoices.value = voicesRes.data.data.assets;
-      } else {
-        activeCollectionVoices.value = null;
-      }
+      await fetchCollectionAssets(collectionId);
     }
   } catch (error) {
     console.error('Error uploading file:', error);

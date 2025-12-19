@@ -3,12 +3,12 @@
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-[1000] vdb-c-flex vdb-c-flex-col vdb-c-bg-[#3D3D3D]"
+      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-[1000] vdb-c-flex vdb-c-h-screen vdb-c-flex-col vdb-c-overflow-hidden vdb-c-bg-[#3D3D3D]"
       @click.self="handleClose"
     >
       <!-- Top Bar with Title and Actions -->
       <div
-        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-px-24 vdb-c-py-20"
+        class="vdb-c-flex vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-between vdb-c-px-24 vdb-c-py-20"
       >
         <!-- Left: Close Button and Title -->
         <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-16">
@@ -99,10 +99,10 @@
 
       <!-- Image Display Container -->
       <div
-        class="vdb-c-flex vdb-c-w-[80%] vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-px-48 vdb-c-pb-48"
+        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-px-48 vdb-c-pb-48"
       >
         <div
-          class="vdb-c-relative vdb-c-flex vdb-c-max-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-overflow-hidden vdb-c-rounded-12"
+          class="vdb-c-relative vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center"
         >
           <img
             v-if="url"

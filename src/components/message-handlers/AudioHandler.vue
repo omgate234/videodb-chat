@@ -145,6 +145,7 @@
               >
                 <!-- Rewind 10s -->
                 <button
+                  v-if="duration >= 10"
                   class="vdb-c-flex vdb-c-h-[32px] vdb-c-w-[32px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border-[0.446px] vdb-c-border-white vdb-c-bg-white vdb-c-p-[6px] vdb-c-transition-all hover:vdb-c-border-[#E6E6E6] hover:vdb-c-bg-vdb-lightgrey"
                   @click="rewind10"
                   title="Rewind 10 seconds"
@@ -164,6 +165,7 @@
 
                 <!-- Forward 10s -->
                 <button
+                  v-if="duration >= 10"
                   class="vdb-c-flex vdb-c-h-[32px] vdb-c-w-[32px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border-[0.446px] vdb-c-border-white vdb-c-bg-white vdb-c-p-[6px] vdb-c-transition-all hover:vdb-c-border-[#E6E6E6] hover:vdb-c-bg-vdb-lightgrey"
                   @click="forward10"
                   title="Forward 10 seconds"
@@ -180,10 +182,19 @@
                   :class="[
                     linkCopied
                       ? 'vdb-c-bg-black'
-                      : 'vdb-c-bg-white hover:vdb-c-border-[#E6E6E6] hover:vdb-c-bg-vdb-lightgrey',
+                      : onSharePage
+                        ? 'vdb-c-cursor-not-allowed vdb-c-bg-white vdb-c-opacity-50'
+                        : 'vdb-c-bg-white hover:vdb-c-border-[#E6E6E6] hover:vdb-c-bg-vdb-lightgrey',
                   ]"
-                  @click="copyAudioLink"
-                  :title="linkCopied ? 'Link Copied!' : 'Copy Link'"
+                  @click="!onSharePage && copyAudioLink()"
+                  :disabled="onSharePage"
+                  :title="
+                    onSharePage
+                      ? 'Not available on shared page'
+                      : linkCopied
+                        ? 'Link Copied!'
+                        : 'Copy Link'
+                  "
                 >
                   <TickIcon v-if="linkCopied" />
                   <CopyLinkIcon v-else />
@@ -192,9 +203,15 @@
                 <!-- Options Button (Three Dots) -->
                 <div ref="menuButtonRef">
                   <button
-                    class="vdb-c-flex vdb-c-h-[32px] vdb-c-w-[32px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[32.143px] vdb-c-border-[1.071px] vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-p-[6px] vdb-c-transition-all hover:vdb-c-border-[#E6E6E6] hover:vdb-c-bg-vdb-lightgrey"
-                    @click.stop="toggleMenu"
-                    title="Options"
+                    class="vdb-c-flex vdb-c-h-[32px] vdb-c-w-[32px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[32.143px] vdb-c-border-[1.071px] vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-p-[6px] vdb-c-transition-all"
+                    :class="[
+                      onSharePage
+                        ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                        : 'hover:vdb-c-border-[#E6E6E6] hover:vdb-c-bg-vdb-lightgrey',
+                    ]"
+                    @click.stop="!onSharePage && toggleMenu()"
+                    :disabled="onSharePage"
+                    :title="onSharePage ? 'Not available on shared page' : 'Options'"
                   >
                     <ThreeDotsIcon />
                   </button>
@@ -315,6 +332,7 @@ const context = inject('videodb-chat-context');
 const handleUpload = context?.handleUpload;
 const activeCollectionData = context?.activeCollectionData;
 const generateAudioUrl = context?.generateAudioUrl;
+const onSharePage = context?.onSharePage || false;
 
 const audioRef = ref(null);
 const isPlaying = ref(false);
@@ -458,6 +476,7 @@ const handleMuteToggle = () => {
 };
 
 const copyAudioLink = async () => {
+  if (onSharePage) return;
   try {
     const link = audioUrl.value || window.location.href;
     await navigator.clipboard.writeText(link);
@@ -473,6 +492,7 @@ const copyAudioLink = async () => {
 };
 
 const toggleMenu = async () => {
+  if (onSharePage) return;
   showMenu.value = !showMenu.value;
   if (showMenu.value && menuButtonRef.value) {
     await nextTick();
@@ -485,7 +505,7 @@ const toggleMenu = async () => {
 };
 
 const copyAssetId = async () => {
-  if (!audioId.value) return;
+  if (onSharePage || !audioId.value) return;
   try {
     await navigator.clipboard.writeText(audioId.value);
     notificationCenterRef.value?.addNotification('Audio ID copied');
@@ -497,6 +517,7 @@ const copyAssetId = async () => {
 };
 
 const handleAddToCollection = async () => {
+  if (onSharePage) return;
   if (!handleUpload || !audioUrl.value) {
     console.error('handleUpload or audioUrl not available');
     showMenu.value = false;
@@ -525,6 +546,7 @@ const handleAddToCollection = async () => {
 };
 
 const handleDownload = async () => {
+  if (onSharePage) return;
   if (!audioUrl.value) {
     console.error('Download not available - missing audioUrl');
     notificationCenterRef.value?.addNotification('Download not available', { type: 'error' });

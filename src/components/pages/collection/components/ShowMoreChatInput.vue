@@ -141,6 +141,7 @@
               v-if="showSearchControlsPanel"
               :precision="additionalData.precision"
               :search-for="additionalData.searchFor"
+              :hide-videos-option="hasVideoId"
               @update:precision="additionalData.precision = $event"
               @update:search-for="additionalData.searchFor = $event"
             />
@@ -171,6 +172,7 @@
     <UploadFromCollectionModal
       :is-open="showUploadFromCollectionModal"
       :context="context"
+      :pre-selected-assets="collectionAssets.map((a) => a.asset)"
       @close="showUploadFromCollectionModal = false"
       @select="handleCollectionAssetsSelected"
     />
@@ -253,9 +255,13 @@ const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
 const placeholder = computed(() => {
   if (context?.activeCollectionData?.value?.name) {
-    return `Chat with "${context.activeCollectionData.value.name}" collection`;
+    return `Chat with "${context.activeCollectionData.value.name}"`;
   }
   return 'Chat with Collection';
+});
+
+const hasVideoId = computed(() => {
+  return !!(context?.videoId?.value || context?.videoId);
 });
 
 const agentsList = [
@@ -563,6 +569,12 @@ watch(
     }
   }
 );
+
+watch(hasVideoId, (videoIdExists) => {
+  if (videoIdExists && additionalData.value.searchFor === 'videos') {
+    additionalData.value.searchFor = 'scenes';
+  }
+});
 
 onMounted(() => {
   window.addEventListener('click', handleClickOutside);
