@@ -12,7 +12,7 @@
         top: `${position.top}px`,
         left: `${position.left}px`,
       }"
-      class="vdb-c-fixed vdb-c-z-50 vdb-c-flex vdb-c-min-w-[254px] vdb-c-flex-col vdb-c-gap-[2px] vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-[0px_23px_6px_0px_rgba(0,0,0,0),0px_15px_6px_0px_rgba(0,0,0,0.01),0px_8px_5px_0px_rgba(0,0,0,0.02),0px_4px_4px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.03)]"
+      class="vdb-c-fixed vdb-c-z-50 vdb-c-flex vdb-c-max-h-[264px] vdb-c-min-w-[254px] vdb-c-flex-col vdb-c-gap-[2px] vdb-c-overflow-y-auto vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-[0px_23px_6px_0px_rgba(0,0,0,0),0px_15px_6px_0px_rgba(0,0,0,0.01),0px_8px_5px_0px_rgba(0,0,0,0.02),0px_4px_4px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.03)]"
       :class="[`vdb-c-top-[${position.top}px]`, `vdb-c-left-[${position.left}px]`]"
       @click.stop
     >

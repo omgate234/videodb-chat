@@ -206,7 +206,7 @@
             @click="handleCreateCollection"
             @mouseenter="hoveredNewCollectionButton = true"
             @mouseleave="hoveredNewCollectionButton = false"
-            class="vdb-c-flex vdb-c-h-[66px] vdb-c-items-center vdb-c-gap-[12px] vdb-c-rounded-[12px] vdb-c-border vdb-c-border-dashed vdb-c-border-[#969696] vdb-c-bg-[#FBFBFB] vdb-c-p-[12px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#FFAD6D] hover:vdb-c-bg-[#FFE9D3]"
+            class="vdb-c-min-w-0 vdb-c-flex vdb-c-h-[66px] vdb-c-w-full vdb-c-max-w-[300px] vdb-c-items-center vdb-c-gap-[12px] vdb-c-rounded-[12px] vdb-c-border vdb-c-border-dashed vdb-c-border-[#969696] vdb-c-bg-[#FBFBFB] vdb-c-p-[12px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#FFAD6D] hover:vdb-c-bg-[#FFE9D3]"
           >
             <div
               class="vdb-c-flex vdb-c-h-[40px] vdb-c-w-[40px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center vdb-c-overflow-clip"
@@ -216,10 +216,10 @@
                 class="vdb-c-h-full vdb-c-w-full"
               />
             </div>
-            <div class="vdb-c-flex vdb-c-grow vdb-c-items-center">
+            <div class="vdb-c-min-w-0 vdb-c-flex vdb-c-grow vdb-c-items-center">
               <p
                 :class="[
-                  'vdb-c-grow vdb-c-overflow-hidden vdb-c-text-ellipsis vdb-c-whitespace-nowrap vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-transition-colors vdb-c-duration-200',
+                  'vdb-c-grow vdb-c-truncate vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-transition-colors vdb-c-duration-200',
                   hoveredNewCollectionButton ? 'vdb-c-text-[#C14103]' : 'vdb-c-text-[#1E1E1E]',
                 ]"
               >
@@ -234,13 +234,13 @@
             :key="collection.id"
             @mouseenter="hoveredCollectionId = collection.id"
             @mouseleave="hoveredCollectionId = null"
-            class="vdb-c-relative"
+            class="vdb-c-min-w-0 vdb-c-relative vdb-c-w-full vdb-c-max-w-[300px]"
             :data-collection-id="collection.id"
           >
             <button
               @click="handleCollectionClick(collection)"
               :class="[
-                'vdb-c-flex vdb-c-h-[66px] vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-[12px] vdb-c-rounded-[12px] vdb-c-p-[12px] vdb-c-transition-all vdb-c-duration-200',
+                'vdb-c-min-w-0 vdb-c-flex vdb-c-h-[66px] vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-between vdb-c-gap-[12px] vdb-c-rounded-[12px] vdb-c-p-[12px] vdb-c-transition-all vdb-c-duration-200',
                 {
                   'vdb-c-bg-[#EFEFEF]':
                     hoveredCollectionId === collection.id ||
@@ -251,68 +251,66 @@
                 },
               ]"
             >
-              <!-- Collection Thumbnail - Centered -->
+              <!-- Collection Thumbnail -->
               <div
-                class="vdb-c-flex vdb-c-h-[42px] vdb-c-w-[54.732px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
+                class="vdb-c-flex vdb-c-h-[42px] vdb-c-w-[54px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
               >
-                <EmptyFolderImage :width="54.732" :height="42" />
+                <EmptyFolderImage :width="54" :height="42" />
               </div>
 
               <!-- Collection Content -->
-              <div class="vdb-c-min-w-0 vdb-c-flex vdb-c-grow vdb-c-items-center vdb-c-gap-[8px]">
-                <div
-                  class="vdb-c-min-w-0 vdb-c-flex vdb-c-grow vdb-c-flex-col vdb-c-items-start vdb-c-justify-center"
-                >
-                  <template v-if="isEditing(collection.id)">
-                    <input
-                      :id="`edit-input-${collection.id}`"
-                      v-model="editingName"
-                      type="text"
-                      class="vdb-selection-orange vdb-c-w-full vdb-c-truncate vdb-c-bg-[#F7F7F7] vdb-c-px-6 vdb-c-py-2 vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E] vdb-c-outline-none focus:vdb-c-border-vdb-darkorange"
-                      @click.stop
-                      @keydown.enter.prevent="handleSaveEdit"
-                      @keydown.esc.stop="handleCancelEdit"
-                      @blur="handleSaveEdit"
-                    />
-                  </template>
-                  <template v-else>
-                    <p
-                      class="vdb-c-w-full vdb-c-overflow-hidden vdb-c-text-ellipsis vdb-c-whitespace-nowrap vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E]"
-                      @dblclick.stop="handleStartEditing(collection)"
-                      title="Double-click to rename"
-                    >
-                      {{ collection.name }}
-                    </p>
-                  </template>
-                </div>
-                <!-- Three Dots Menu -->
-                <div
-                  v-if="!isEditing(collection.id)"
-                  class="vdb-c-relative vdb-c-flex-shrink-0"
-                  @mouseenter="handleOptionsHover(collection)"
-                  @mouseleave="handleOptionsLeave"
-                >
-                  <button
+              <div
+                class="vdb-c-min-w-0 vdb-c-max-w-[50%] vdb-c-grow vdb-c-gap-[8px] vdb-c-overflow-hidden"
+              >
+                <template v-if="isEditing(collection.id)">
+                  <input
+                    :id="`edit-input-${collection.id}`"
+                    v-model="editingName"
+                    type="text"
+                    class="vdb-selection-orange vdb-c-w-full vdb-c-truncate vdb-c-bg-[#F7F7F7] vdb-c-px-1 vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-outline-none"
                     @click.stop
-                    class="vdb-c-flex vdb-c-h-[24px] vdb-c-w-[24px] vdb-c-items-center vdb-c-justify-center vdb-c-overflow-clip vdb-c-rounded-6 vdb-c-transition-all vdb-c-duration-200"
-                  >
-                    <ThreeDotsIcon stroke-color="#1E1E1E" />
-                  </button>
-
-                  <!-- Collection Options Menu -->
-                  <CollectionOptionsMenu
-                    :show-on-right="
-                      searchQuery.trim() ? (index + 1) % 4 === 0 : (index + 2) % 4 === 0
-                    "
-                    :show-on-bottom="isInLastRow(index)"
-                    :is-open="activeOptionsCollectionId === collection.id"
-                    :collection="collection"
-                    @close="activeOptionsCollectionId = null"
-                    @chat="handleChatWithCollection"
-                    @rename="handleRename"
-                    @delete="handleDeleteClick"
+                    @keydown.enter.prevent="handleSaveEdit"
+                    @keydown.esc.stop="handleCancelEdit"
+                    @blur="handleSaveEdit"
                   />
-                </div>
+                </template>
+                <template v-else>
+                  <p
+                    class="vdb-c-w-full vdb-c-truncate vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-[#1E1E1E]"
+                    @dblclick.stop="handleStartEditing(collection)"
+                    title="Double-click to rename"
+                  >
+                    {{ collection.name }}
+                  </p>
+                </template>
+                <!-- Three Dots Menu -->
+              </div>
+              <div
+                v-if="!isEditing(collection.id)"
+                class="vdb-c-relative vdb-c-flex-shrink-0"
+                @mouseenter="handleOptionsHover(collection)"
+                @mouseleave="handleOptionsLeave"
+              >
+                <button
+                  @click.stop
+                  class="vdb-c-flex vdb-c-h-[24px] vdb-c-w-[24px] vdb-c-items-center vdb-c-justify-center"
+                >
+                  <ThreeDotsIcon stroke-color="#1E1E1E" />
+                </button>
+
+                <!-- Collection Options Menu -->
+                <CollectionOptionsMenu
+                  :show-on-right="
+                    searchQuery.trim() ? (index + 1) % 4 === 0 : (index + 2) % 4 === 0
+                  "
+                  :show-on-bottom="isInLastRow(index)"
+                  :is-open="activeOptionsCollectionId === collection.id"
+                  :collection="collection"
+                  @close="activeOptionsCollectionId = null"
+                  @chat="handleChatWithCollection"
+                  @rename="handleRename"
+                  @delete="handleDeleteClick"
+                />
               </div>
             </button>
           </div>
@@ -596,6 +594,12 @@ const handleUploadWrapper = async (uploadData) => {
   grid-template-columns: repeat(4, minmax(0, 300px));
   gap: 20px;
   align-content: start;
+}
+
+@media (max-width: 1080px) {
+  .collections-grid {
+    grid-template-columns: repeat(2, minmax(0, 300px));
+  }
 }
 
 :global(.vdb-selection-orange::selection) {
