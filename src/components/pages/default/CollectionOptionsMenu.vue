@@ -38,27 +38,11 @@
         Rename collection
       </span>
     </button>
-    <button
-      @click="handleDelete"
-      class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#F5F5F5]"
-    >
-      <div
-        class="vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
-      >
-        <TrashIcon stroke-color="#E2462C" />
-      </div>
-      <span
-        class="vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#E2462C]"
-      >
-        Delete
-      </span>
-    </button>
   </div>
 </template>
 
 <script setup>
 import EditIcon from '../../chat/v2/icons/EditIcon.vue';
-import TrashIcon from '../../chat/v2/icons/TrashIcon.vue';
 import ChatWithCollectionIcon from '../../chat/v2/icons/ChatWithCollectionIcon.vue';
 
 const props = defineProps({

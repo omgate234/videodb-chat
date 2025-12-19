@@ -20,13 +20,6 @@
           Rename collection
         </span>
       </button>
-      <button
-        @click="handleDelete"
-        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-8 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-roy"
-      >
-        <TrashIcon stroke-color="#E2462C" />
-        <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-text-primary">Delete</span>
-      </button>
     </div>
   </Teleport>
 </template>
@@ -34,7 +27,6 @@
 <script setup>
 import { ref, watch, nextTick, onUnmounted } from 'vue';
 import EditIcon from './icons/EditIcon.vue';
-import TrashIcon from './icons/TrashIcon.vue';
 
 const props = defineProps({
   isOpen: {
