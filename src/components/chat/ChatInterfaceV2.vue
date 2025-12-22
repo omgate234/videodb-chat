@@ -568,10 +568,25 @@ const createNewSession = () => {
   videoId.value = null;
   showCollectionView.value = false;
   taggedAgent.value = [];
-  const targetCollectionId =
-    (selectedCollectionId.value && selectedCollectionId.value !== 'default'
-      ? selectedCollectionId.value
-      : collections.value?.[0]?.id) || 'default';
+
+  // Prioritize: 1) current session's collection, 2) selected collection, 3) first collection
+  let targetCollectionId = null;
+
+  // If on chat page, get collection from current session
+  if (navState.currentPage === 'chat' && sessionId.value) {
+    const currentSession = sessions.value?.find((s) => s.session_id === sessionId.value);
+    if (currentSession?.collection_id) {
+      targetCollectionId = currentSession.collection_id;
+    }
+  }
+
+  // Fallback to selected collection or first collection
+  if (!targetCollectionId) {
+    targetCollectionId =
+      (selectedCollectionId.value && selectedCollectionId.value !== 'default'
+        ? selectedCollectionId.value
+        : collections.value?.[0]?.id) || 'default';
+  }
 
   actions.goToCollection(targetCollectionId);
 };
