@@ -9,7 +9,7 @@
     />
     <transition name="fade" mode="out-in">
       <div
-        v-if="content.status === 'success' || content.status === 'progress'"
+        v-if="(content.status === 'success' || content.status === 'progress') && totalVideos > 0"
         class="vdb-c-mx-auto vdb-c-flex vdb-c-w-full vdb-c-max-w-[1080px] vdb-c-flex-col vdb-c-gap-20"
       >
         <!-- Header -->
