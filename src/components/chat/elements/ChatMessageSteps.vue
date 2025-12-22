@@ -260,16 +260,13 @@ watch(
   (steps) => {
     const startIndex = lastStepsLength.value === 0 ? 0 : lastStepsLength.value;
     const nextProcess = new Set(expandedProcesses.value);
-    const nextCode = new Set(expandedCode.value);
     for (let i = startIndex; i < steps.length; i++) {
       const s = steps[i];
       if (s && typeof s === 'object') {
         if (s.type === 'process') nextProcess.add(i);
-        if (s.type === 'code') nextCode.add(i);
       }
     }
     expandedProcesses.value = nextProcess;
-    expandedCode.value = nextCode;
     lastStepsLength.value = steps.length;
 
     measureRail();
