@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="totalVideosCount > 0"
     class="vdb-c-mx-auto vdb-c-flex vdb-c-w-full vdb-c-max-w-[1080px] vdb-c-flex-col vdb-c-gap-20"
   >
     <!-- Show grid view when no video is being edited -->
