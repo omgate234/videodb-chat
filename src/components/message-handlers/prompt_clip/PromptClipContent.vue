@@ -134,10 +134,10 @@
               class="vdb-c-flex vdb-c-shrink-0 vdb-c-flex-col vdb-c-items-start vdb-c-justify-center vdb-c-gap-10"
             >
               <button
-                :disabled="activeClipIndex !== index || index === 0"
+                :disabled="index === 0"
                 :class="[
                   'vdb-c-relative vdb-c-flex vdb-c-h-30 vdb-c-w-30 vdb-c-shrink-0 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[66px] vdb-c-transition-all',
-                  activeClipIndex === index && index !== 0
+                  index !== 0
                     ? 'vdb-c-cursor-pointer hover:vdb-c-bg-[rgba(130,31,12,0.10)]'
                     : 'vdb-c-cursor-not-allowed vdb-c-opacity-50',
                 ]"
@@ -145,14 +145,14 @@
               >
                 <ChevronUp
                   class="vdb-c-h-30 vdb-c-w-30"
-                  :fill="activeClipIndex === index && index !== 0 ? '#821F0C' : '#969696'"
+                  :fill="index !== 0 ? '#821F0C' : '#969696'"
                 />
               </button>
               <button
-                :disabled="activeClipIndex !== index || index === localClips.length - 1"
+                :disabled="index === localClips.length - 1"
                 :class="[
                   'vdb-c-relative vdb-c-flex vdb-c-h-30 vdb-c-w-30 vdb-c-shrink-0 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[66px] vdb-c-transition-all',
-                  activeClipIndex === index && index !== localClips.length - 1
+                  index !== localClips.length - 1
                     ? 'vdb-c-cursor-pointer hover:vdb-c-bg-[rgba(130,31,12,0.10)]'
                     : 'vdb-c-cursor-not-allowed vdb-c-opacity-50',
                 ]"
@@ -161,7 +161,7 @@
                 <ChevronUp
                   class="vdb-c-h-30 vdb-c-w-30"
                   style="transform: rotate(180deg)"
-                  :fill="activeClipIndex === index ? '#821F0C' : '#969696'"
+                  :fill="index !== localClips.length - 1 ? '#821F0C' : '#969696'"
                 />
               </button>
             </div>
@@ -432,19 +432,27 @@ const truncateText = (text) => {
 };
 
 const moveClipUp = (index) => {
-  if (index === 0 || activeClipIndex.value !== index) return;
+  if (index === 0) return;
   const newClips = [...localClips.value];
   [newClips[index - 1], newClips[index]] = [newClips[index], newClips[index - 1]];
   localClips.value = newClips;
-  activeClipIndex.value = index - 1;
+  if (activeClipIndex.value === index) {
+    activeClipIndex.value = index - 1;
+  } else if (activeClipIndex.value === index - 1) {
+    activeClipIndex.value = index;
+  }
 };
 
 const moveClipDown = (index) => {
-  if (index === localClips.value.length - 1 || activeClipIndex.value !== index) return;
+  if (index === localClips.value.length - 1) return;
   const newClips = [...localClips.value];
   [newClips[index], newClips[index + 1]] = [newClips[index + 1], newClips[index]];
   localClips.value = newClips;
-  activeClipIndex.value = index + 1;
+  if (activeClipIndex.value === index) {
+    activeClipIndex.value = index + 1;
+  } else if (activeClipIndex.value === index + 1) {
+    activeClipIndex.value = index;
+  }
 };
 
 const handleCancel = () => {
