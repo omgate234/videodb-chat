@@ -2,12 +2,6 @@
   <div
     class="vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-20 vdb-c-py-14 vdb-c-text-left"
   >
-    <LoadingMessage
-      :status="content.status"
-      :message="content.status_message"
-      :is-last-conv="isLastConv"
-    />
-
     <transition name="fade" mode="out-in">
       <div
         v-if="content.status === 'success' || content.status === 'progress'"
