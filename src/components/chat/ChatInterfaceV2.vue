@@ -31,6 +31,7 @@ import EditStagesHandler from '../message-handlers/EditStagesHandler.vue';
 import CensorReportHandler from '../message-handlers/CensorReportHandler.vue';
 import PromptClipContent from '../message-handlers/prompt_clip/PromptClipContent.vue';
 import SubtitlesContentHandler from '../message-handlers/SubtitlesContentHandler.vue';
+import TodoListHandler from '../message-handlers/TodoListHandler.vue';
 import DeleteIcon from '../icons/Delete3.vue';
 import AssetSelectorHandler from '../message-handlers/AssetSelectorHandler.vue';
 
@@ -446,6 +447,7 @@ registerMessageHandler('censor', CensorReportHandler);
 registerMessageHandler('prompt_clip', PromptClipContent);
 registerMessageHandler('subtitles', SubtitlesContentHandler);
 registerMessageHandler('asset_selector', AssetSelectorHandler);
+registerMessageHandler('todo_list', TodoListHandler);
 
 if (Array.isArray(props.customMessageHandlers)) {
   for (const handler of props.customMessageHandlers) {
