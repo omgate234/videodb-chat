@@ -163,6 +163,7 @@ const uploadNotificationsRef = ref(null);
 
 const showCollectionView = ref(false);
 const taggedAgent = ref([]);
+const selectedModel = ref(null);
 
 const useChatHook = props.customChatHook || useVideoDBAgent;
 const agentHook = useChatHook(props.chatHookConfig);
@@ -207,6 +208,7 @@ const {
   callApi,
   generateVideoStream,
   isLoadingSession,
+  fetchLLMModels,
 } = agentHook;
 
 const uploadSimulator = useUploadChatSimulator();
@@ -725,6 +727,7 @@ const handleAddMessage = async ({
   scroll_to_message = false,
   uploaded_files = null,
   upload_summary = null,
+  model_name = null,
 }) => {
   if (files?.length > 0) {
     await uploadSimulator.startUploadSession({
@@ -804,6 +807,7 @@ const handleAddMessage = async ({
     from_event: from_event,
     uploaded_files: uploaded_files,
     upload_summary: upload_summary,
+    model_name: model_name,
   });
   taggedAgent.value = [];
 
@@ -893,10 +897,16 @@ onUnmounted(() => {
   }
 });
 
+const handleModelSelect = (model) => {
+  selectedModel.value = model;
+};
+
 const chatContext = {
   chatInput,
   chatAttachments,
   chatLoading,
+  selectedModel,
+  handleModelSelect,
   conversations: computed(() => {
     const currentSessionId = sessionId.value;
 
@@ -1018,6 +1028,7 @@ const chatContext = {
   fetchCollectionAudios,
   fetchCollectionImages,
   fetchAssets,
+  fetchLLMModels,
   handleCreateNewSession,
   handleSessionClick,
   handleCollectionClick,

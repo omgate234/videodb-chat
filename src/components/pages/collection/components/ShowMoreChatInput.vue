@@ -65,6 +65,35 @@
             @upload-from-collection="handleUploadFromCollection"
           />
         </div>
+        <div class="vdb-c-relative">
+          <button
+            ref="modelButtonRef"
+            @click="toggleModelDropdown"
+            :class="[
+              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
+              selectedModel?.value?.id || selectedModel?.id
+                ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3]'
+                : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-roy',
+            ]"
+          >
+            <ModelIcon
+              :class="[
+                'vdb-c-h-[16.667px] vdb-c-w-[16.667px]',
+                selectedModel?.value?.id || selectedModel?.id
+                  ? 'vdb-c-text-[#821F0C]'
+                  : 'vdb-c-text-vdb-darkishgrey',
+              ]"
+            />
+          </button>
+          <LLMDropdown
+            :is-open="showModelDropdown"
+            :trigger-element="modelButtonRef"
+            :providers="llmProviders"
+            :selected-model-id="selectedModel?.value?.id || selectedModel?.id"
+            @close="showModelDropdown = false"
+            @model-select="handleModelSelect"
+          />
+        </div>
         <textarea
           name="chat-input"
           v-if="selectedAgent === null"
@@ -182,6 +211,7 @@
 <script setup>
 import { ref, computed, inject, onUnmounted, watch, nextTick, onMounted } from 'vue';
 import AttachIcon from '../../../chat/v2/icons/AttachIcon.vue';
+import ModelIcon from '../../../chat/v2/icons/ModelIcon.vue';
 import SearchIcon from '../../../chat/v2/icons/agents/SearchIcon.vue';
 import VoiceIcon from '../../../chat/v2/icons/agents/VoiceIcon.vue';
 import CensorIcon from '../../../chat/v2/icons/agents/CensorIcon.vue';
@@ -195,6 +225,7 @@ import SendButtonIcon from '../../../chat/v2/icons/agents/SendButtonIcon.vue';
 import CrossIcon from '../../../chat/v2/icons/CrossIcon.vue';
 import AgentDropdown from './AgentDropdown.vue';
 import AttachDropdown from './AttachDropdown.vue';
+import LLMDropdown from './LLMDropdown.vue';
 import ImageFileDisplay from './ImageFileDisplay.vue';
 import VideoFileDisplay from './VideoFileDisplay.vue';
 import AudioFileDisplay from './AudioFileDisplay.vue';
@@ -243,16 +274,21 @@ const chatLoading = computed(() => {
 const inputText = ref('');
 const showAgentsDropdown = ref(false);
 const showAttachDropdown = ref(false);
+const showModelDropdown = ref(false);
 const showDropUp = ref(false);
 const showUploadFromCollectionModal = ref(false);
 const showCursor = ref(true);
 const selectedAgent = ref(null);
+const llmProviders = ref([]);
 const threeDotsButtonRef = ref(null);
 const attachButtonRef = ref(null);
+const modelButtonRef = ref(null);
 const plusButtonRef = ref(null);
 const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
+
+const selectedModel = computed(() => context?.selectedModel?.value || context?.selectedModel);
 const placeholder = computed(() => {
   if (context?.activeCollectionData?.value?.name) {
     return `Chat with "${context.activeCollectionData.value.name}"`;
@@ -455,6 +491,7 @@ const toggleAgentsDropdown = () => {
   showAgentsDropdown.value = !showAgentsDropdown.value;
   if (showAgentsDropdown.value) {
     showAttachDropdown.value = false;
+    showModelDropdown.value = false;
     showDropUp.value = false;
   }
 };
@@ -463,7 +500,23 @@ const toggleAttachDropdown = () => {
   showAttachDropdown.value = !showAttachDropdown.value;
   if (showAttachDropdown.value) {
     showAgentsDropdown.value = false;
+    showModelDropdown.value = false;
     showDropUp.value = false;
+  }
+};
+
+const toggleModelDropdown = () => {
+  showModelDropdown.value = !showModelDropdown.value;
+  if (showModelDropdown.value) {
+    showAgentsDropdown.value = false;
+    showAttachDropdown.value = false;
+    showDropUp.value = false;
+  }
+};
+
+const handleModelSelect = (model) => {
+  if (context?.handleModelSelect) {
+    context.handleModelSelect(model);
   }
 };
 
@@ -576,8 +629,19 @@ watch(hasVideoId, (videoIdExists) => {
   }
 });
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('click', handleClickOutside);
+
+  if (context?.fetchLLMModels) {
+    try {
+      const result = await context.fetchLLMModels();
+      if (result.status === 'success' && result.data?.data?.providers) {
+        llmProviders.value = result.data.data.providers;
+      }
+    } catch (error) {
+      console.error('Failed to fetch LLM models:', error);
+    }
+  }
 });
 
 onUnmounted(() => {
@@ -692,6 +756,10 @@ const handleSend = () => {
     }
     if (voices.length > 0) {
       messageData.voices = voices;
+    }
+    const modelId = selectedModel?.value?.id || selectedModel?.id;
+    if (modelId) {
+      messageData.model_name = modelId;
     }
 
     context.handleAddMessage(messageData);
