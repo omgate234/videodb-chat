@@ -179,20 +179,26 @@
 
         <div class="vdb-c-flex vdb-c-items-center">
           <button
+            v-if="chatLoading"
+            @click="handleStopMessage"
+            :class="[
+              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[#EC5B16] vdb-c-bg-white vdb-c-text-[#EC5B16] vdb-c-transition hover:vdb-c-bg-[#FFF5EC]',
+            ]"
+            type="button"
+            title="Stop generating"
+          >
+            <StopIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="'#EC5B16'" />
+          </button>
+          <button
+            v-else
             @click="handleSend"
             :disabled="!canSend"
             :class="[
               'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-text-white vdb-c-transition',
-              chatLoading ? 'vdb-c-bg-[#B9B9B9]' : '',
             ]"
             type="submit"
           >
-            <AnimatedEllipsisIcon v-if="chatLoading" />
-            <SendIcon
-              v-else
-              class-name="vdb-c-w-20 vdb-c-h-20"
-              :fill="canSend ? '#EC5B16' : '#B9B9B9'"
-            />
+            <SendIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="canSend ? '#EC5B16' : '#B9B9B9'" />
           </button>
         </div>
       </div>
@@ -237,7 +243,7 @@ import AddDropUp from './AddDropUp.vue';
 import ChevronDown from '../../../icons/ChevronDown.vue';
 import SearchControlsPanel from './SearchControlsPanel.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
-import AnimatedEllipsisIcon from '../../../chat/v2/icons/AnimatedEllipsisIcon.vue';
+import StopIcon from '../../../icons/StopIcon.vue';
 
 const props = defineProps({
   context: {
@@ -269,6 +275,38 @@ const chatLoading = computed(() => {
       (content) => content.status === 'progress' || content.clientLoading || content.is_mock
     )
   );
+});
+
+const pendingMessageId = computed(() => {
+  if (!props.showLoadingState) {
+    return null;
+  }
+  const conversations = context?.conversations?.value || context?.conversations || {};
+
+  // Get all conversations sorted by conv_id (timestamp)
+  const sortedConvIds = Object.keys(conversations).sort((a, b) => Number(b) - Number(a));
+
+  // Find the last conversation with a pending output message
+  for (const convId of sortedConvIds) {
+    const conv = conversations[convId];
+    const messages = Object.values(conv).sort((a, b) => {
+      const aId = parseFloat(a.msg_id);
+      const bId = parseFloat(b.msg_id);
+      return bId - aId;
+    });
+
+    // Find the last output message that is pending
+    const pendingMsg = messages.find(
+      (msg) =>
+        msg.msg_type === 'output' && (msg.status === 'progress' || msg.clientLoading || msg.is_mock)
+    );
+
+    if (pendingMsg) {
+      return pendingMsg.msg_id;
+    }
+  }
+
+  return null;
 });
 
 const inputText = ref('');
@@ -704,6 +742,13 @@ const handleInput = (event) => {
   const textarea = event.target;
   textarea.style.height = 'auto';
   textarea.style.height = `${Math.min(textarea.scrollHeight, 72)}px`;
+};
+
+const handleStopMessage = () => {
+  const msgId = pendingMessageId.value;
+  if (msgId && context?.stopMessage) {
+    context.stopMessage(msgId);
+  }
 };
 
 const handleSend = () => {
