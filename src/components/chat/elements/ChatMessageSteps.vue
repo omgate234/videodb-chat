@@ -109,6 +109,17 @@
                 :is-expanded="isCodeExpanded(index)"
                 :toggle="() => toggleCode(index)"
               />
+
+              <!-- 5. Search results step (default handler) -->
+              <SearchResultsSteps
+                v-else-if="step.type === 'search_results'"
+                :step="step"
+                :index="index"
+                :status="status"
+                :active-index="activeIndex"
+                :is-expanded="isSearchResultsExpanded(index)"
+                :toggle="() => toggleSearchResults(index)"
+              />
             </div>
           </div>
           <!-- /Steps -->
@@ -123,6 +134,7 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import ChevronDown from '../../icons/ChevronDown.vue';
 import ProcessSteps from './ProcessSteps.vue';
 import CodeSteps from './CodeSteps.vue';
+import SearchResultsSteps from './SearchResultsSteps.vue';
 import { useVideoDBChat } from '../../../context.js';
 
 const props = defineProps({
@@ -149,6 +161,7 @@ const { stepActionHandlers } = useVideoDBChat();
 const isExpanded = ref(props.expanded);
 const expandedProcesses = ref(new Set());
 const expandedCode = ref(new Set());
+const expandedSearchResults = ref(new Set());
 const lastStepsLength = ref(0);
 
 const displaySteps = computed(() => {
@@ -206,6 +219,18 @@ const toggleCode = (i) => {
 
 const isCodeExpanded = (i) => expandedCode.value.has(i);
 
+const toggleSearchResults = (i) => {
+  const next = new Set(expandedSearchResults.value);
+  if (next.has(i)) {
+    next.delete(i);
+  } else {
+    next.add(i);
+  }
+  expandedSearchResults.value = next;
+};
+
+const isSearchResultsExpanded = (i) => expandedSearchResults.value.has(i);
+
 // ---- timeline rail measurement ----
 const timelineEl = ref(null);
 const bulletRefs = ref([]);
@@ -260,13 +285,16 @@ watch(
   (steps) => {
     const startIndex = lastStepsLength.value === 0 ? 0 : lastStepsLength.value;
     const nextProcess = new Set(expandedProcesses.value);
+    const nextSearchResults = new Set(expandedSearchResults.value);
     for (let i = startIndex; i < steps.length; i++) {
       const s = steps[i];
       if (s && typeof s === 'object') {
         if (s.type === 'process') nextProcess.add(i);
+        if (s.type === 'search_results') nextSearchResults.add(i);
       }
     }
     expandedProcesses.value = nextProcess;
+    expandedSearchResults.value = nextSearchResults;
     lastStepsLength.value = steps.length;
 
     measureRail();
@@ -287,6 +315,7 @@ watch(
 // re-measure when process or code sections toggle (heights change)
 watch(expandedProcesses, measureRail, { deep: true });
 watch(expandedCode, measureRail, { deep: true });
+watch(expandedSearchResults, measureRail, { deep: true });
 
 // also re-measure on window resize
 if (typeof window !== 'undefined') {
