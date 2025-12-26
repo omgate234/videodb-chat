@@ -254,6 +254,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  editedContext: {
+    type: [Array, Object],
+    default: null,
+  },
 });
 
 const context = props.context || inject('videodb-chat-context', {});
@@ -805,6 +809,9 @@ const handleSend = () => {
     const modelId = selectedModel?.value?.id || selectedModel?.id;
     if (modelId) {
       messageData.model_name = modelId;
+    }
+    if (props.editedContext) {
+      messageData.edited_context = props.editedContext;
     }
 
     context.handleAddMessage(messageData);

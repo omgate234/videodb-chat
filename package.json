@@ -70,7 +70,8 @@
     "vue-tsc": "^2.0.29"
   },
   "dependencies": {
-    "@videodb/player-vue": "^0.0.6",
+    "@guolao/vue-monaco-editor": "^1.6.0",
+    "@videodb/player-vue": "github:omgate234/videodb-player#fix/remove-keyboard-handlers",
     "dayjs": "^1.11.13",
     "katex": "^0.16.11",
     "marked": "^4.2.5",

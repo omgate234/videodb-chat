@@ -211,6 +211,7 @@ const {
   generateVideoStream,
   isLoadingSession,
   fetchLLMModels,
+  fetchSessionContext,
 } = agentHook;
 
 const uploadSimulator = useUploadChatSimulator();
@@ -731,6 +732,7 @@ const handleAddMessage = async ({
   uploaded_files = null,
   upload_summary = null,
   model_name = null,
+  edited_context = null,
 }) => {
   if (files?.length > 0) {
     await uploadSimulator.startUploadSession({
@@ -811,6 +813,7 @@ const handleAddMessage = async ({
     uploaded_files: uploaded_files,
     upload_summary: upload_summary,
     model_name: model_name,
+    edited_context: edited_context,
   });
   taggedAgent.value = [];
 
@@ -1033,6 +1036,7 @@ const chatContext = {
   fetchCollectionImages,
   fetchAssets,
   fetchLLMModels,
+  fetchSessionContext,
   handleCreateNewSession,
   handleSessionClick,
   handleCollectionClick,
