@@ -3,6 +3,10 @@
     <Sidebar v-if="sidebarConfig.enabled" ref="sidebarRef" class="vdb-c-flex-shrink-0" />
     <PageDisplay class="vdb-c-flex-1 vdb-c-overflow-auto" />
     <UploadNotifications ref="uploadNotificationsRef" />
+    <CustomizeAgentsDrawer
+      :is-open="isCustomizeAgentsDrawerOpen"
+      @close="handleCloseCustomizeAgentsDrawer"
+    />
   </div>
 </template>
 <script setup>
@@ -15,6 +19,7 @@ import { useUploadChatSimulator } from '../hooks/useUploadChatSimulator';
 import Sidebar from './v2/Sidebar.vue';
 import PageDisplay from './PageDisplay.vue';
 import UploadNotifications from './elements/UploadNotifications.vue';
+import CustomizeAgentsDrawer from './v2/CustomizeAgentsDrawer.vue';
 
 import ChatSearchResults from '../message-handlers/ChatSearchResults.vue';
 import ChatVideo from '../message-handlers/ChatVideo.vue';
@@ -165,6 +170,7 @@ const uploadNotificationsRef = ref(null);
 const showCollectionView = ref(false);
 const taggedAgent = ref([]);
 const selectedModel = ref(null);
+const isCustomizeAgentsDrawerOpen = ref(false);
 
 const useChatHook = props.customChatHook || useVideoDBAgent;
 const agentHook = useChatHook(props.chatHookConfig);
@@ -212,6 +218,15 @@ const {
   isLoadingSession,
   fetchLLMModels,
   fetchSessionContext,
+  fetchPromptSchema,
+  fetchDefaultPrompts,
+  fetchUserPrompts,
+  fetchSpecificPrompt,
+  createOrUpdatePrompt,
+  deletePrompt,
+  defaultPrompts,
+  userPrompts,
+  refreshUserPrompts,
 } = agentHook;
 
 const uploadSimulator = useUploadChatSimulator();
@@ -907,12 +922,22 @@ const handleModelSelect = (model) => {
   selectedModel.value = model;
 };
 
+const handleOpenCustomizeAgentsDrawer = () => {
+  isCustomizeAgentsDrawerOpen.value = true;
+};
+
+const handleCloseCustomizeAgentsDrawer = () => {
+  isCustomizeAgentsDrawerOpen.value = false;
+};
+
 const chatContext = {
   chatInput,
   chatAttachments,
   chatLoading,
   selectedModel,
   handleModelSelect,
+  handleOpenCustomizeAgentsDrawer,
+  handleCloseCustomizeAgentsDrawer,
   conversations: computed(() => {
     const currentSessionId = sessionId.value;
 
@@ -1037,6 +1062,15 @@ const chatContext = {
   fetchAssets,
   fetchLLMModels,
   fetchSessionContext,
+  fetchPromptSchema,
+  fetchDefaultPrompts,
+  fetchUserPrompts,
+  fetchSpecificPrompt,
+  createOrUpdatePrompt,
+  deletePrompt,
+  defaultPrompts,
+  userPrompts,
+  refreshUserPrompts,
   handleCreateNewSession,
   handleSessionClick,
   handleCollectionClick,

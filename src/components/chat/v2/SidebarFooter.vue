@@ -157,7 +157,30 @@
         </div>
 
         <div
-          v-if="section1Buttons.length > 0 && section2Buttons.length > 0"
+          v-if="section1Buttons.length > 0"
+          class="vdb-c-h-0 vdb-c-w-full vdb-c-border-t vdb-c-border-[#EFEFEF]"
+        ></div>
+
+        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[1px]">
+          <button
+            @click="handleCustomizeAgentsClick"
+            class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]"
+          >
+            <div
+              class="vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
+            >
+              <CustomizeAgentsIcon fill="#1E1E1E" />
+            </div>
+            <span
+              class="vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
+            >
+              Customize Agents
+            </span>
+          </button>
+        </div>
+
+        <div
+          v-if="section2Buttons.length > 0"
           class="vdb-c-h-0 vdb-c-w-full vdb-c-border-t vdb-c-border-[#EFEFEF]"
         ></div>
 
@@ -220,8 +243,9 @@
 </template>
 
 <script setup>
-import { computed, nextTick, watch, ref, onUnmounted } from 'vue';
+import { computed, nextTick, watch, ref, onUnmounted, inject } from 'vue';
 import ChevronRightIcon from './icons/ChevronRightIcon.vue';
+import CustomizeAgentsIcon from './icons/CustomizeAgentsIcon.vue';
 
 const props = defineProps({
   user: {
@@ -244,6 +268,8 @@ const props = defineProps({
 
 const emit = defineEmits(['profile-click']);
 
+const chatContext = inject('videodb-chat-context', null);
+
 const footerRef = ref(null);
 const position = ref({ bottom: 0, left: 0 });
 
@@ -257,7 +283,6 @@ const userInitials = computed(() => {
   return names[0][0].toUpperCase();
 });
 
-// Group buttons by section
 const section1Buttons = computed(() => {
   return props.buttons.filter((button) => button.section === 1);
 });
@@ -274,6 +299,13 @@ const isValidComponent = (component) => {
 const handleButtonClick = (button) => {
   if (button.onClick) {
     button.onClick();
+  }
+  emit('profile-click');
+};
+
+const handleCustomizeAgentsClick = () => {
+  if (chatContext?.handleOpenCustomizeAgentsDrawer) {
+    chatContext.handleOpenCustomizeAgentsDrawer();
   }
   emit('profile-click');
 };
