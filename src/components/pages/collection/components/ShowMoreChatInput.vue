@@ -2,6 +2,44 @@
   <div
     class="vdb-c-h-fit vdb-c-w-full vdb-c-border-t vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-20 vdb-c-py-10"
   >
+    <!-- Queued Messages List -->
+    <div
+      v-if="queuedMessages.length > 0"
+      class="vdb-c-mb-10 vdb-c-rounded-lg vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-[#FAFAFA] vdb-c-p-12"
+    >
+      <div class="vdb-c-mb-8 vdb-c-flex vdb-c-items-center vdb-c-gap-6">
+        <ChevronDownIcon class="vdb-c-h-16 vdb-c-w-16 vdb-c-text-[#969696]" />
+        <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-text-[#969696]">
+          {{ queuedMessages.length }} Queued
+        </span>
+      </div>
+      <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-8">
+        <div
+          v-for="(msg, index) in queuedMessages"
+          :key="msg.id"
+          class="vdb-c-flex vdb-c-items-start vdb-c-gap-8 vdb-c-rounded vdb-c-bg-white vdb-c-px-10 vdb-c-py-8"
+        >
+          <div class="vdb-c-flex-1">
+            <p
+              class="vdb-c-text-[13px] vdb-c-font-normal vdb-c-leading-[20px] vdb-c-text-[#1E1E1E]"
+            >
+              {{ msg.text }}
+            </p>
+            <p class="vdb-c-mt-4 vdb-c-text-[12px] vdb-c-text-[#969696]">
+              Sends after message finishes ( we are aborting the current message)
+            </p>
+          </div>
+          <button
+            @click="removeQueuedMessage(index)"
+            class="vdb-c-flex-shrink-0 vdb-c-p-4 vdb-c-transition hover:vdb-c-opacity-70"
+            title="Remove from queue"
+          >
+            <TrashIcon :stroke-color="'#969696'" />
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div
       :class="[
         'vdb-c-relative vdb-c-w-full vdb-c-rounded-[26px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-10 vdb-c-py-[7px]',
@@ -51,14 +89,21 @@
           <button
             ref="plusButtonRef"
             @click="toggleDropUp"
-            class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-roy focus:vdb-c-border-orange-200 focus:vdb-c-bg-orange-100"
+            :disabled="chatLoading"
+            :class="[
+              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
+              chatLoading
+                ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-roy'
+                : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-roy focus:vdb-c-border-orange-200 focus:vdb-c-bg-orange-100',
+            ]"
           >
-            <PlusIcon />
+            <PlusIcon :class="[chatLoading ? 'vdb-c-opacity-50' : '']" />
           </button>
           <AddDropUp
             :is-open="showDropUp"
             :trigger-element="plusButtonRef"
             :agents="allAgentsForDropdown"
+            :disabled="chatLoading"
             @close="showDropUp = false"
             @agent-select="handleAgentSelect"
             @files-selected="handleFilesSelected"
@@ -244,6 +289,8 @@ import ChevronDown from '../../../icons/ChevronDown.vue';
 import SearchControlsPanel from './SearchControlsPanel.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
 import StopIcon from '../../../icons/StopIcon.vue';
+import TrashIcon from '../../../chat/v2/icons/TrashIcon.vue';
+import ChevronDownIcon from '../../../chat/v2/icons/ChevronDownIcon.vue';
 
 const props = defineProps({
   context: {
@@ -329,6 +376,9 @@ const plusButtonRef = ref(null);
 const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
+
+const queuedMessages = ref([]);
+let queueIdCounter = 0;
 
 const selectedModel = computed(() => context?.selectedModel?.value || context?.selectedModel);
 const placeholder = computed(() => {
@@ -526,6 +576,7 @@ const handleAgentSelect = (agent) => {
 };
 
 const toggleDropUp = () => {
+  if (chatLoading.value) return;
   showDropUp.value = !showDropUp.value;
 };
 
@@ -580,6 +631,8 @@ const formatFileSize = (bytes) => {
 };
 
 const handleFilesSelected = (files) => {
+  if (chatLoading.value) return;
+
   files.forEach((file) => {
     let fileType = 'file';
     if (file.type.startsWith('image/')) {
@@ -671,6 +724,12 @@ watch(hasVideoId, (videoIdExists) => {
   }
 });
 
+watch(chatLoading, (isLoading, wasLoading) => {
+  if (wasLoading && !isLoading) {
+    processQueue();
+  }
+});
+
 onMounted(async () => {
   window.addEventListener('click', handleClickOutside);
 
@@ -698,6 +757,7 @@ onUnmounted(() => {
 const handleUploadFromDevice = () => {};
 
 const handleUploadFromCollection = () => {
+  if (chatLoading.value) return;
   showUploadFromCollectionModal.value = true;
   showDropUp.value = false;
 };
@@ -755,7 +815,60 @@ const handleStopMessage = () => {
   }
 };
 
+const addToQueue = (text) => {
+  if (!text || !text.trim()) return;
+
+  handleStopMessage();
+
+  queuedMessages.value.push({
+    id: queueIdCounter++,
+    text: text.trim(),
+  });
+
+  inputText.value = '';
+};
+
+const removeQueuedMessage = (index) => {
+  queuedMessages.value.splice(index, 1);
+};
+
+const processQueue = () => {
+  if (queuedMessages.value.length === 0) return;
+
+  // Join all queued messages with newlines
+  const combinedText = queuedMessages.value.map((msg) => msg.text).join('\n\n');
+
+  // Clear the queue
+  queuedMessages.value = [];
+
+  // Send the combined message
+  if (context?.handleAddMessage) {
+    const messageData = {
+      text: combinedText,
+      agents: [],
+      files: [],
+      uploaded_files: [],
+      additionalInfo: null,
+    };
+
+    const modelId = selectedModel?.value?.id || selectedModel?.id;
+    if (modelId) {
+      messageData.model_name = modelId;
+    }
+    if (props.editedContext) {
+      messageData.edited_context = props.editedContext;
+    }
+
+    context.handleAddMessage(messageData);
+  }
+};
+
 const handleSend = () => {
+  if (chatLoading.value) {
+    addToQueue(inputText.value);
+    return;
+  }
+
   if (!canSend.value) return;
 
   // Prepare files for sending (raw File objects from device uploads)
