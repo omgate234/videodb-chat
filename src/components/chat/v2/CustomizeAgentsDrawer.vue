@@ -213,6 +213,7 @@ import ChevronDownIcon from './icons/ChevronDownIcon.vue';
 import MixerHorizontalIcon from '../../icons/MixerHorizontalIcon.vue';
 import CensorIcon from './icons/agents/CensorIcon.vue';
 import ClipIcon from './icons/agents/ClipIcon.vue';
+import EditIcon from './icons/agents/EditIcon.vue';
 import ResetIcon from '../../icons/Reset.vue';
 import TextArea from './elements/TextArea.vue';
 
@@ -298,6 +299,17 @@ const AGENT_CONFIGS = {
       { promptName: 'multimodal_prompt', label: 'Multimodal Prompt' },
     ],
   },
+  editing: {
+    id: 'editing',
+    title: 'Editing Agent',
+    description: 'Video editing and manipulation',
+    icon: EditIcon,
+    showBorder: false,
+    chevronColor: '#969696',
+    showModelSelector: true,
+    useAllProviders: false,
+    prompts: [{ promptName: 'editing_prompt', label: 'Editing Prompt' }],
+  },
 };
 
 const agents = computed(() => Object.values(AGENT_CONFIGS));
@@ -321,8 +333,8 @@ const fetchModels = async () => {
 };
 
 const getPromptValue = (agentId, promptName) => {
-  const userPrompt = chatContext.userPrompts.value?.[agentId]?.[promptName];
-  const defaultPrompt = chatContext.defaultPrompts.value?.[agentId]?.[promptName];
+  const userPrompt = chatContext?.userPrompts?.value?.[agentId]?.[promptName];
+  const defaultPrompt = chatContext?.defaultPrompts?.value?.[agentId]?.[promptName];
 
   if (userPrompt) {
     return typeof userPrompt === 'object' ? userPrompt.prompt : userPrompt;
@@ -333,7 +345,8 @@ const getPromptValue = (agentId, promptName) => {
 
 const getModelName = (agentId, promptNames) => {
   for (const promptName of promptNames) {
-    const userPrompt = chatContext.userPrompts.value?.[agentId]?.[promptName];
+    console.log(chatContext?.userPrompts);
+    const userPrompt = chatContext?.userPrompts?.value?.[agentId]?.[promptName];
     if (userPrompt?.model_name) {
       return userPrompt.model_name;
     }
