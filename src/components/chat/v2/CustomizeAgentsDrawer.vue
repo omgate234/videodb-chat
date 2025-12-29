@@ -214,6 +214,7 @@ import MixerHorizontalIcon from '../../icons/MixerHorizontalIcon.vue';
 import CensorIcon from './icons/agents/CensorIcon.vue';
 import ClipIcon from './icons/agents/ClipIcon.vue';
 import EditIcon from './icons/agents/EditIcon.vue';
+import GenerateIcon from './icons/agents/GenerateIcon.vue';
 import ResetIcon from '../../icons/Reset.vue';
 import TextArea from './elements/TextArea.vue';
 
@@ -309,6 +310,24 @@ const AGENT_CONFIGS = {
     showModelSelector: true,
     useAllProviders: false,
     prompts: [{ promptName: 'editing_prompt', label: 'Editing Prompt' }],
+  },
+  promo_agent: {
+    id: 'promo_agent',
+    title: 'Promo Agent',
+    description: 'Promotional video generation',
+    icon: GenerateIcon,
+    showBorder: false,
+    chevronColor: '#969696',
+    showModelSelector: true,
+    useAllProviders: false,
+    prompts: [
+      {
+        promptName: 'generate_director_instructions_prompt',
+        label: 'Director Instructions Prompt',
+      },
+      { promptName: 'generate_video_summary_prompt', label: 'Video Summary Prompt' },
+      { promptName: 'pick_promo_scenes_prompt', label: 'Pick Promo Scenes Prompt' },
+    ],
   },
 };
 
