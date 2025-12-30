@@ -1,5 +1,7 @@
 <template>
   <Teleport to="body">
+    <NotificationCenter ref="notificationCenter" />
+
     <Transition name="drawer-backdrop">
       <div
         v-if="isOpen"
@@ -187,10 +189,10 @@
           >
             <button
               @click="handleSave"
-              :disabled="!hasModifications || isSaving || hasEmptyPrompts"
+              :disabled="isSaving || hasEmptyPrompts"
               class="vdb-c-flex vdb-c-items-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-transparent vdb-c-px-[11px] vdb-c-py-[7px] vdb-c-text-center vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-white vdb-c-transition-all"
               :class="
-                hasModifications && !isSaving && !hasEmptyPrompts
+                !isSaving && !hasEmptyPrompts
                   ? 'vdb-c-bg-[#FF7E32] hover:vdb-c-bg-[#E67129]'
                   : 'vdb-c-cursor-not-allowed vdb-c-bg-[#B9B9B9]'
               "
@@ -217,6 +219,9 @@ import EditIcon from './icons/agents/EditIcon.vue';
 import GenerateIcon from './icons/agents/GenerateIcon.vue';
 import ResetIcon from '../../icons/Reset.vue';
 import TextArea from './elements/TextArea.vue';
+import NotificationCenter from '../elements/NotificationCenter.vue';
+import RedCheck from '../../icons/RedCheck.vue';
+import RedExclamation from '../../icons/RedExclamation.vue';
 
 const props = defineProps({
   isOpen: {
@@ -236,6 +241,7 @@ const isResettingPrompt = ref(false);
 const selectedModelName = ref(null);
 const showModelDropdown = ref(false);
 const allProviders = ref([]);
+const notificationCenter = ref(null);
 
 const availableModels = computed(() => {
   if (!selectedAgent.value) return [];
@@ -429,8 +435,20 @@ const resetPrompt = async (promptConfig) => {
     await chatContext.deletePrompt(selectedAgent.value.id, promptConfig.promptName);
     loadAgentPrompts(selectedAgent.value);
     hasModifications.value = false;
+
+    notificationCenter.value?.addNotification('Reset to Default', {
+      type: 'success',
+      icon: RedCheck,
+      duration: 3000,
+    });
   } catch (error) {
     console.error('Error resetting prompt:', error);
+
+    notificationCenter.value?.addNotification('Failed to reset prompt', {
+      type: 'error',
+      icon: RedExclamation,
+      duration: 5000,
+    });
   } finally {
     isResettingPrompt.value = false;
   }
@@ -452,8 +470,22 @@ const handleSave = async () => {
 
     await Promise.all(savePromises);
     hasModifications.value = false;
+    notificationCenter.value?.addNotification('Updated Successfully', {
+      type: 'success',
+      icon: RedCheck,
+      duration: 3000,
+    });
   } catch (error) {
     console.error('Error saving prompts:', error);
+
+    const promptCount = selectedAgent.value.prompts.length;
+    const message = 'Failed to update prompt' + (promptCount === 1 ? '' : 's');
+
+    notificationCenter.value?.addNotification(message, {
+      type: 'error',
+      icon: RedExclamation,
+      duration: 5000,
+    });
   } finally {
     isSaving.value = false;
   }
