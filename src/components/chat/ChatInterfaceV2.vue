@@ -7,6 +7,7 @@
       :is-open="isCustomizeAgentsDrawerOpen"
       @close="handleCloseCustomizeAgentsDrawer"
     />
+    <CostDrawer :is-open="isCostDrawerOpen" @close="handleCloseCostDrawer" />
   </div>
 </template>
 <script setup>
@@ -20,6 +21,7 @@ import Sidebar from './v2/Sidebar.vue';
 import PageDisplay from './PageDisplay.vue';
 import UploadNotifications from './elements/UploadNotifications.vue';
 import CustomizeAgentsDrawer from './v2/CustomizeAgentsDrawer.vue';
+import CostDrawer from './v2/CostDrawer.vue';
 
 import ChatSearchResults from '../message-handlers/ChatSearchResults.vue';
 import ChatVideo from '../message-handlers/ChatVideo.vue';
@@ -171,6 +173,7 @@ const showCollectionView = ref(false);
 const taggedAgent = ref([]);
 const selectedModel = ref(null);
 const isCustomizeAgentsDrawerOpen = ref(false);
+const isCostDrawerOpen = ref(false);
 
 const useChatHook = props.customChatHook || useVideoDBAgent;
 const agentHook = useChatHook(props.chatHookConfig);
@@ -227,6 +230,8 @@ const {
   defaultPrompts,
   userPrompts,
   refreshUserPrompts,
+  fetchAllCostingsPerUser,
+  fetchTotalCostPerProvider,
 } = agentHook;
 
 const uploadSimulator = useUploadChatSimulator();
@@ -930,6 +935,14 @@ const handleCloseCustomizeAgentsDrawer = () => {
   isCustomizeAgentsDrawerOpen.value = false;
 };
 
+const handleOpenCostDrawer = () => {
+  isCostDrawerOpen.value = true;
+};
+
+const handleCloseCostDrawer = () => {
+  isCostDrawerOpen.value = false;
+};
+
 const chatContext = {
   chatInput,
   chatAttachments,
@@ -938,6 +951,8 @@ const chatContext = {
   handleModelSelect,
   handleOpenCustomizeAgentsDrawer,
   handleCloseCustomizeAgentsDrawer,
+  handleOpenCostDrawer,
+  handleCloseCostDrawer,
   conversations: computed(() => {
     const currentSessionId = sessionId.value;
 
@@ -1071,6 +1086,8 @@ const chatContext = {
   defaultPrompts,
   userPrompts,
   refreshUserPrompts,
+  fetchAllCostingsPerUser,
+  fetchTotalCostPerProvider,
   handleCreateNewSession,
   handleSessionClick,
   handleCollectionClick,
