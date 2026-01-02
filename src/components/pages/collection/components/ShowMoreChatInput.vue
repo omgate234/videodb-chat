@@ -26,7 +26,7 @@
               {{ msg.text }}
             </p>
             <p class="vdb-c-mt-4 vdb-c-text-[12px] vdb-c-text-[#969696]">
-              Sends after message finishes ( we are aborting the current message)
+              Sends after message finishes
             </p>
           </div>
           <button
