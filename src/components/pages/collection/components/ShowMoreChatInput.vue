@@ -316,18 +316,6 @@ const collectionHasVideos = computed(() => {
   );
 });
 
-const chatLoading = computed(() => {
-  if (!props.showLoadingState) {
-    return false;
-  }
-  const conversations = context?.conversations?.value || context?.conversations || {};
-  return Object.values(conversations).some((conv) =>
-    Object.values(conv).some(
-      (content) => content.status === 'progress' || content.clientLoading || content.is_mock
-    )
-  );
-});
-
 const pendingMessageId = computed(() => {
   if (!props.showLoadingState) {
     return null;
@@ -377,8 +365,22 @@ const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
 
-const queuedMessages = ref([]);
-let queueIdCounter = 0;
+const chatLoading = computed(() => {
+  if (!props.showLoadingState) {
+    return false;
+  }
+  const sid = context.sessionId?.value || context.sessionId;
+  return context.isSessionBusy?.(sid) || false;
+});
+
+const queuedMessages = computed(() => {
+  const sid = context.sessionId?.value || context.sessionId;
+  if (!sid || !context.messageQueues) return [];
+  return (context.messageQueues[sid] || []).map((m) => ({
+    id: m.id,
+    text: m.text,
+  }));
+});
 
 const selectedModel = computed(() => context?.selectedModel?.value || context?.selectedModel);
 const placeholder = computed(() => {
@@ -724,12 +726,6 @@ watch(hasVideoId, (videoIdExists) => {
   }
 });
 
-watch(chatLoading, (isLoading, wasLoading) => {
-  if (wasLoading && !isLoading) {
-    processQueue();
-  }
-});
-
 onMounted(async () => {
   window.addEventListener('click', handleClickOutside);
 
@@ -815,61 +811,19 @@ const handleStopMessage = () => {
   }
 };
 
-const addToQueue = (text) => {
-  if (!text || !text.trim()) return;
-
-  handleStopMessage();
-
-  queuedMessages.value.push({
-    id: queueIdCounter++,
-    text: text.trim(),
-  });
-
-  inputText.value = '';
-};
-
 const removeQueuedMessage = (index) => {
-  queuedMessages.value.splice(index, 1);
-};
-
-const processQueue = () => {
-  if (queuedMessages.value.length === 0) return;
-
-  // Join all queued messages with newlines
-  const combinedText = queuedMessages.value.map((msg) => msg.text).join('\n\n');
-
-  // Clear the queue
-  queuedMessages.value = [];
-
-  // Send the combined message
-  if (context?.handleAddMessage) {
-    const messageData = {
-      text: combinedText,
-      agents: [],
-      files: [],
-      uploaded_files: [],
-      additionalInfo: null,
-    };
-
-    const modelId = selectedModel?.value?.id || selectedModel?.id;
-    if (modelId) {
-      messageData.model_name = modelId;
-    }
-    if (props.editedContext) {
-      messageData.edited_context = props.editedContext;
-    }
-
-    context.handleAddMessage(messageData);
+  const sid = context.sessionId?.value || context.sessionId;
+  if (sid && context.messageQueues?.[sid]) {
+    context.messageQueues[sid].splice(index, 1);
   }
 };
 
 const handleSend = () => {
-  if (chatLoading.value) {
-    addToQueue(inputText.value);
-    return;
-  }
+  const textClean = inputText.value.trim();
 
-  if (!canSend.value) return;
+  if (textClean.length === 0) return;
+
+  const targetSid = context.sessionId?.value || context.sessionId;
 
   // Prepare files for sending (raw File objects from device uploads)
   const filesToSend = uploadedFiles.value.map((f) => f.file);
@@ -901,35 +855,37 @@ const handleSend = () => {
         }
       : null;
 
-  if (context?.handleAddMessage) {
-    const messageData = {
-      text: inputText.value,
-      agents: selectedAgent.value ? [selectedAgent.value.name] : [],
-      files: filesToSend,
-      uploaded_files: uploadedFilesFromCollection,
-      additionalInfo: additionalInfo,
-    };
+  const payload = {
+    text: textClean,
+    agents: selectedAgent.value ? [selectedAgent.value.name] : [],
+    files: filesToSend,
+    uploaded_files: uploadedFilesFromCollection,
+    additionalInfo: additionalInfo,
+  };
 
-    if (videos.length > 0) {
-      messageData.videos = videos;
-    }
-    if (audios.length > 0) {
-      messageData.audios = audios;
-    }
-    if (voices.length > 0) {
-      messageData.voices = voices;
-    }
-    const modelId = selectedModel?.value?.id || selectedModel?.id;
-    if (modelId) {
-      messageData.model_name = modelId;
-    }
-    if (props.editedContext) {
-      messageData.edited_context = props.editedContext;
-    }
-
-    context.handleAddMessage(messageData);
+  if (videos.length > 0) {
+    payload.videos = videos;
+  }
+  if (audios.length > 0) {
+    payload.audios = audios;
+  }
+  if (voices.length > 0) {
+    payload.voices = voices;
   }
 
+  const modelId = selectedModel?.value?.id || selectedModel?.id;
+  if (modelId) {
+    payload.model_name = modelId;
+  }
+  if (props.editedContext) {
+    payload.edited_context = props.editedContext;
+  }
+
+  if (context?.enqueueMessage) {
+    context.enqueueMessage(targetSid, payload);
+  }
+
+  // Clean up object URLs before clearing
   displayFiles.value.forEach((file) => {
     if (file.type === 'image' && file.url && file.isFromDevice) {
       URL.revokeObjectURL(file.url);
