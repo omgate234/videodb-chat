@@ -881,8 +881,14 @@ const handleSend = () => {
     payload.edited_context = props.editedContext;
   }
 
-  if (context?.enqueueMessage) {
-    context.enqueueMessage(targetSid, payload);
+  if (chatLoading.value) {
+    if (context?.enqueueMessage) {
+      context.enqueueMessage(targetSid, payload);
+    }
+  } else {
+    if (context?.handleAddMessage) {
+      context.handleAddMessage(payload);
+    }
   }
 
   // Clean up object URLs before clearing
