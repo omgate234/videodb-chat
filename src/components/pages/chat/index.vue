@@ -104,6 +104,17 @@
               </div>
             </div>
 
+            <div
+              v-else-if="showEmptyState"
+              class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-bg-white vdb-c-px-60 vdb-c-pb-20 vdb-c-pt-16"
+            >
+              <p
+                class="vdb-c-text-[16px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1E1E1E]"
+              >
+                Did not find any messages
+              </p>
+            </div>
+
             <!-- Chat messages (scrollable area) -->
             <div
               v-else
@@ -260,6 +271,13 @@ const collectionsList = computed(() => collections?.value || []);
 const showLoadingState = computed(() => {
   return (
     isLoadingSession?.value &&
+    (!conversations?.value || Object.keys(conversations.value).length === 0)
+  );
+});
+
+const showEmptyState = computed(() => {
+  return (
+    !isLoadingSession?.value &&
     (!conversations?.value || Object.keys(conversations.value).length === 0)
   );
 });
