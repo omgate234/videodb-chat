@@ -148,9 +148,7 @@ const fetchContext = async (forceRefetch = false) => {
     return;
   }
 
-  const sessionChanged = currentSessionId.value !== sessionIdValue;
-
-  if (!forceRefetch && !sessionChanged && originalContext.value) {
+  if (!forceRefetch && originalContext.value) {
     return;
   }
 
@@ -162,6 +160,7 @@ const fetchContext = async (forceRefetch = false) => {
     const result = await props.fetchSessionContext(sessionIdValue);
 
     if (result.status === 'success' && result.data) {
+      console.log('result.data', result.data);
       const contextMessages = result.data.context_messages || [];
       const formattedContext = JSON.stringify(contextMessages, null, 2);
       originalContext.value = formattedContext;
