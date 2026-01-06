@@ -246,23 +246,13 @@ const notificationCenter = ref(null);
 const availableModels = computed(() => {
   if (!selectedAgent.value) return [];
 
-  if (selectedAgent.value.useAllProviders) {
-    return allProviders.value.flatMap((provider) =>
-      provider.models.map((model) => ({
-        model_name: model.id,
-        display_name: model.name,
-        provider: provider.name,
-      }))
-    );
-  } else {
-    const openaiProvider = allProviders.value.find((p) => p.provider === 'openai');
-    return (
-      openaiProvider?.models.map((model) => ({
-        model_name: model.id,
-        display_name: model.name,
-      })) || []
-    );
-  }
+  return allProviders.value.flatMap((provider) =>
+    provider.models.map((model) => ({
+      model_name: model.id,
+      display_name: model.name,
+      provider: provider.name,
+    }))
+  );
 });
 
 const AGENT_CONFIGS = {
