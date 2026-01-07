@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-50 vdb-c-flex vdb-c-items-center vdb-c-justify-center"
+      class="vdb-c-fixed vdb-c-inset-0 vdb-c-z-[1500] vdb-c-flex vdb-c-items-center vdb-c-justify-center"
       @click="$emit('close')"
     >
       <div
