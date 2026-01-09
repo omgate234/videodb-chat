@@ -1,9 +1,20 @@
 <template>
-  <div>
-    <!-- Videos Grid -->
+  <div class="vdb-c-relative">
+    <div
+      v-if="isLoading"
+      class="vdb-c-pointer-events-none vdb-c-absolute vdb-c-inset-0 vdb-c-z-[100] vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-lg vdb-c-bg-white/60 vdb-c-backdrop-blur-[2px]"
+    >
+      <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
+        <div class="vdb-c-h-[24px] vdb-c-w-[24px]">
+          <SpinnerIcon />
+        </div>
+        <span class="vdb-c-text-sm vdb-c-font-medium vdb-c-text-[#1E1E1E]">Loading...</span>
+      </div>
+    </div>
+
     <div class="vdb-c-grid vdb-c-grid-cols-12 vdb-c-gap-20">
       <div
-        v-for="(item, index) in paginatedAssets"
+        v-for="(item, index) in displayedAssets"
         :key="`post-${item.id}`"
         class="vdb-c-col-span-12 sm:vdb-c-col-span-6"
         :class="[
@@ -56,26 +67,25 @@
       </div>
     </div>
 
-    <!-- Pagination -->
     <div
       v-if="showPagination && totalPages > 1"
       class="vdb-c-mt-20 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-8"
     >
       <NavigationButton
         label="Previous"
-        :disabled="currentPage === 1"
+        :disabled="activePage === 1 || isLoading"
         :is-previous="true"
-        @click="goToPage(currentPage - 1)"
+        @click="goToPage(activePage - 1)"
       />
 
       <template v-for="(pageNumber, index) in displayedPageNumbers" :key="pageNumber">
         <PaginationButton
           :target-page="pageNumber"
-          :state="currentPage === pageNumber ? 'active' : 'default'"
+          :state="activePage === pageNumber ? 'active' : 'default'"
           :label="pageNumber"
+          :disabled="isLoading"
           @click="goToPage"
         />
-        <!-- Show ellipsis if there's a gap between consecutive numbers -->
         <div
           class="vdb-c-flex vdb-c-h-40 vdb-c-w-40 vdb-c-items-end vdb-c-justify-center vdb-c-px-2 vdb-c-text-[#969696]"
           v-if="
@@ -89,33 +99,46 @@
 
       <NavigationButton
         label="Next"
-        :disabled="currentPage === totalPages"
-        @click="goToPage(currentPage + 1)"
+        :disabled="activePage === totalPages || isLoading"
+        @click="goToPage(activePage + 1)"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AudioCard from './AudioCard.vue';
 import ImageCard from './ImageCard.vue';
 import NavigationButton from './NavigationButton.vue';
 import PaginationButton from './PaginationButton.vue';
 import VideoCard from './VideoCard.vue';
+import SpinnerIcon from '../icons/SpinnerIcon.vue';
 
 const props = defineProps({
   assetResults: {
     type: Array,
     default: () => [],
   },
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
+  currentPage: {
+    type: Number,
+    default: 1,
+  },
   itemsPerPage: {
     type: Number,
-    default: 8,
+    default: 12,
   },
   showPagination: {
     type: Boolean,
     default: true,
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
   },
   columns: {
     type: Number,
@@ -137,46 +160,73 @@ const props = defineProps({
   },
 });
 
-const currentPage = ref(1);
-const totalPages = computed(() => Math.ceil(props.assetResults.length / props.itemsPerPage));
+const emit = defineEmits([
+  'video-click',
+  'delete-video',
+  'delete-audio',
+  'delete-voice',
+  'delete-image',
+  'start-editing',
+  'save-editing',
+  'cancel-editing',
+  'update:currentPage',
+]);
 
-const paginatedAssets = computed(() => {
+const isServerSidePagination = computed(() => props.totalCount > 0);
+
+const localPage = ref(1);
+
+const activePage = computed(() => {
+  return isServerSidePagination.value ? props.currentPage : localPage.value;
+});
+
+const totalPages = computed(() => {
+  const count = isServerSidePagination.value ? props.totalCount : props.assetResults.length;
+  return Math.ceil(count / props.itemsPerPage);
+});
+
+const displayedAssets = computed(() => {
   if (!props.showPagination) {
     return props.assetResults;
   }
-  const start = (currentPage.value - 1) * props.itemsPerPage;
+
+  if (isServerSidePagination.value) {
+    return props.assetResults;
+  }
+
+  const start = (localPage.value - 1) * props.itemsPerPage;
   const end = start + props.itemsPerPage;
   return props.assetResults.slice(start, end);
 });
 
+watch(
+  () => props.assetResults.length,
+  () => {
+    if (!isServerSidePagination.value) {
+      localPage.value = 1;
+    }
+  }
+);
+
 const displayedPageNumbers = computed(() => {
   const total = totalPages.value;
-  const current = currentPage.value;
+  const current = activePage.value;
 
-  // 1. If we have very few pages (5 or less), just show them all.
-  // We use 5 instead of 4 here because '1 ... 4 5' looks weird compared to just '1 2 3 4 5'
   if (total <= 5) {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
 
-  // 2. We want to show: First Page, Last Page, and a "Window" around current page
-  // We use a Set to automatically handle duplicate numbers (e.g., if current is 1)
   const pages = new Set([1, total]);
 
-  // 3. Add neighbors (Current - 1, Current, Current + 1)
-  // But we clamp the window to ensure we always show at least 3 numbers together
   if (current <= 3) {
-    // If near the start (e.g., Page 1, 2, or 3), show 1, 2, 3, 4 ... Last
     pages.add(2);
     pages.add(3);
     pages.add(4);
   } else if (current >= total - 2) {
-    // If near the end (e.g., Page 8, 9, or 10), show 1 ... 7, 8, 9, 10
     pages.add(total - 3);
     pages.add(total - 2);
     pages.add(total - 1);
   } else {
-    // If in the middle (e.g., Page 5), show 1 ... 4, 5, 6 ... 10
     pages.add(current - 1);
     pages.add(current);
     pages.add(current + 1);
@@ -186,19 +236,13 @@ const displayedPageNumbers = computed(() => {
 });
 
 const goToPage = (page) => {
+  if (props.isLoading) return;
   if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
+    if (isServerSidePagination.value) {
+      emit('update:currentPage', page);
+    } else {
+      localPage.value = page;
+    }
   }
 };
-
-defineEmits([
-  'video-click',
-  'delete-video',
-  'delete-audio',
-  'delete-voice',
-  'delete-image',
-  'start-editing',
-  'save-editing',
-  'cancel-editing',
-]);
 </script>

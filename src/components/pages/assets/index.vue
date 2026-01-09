@@ -98,7 +98,7 @@
         <SearchInput
           :items="assets"
           @select-item="handleSelectItem"
-          @update:query="(value) => (searchQuery = value)"
+          @update:query="handleSearchUpdate"
         />
         <PrimaryButton
           class="vdb-c-flex-shrink-0"
@@ -157,7 +157,7 @@
       <!-- MAIN CONTENT -->
       <div class="vdb-c-h-full vdb-c-w-full vdb-c-p-24">
         <div
-          v-if="filteredAssets.length === 0"
+          v-if="assets.length === 0"
           class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-12 vdb-c-py-60 vdb-c-text-center"
         >
           <EmptyFolderIcon />
@@ -167,19 +167,24 @@
         </div>
         <VideoList
           v-else
-          :asset-results="filteredAssets"
+          :asset-results="assets"
+          :total-count="totalAssets"
+          :current-page="currentPage"
+          :items-per-page="itemsPerPage"
+          :is-loading="isLoadingAssets"
           :get-image-url="getImageUrl"
           :get-audio-url="getAudioUrl"
           :handle-add-message="context?.handleAddMessage"
           :editing-asset-id="editingAssetId"
           @video-click="handleVideoClick"
-          @delete-video="handleDeleteVideo"
-          @delete-image="handleDeleteImage"
-          @delete-audio="handleDeleteAudio"
-          @delete-voice="handleDeleteVoice"
+          @delete-video="handleDeleteVideoWrapper"
+          @delete-image="handleDeleteImageWrapper"
+          @delete-audio="handleDeleteAudioWrapper"
+          @delete-voice="handleDeleteVoiceWrapper"
           @start-editing="handleStartEditing"
           @save-editing="handleSaveEditing"
           @cancel-editing="handleCancelEditing"
+          @update:currentPage="handlePageChange"
         />
       </div>
     </div>
@@ -211,8 +216,6 @@ import FolderImage from '../../chat/v2/icons/FolderImage.vue';
 import CreateFolderIcon from '../../chat/v2/icons/CreateFolderIcon.vue';
 import CreateCollectionModal from '../../chat/v2/CreateCollectionModal.vue';
 import { useAssets } from './hooks/useAssets.js';
-import { useAssetFilters } from './hooks/useAssetFilters.js';
-import { useAssetSearch } from './hooks/useAssetSearch.js';
 import AddIcon from '../../chat/v2/icons/AddIcon.vue';
 
 const props = defineProps({
@@ -250,7 +253,6 @@ const handleUploadClick = () => {
 
 const handleCancelUpload = () => {
   showUploadModal.value = false;
-
   if (newlyCreatedCollectionId.value) {
     newlyCreatedCollectionId.value = null;
   }
@@ -258,14 +260,13 @@ const handleCancelUpload = () => {
 
 const handleUploadWrapper = async (uploadData) => {
   showUploadModal.value = false;
-
   if (newlyCreatedCollectionId.value) {
     newlyCreatedCollectionId.value = null;
   }
 
   try {
     await context?.handleUpload(uploadData);
-    await loadAllAssets();
+    await loadAssets(apiParams.value);
   } catch (error) {
     console.error('Error uploading file:', error);
   }
@@ -303,16 +304,23 @@ const handleCreateCollectionFromEmpty = async (newCollection) => {
   }
 };
 
-// State
+// UI State
 const activeTab = ref('Video');
 const selectedCollection = ref(null);
 const sortState = ref('');
+const searchQuery = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 8;
 const editingAssetId = ref(null);
 const filterState = reactive({
   dur_less_1: false,
   dur_1_15: false,
   dur_15_30: false,
   dur_more_30: false,
+  size_less_10: false,
+  size_10_100: false,
+  size_100_500: false,
+  size_more_500: false,
 });
 
 // Dropdown Management
@@ -325,7 +333,6 @@ const toggleDropdown = (name) => {
   activeDropdown.value = activeDropdown.value === name ? null : name;
 };
 
-// Handle Click Outside to close dropdowns
 const handleClickOutside = (event) => {
   if (!activeDropdown.value) return;
   const target = event.target;
@@ -345,6 +352,132 @@ const handleClickOutside = (event) => {
   }
 };
 
+// Initialize the assets hook
+const {
+  assets,
+  totalAssets,
+  isLoadingAssets,
+  loadAssets,
+  getImageUrl,
+  getAudioUrl,
+  handleDeleteVideo,
+  handleDeleteAudio,
+  handleDeleteImage,
+  handleDeleteVoice,
+} = useAssets(context);
+
+// Map UI state to API parameters
+const apiParams = computed(() => {
+  const typeMap = {
+    Video: 'video',
+    Audio: 'audio',
+    Images: 'image',
+    Voices: 'voices',
+  };
+
+  let sort_by = 'created_at';
+  let sort_order = 'desc';
+
+  if (sortState.value === 'az') {
+    sort_by = 'name';
+    sort_order = 'asc';
+  } else if (sortState.value === 'za') {
+    sort_by = 'name';
+    sort_order = 'desc';
+  } else if (sortState.value === 'short_long') {
+    sort_by = 'duration';
+    sort_order = 'asc';
+  } else if (sortState.value === 'long_short') {
+    sort_by = 'duration';
+    sort_order = 'desc';
+  } else if (sortState.value === 'small_large') {
+    sort_by = 'size';
+    sort_order = 'asc';
+  } else if (sortState.value === 'large_small') {
+    sort_by = 'size';
+    sort_order = 'desc';
+  } else if (sortState.value === 'newest') {
+    sort_by = 'created_at';
+    sort_order = 'desc';
+  } else if (sortState.value === 'oldest') {
+    sort_by = 'created_at';
+    sort_order = 'asc';
+  }
+
+  let min_duration = null;
+  let max_duration = null;
+  let min_size = null;
+  let max_size = null;
+
+  // Duration filters (in seconds)
+  if (filterState.dur_less_1) {
+    max_duration = 60;
+  } else if (filterState.dur_1_15) {
+    min_duration = 60;
+    max_duration = 900;
+  } else if (filterState.dur_15_30) {
+    min_duration = 900;
+    max_duration = 1800;
+  } else if (filterState.dur_more_30) {
+    min_duration = 1800;
+  }
+
+  // File size filters (in bytes: MB * 1024 * 1024)
+  if (filterState.size_less_10) {
+    max_size = 10 * 1024 * 1024;
+  } else if (filterState.size_10_100) {
+    min_size = 10 * 1024 * 1024;
+    max_size = 100 * 1024 * 1024;
+  } else if (filterState.size_100_500) {
+    min_size = 100 * 1024 * 1024;
+    max_size = 500 * 1024 * 1024;
+  } else if (filterState.size_more_500) {
+    min_size = 500 * 1024 * 1024;
+  }
+
+  return {
+    asset_type: typeMap[activeTab.value],
+    collection_id: selectedCollection.value?.id || null,
+    name_pattern: searchQuery.value.trim() || null,
+    sort_by,
+    sort_order,
+    min_duration,
+    max_duration,
+    min_size,
+    max_size,
+    page: currentPage.value,
+    page_size: itemsPerPage,
+  };
+});
+
+// Debounce timer for search
+let searchDebounceTimer = null;
+
+// Watch for filter/sort/tab/collection changes - reset page and fetch immediately
+watch(
+  [activeTab, selectedCollection, sortState, filterState],
+  () => {
+    currentPage.value = 1;
+    loadAssets(apiParams.value);
+  },
+  { deep: true }
+);
+
+// Watch search query with debounce
+watch(searchQuery, () => {
+  currentPage.value = 1;
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    loadAssets(apiParams.value);
+  }, 300);
+});
+
+// Watch page changes
+watch(currentPage, () => {
+  loadAssets(apiParams.value);
+});
+
+// Watch for navigation to assets page
 watch(
   () => navState.value?.currentPage,
   (newPage, oldPage) => {
@@ -353,9 +486,20 @@ watch(
     const pageJustOpened = isAssetsPage && !wasAssetsPage;
 
     if (pageJustOpened && isSetupComplete.value && collections.value.length > 0) {
-      loadAllAssets();
+      loadAssets(apiParams.value);
     }
   }
+);
+
+// Initial load when setup is complete
+watch(
+  [isSetupComplete, collections],
+  ([setup, cols]) => {
+    if (setup && cols.length > 0 && navState.value?.currentPage === 'assets') {
+      loadAssets(apiParams.value);
+    }
+  },
+  { immediate: true }
 );
 
 onMounted(() => {
@@ -364,46 +508,43 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 });
 
-// Use hooks
-// 1. Initialize Base Assets Hook
-// This hook now manages its own watchers for data loading
-const {
-  assets, // Raw API results
-  isLoadingAssets,
-  getImageUrl,
-  getAudioUrl,
-  handleDeleteVideo,
-  handleDeleteAudio,
-  handleDeleteImage,
-  handleDeleteVoice,
-  loadAllAssets,
-} = useAssets(context);
+// Event handlers
+const handleSearchUpdate = (value) => {
+  searchQuery.value = value;
+};
 
-// 2. Initialize Search Hook
-// Pass raw assets in. Get search-filtered assets out.
-const {
-  searchQuery,
-  searchFilteredAssets, // <--- Used as input for next hook
-  handleSelectItem,
-} = useAssetSearch(assets);
-
-// 3. Initialize Filters Hook
-// Pass SEARCH RESULTS in. Get final UI assets out.
-const { filteredAssets } = useAssetFilters(
-  searchFilteredAssets,
-  selectedCollection,
-  activeTab,
-  sortState,
-  filterState
-);
+const handleSelectItem = (item) => {
+  searchQuery.value = item.name || '';
+};
 
 const handleFilterUpdate = (updatedFilterState) => {
   Object.assign(filterState, updatedFilterState);
 };
 
-const handleVideoClick = (video) => {};
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
+
+const handleVideoClick = () => {};
+
+const handleDeleteVideoWrapper = async (video) => {
+  await handleDeleteVideo(video, apiParams.value);
+};
+
+const handleDeleteAudioWrapper = async (audio) => {
+  await handleDeleteAudio(audio, apiParams.value);
+};
+
+const handleDeleteImageWrapper = async (image) => {
+  await handleDeleteImage(image, apiParams.value);
+};
+
+const handleDeleteVoiceWrapper = async (voice) => {
+  await handleDeleteVoice(voice, apiParams.value);
+};
 
 const handleStartEditing = (asset) => {
   editingAssetId.value = asset.id;
@@ -411,64 +552,43 @@ const handleStartEditing = (asset) => {
 
 const handleSaveEditing = async ({ assetId, name }) => {
   try {
-    // Find the asset in the current results
     const asset = assets.value.find((item) => item.id === assetId);
     if (!asset) return;
 
-    // Store original name for rollback
     const originalName = asset.name;
-
-    // Optimistically update the name
     asset.name = name;
 
-    // Call the appropriate API based on asset type
     let result;
     if (asset.type === 'video') {
       result = await context.callApi(
         `/videodb/collection/${asset.collectionId || asset.collection_id}/video/${assetId}`,
-        {
-          method: 'PATCH',
-          payload: { name: name },
-        }
+        { method: 'PATCH', payload: { name } }
       );
     } else if (asset.type === 'audio') {
       result = await context.callApi(
         `/videodb/collection/${asset.collectionId || asset.collection_id}/audio/${assetId}`,
-        {
-          method: 'PATCH',
-          payload: { name: name },
-        }
+        { method: 'PATCH', payload: { name } }
       );
     } else if (asset.type === 'image') {
       result = await context.callApi(
         `/videodb/collection/${asset.collectionId || asset.collection_id}/image/${assetId}`,
-        {
-          method: 'PATCH',
-          payload: { name: name },
-        }
+        { method: 'PATCH', payload: { name } }
       );
     } else if (asset.type === 'voices') {
       result = await context.callApi(
         `/videodb/collection/${asset.collectionId || asset.collection_id}/voice/${assetId}`,
-        {
-          method: 'PATCH',
-          payload: { name: name },
-        }
+        { method: 'PATCH', payload: { name } }
       );
     }
 
-    console.log('>>> result', result);
     if (result?.status === 'success') {
-      // API call successful, name is already updated optimistically
       editingAssetId.value = null;
     } else {
-      // Revert on failure
       asset.name = originalName;
       throw new Error('Rename failed');
     }
   } catch (error) {
     console.error('Error saving asset name:', error);
-    // Revert the optimistic update on error
     const asset = assets.value.find((item) => item.id === assetId);
     if (asset) {
       asset.name = asset.originalName || asset.name;

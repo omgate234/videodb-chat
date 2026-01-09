@@ -24,50 +24,86 @@
     <div
       v-if="isOpen"
       @click.stop
-      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-50 vdb-c-mt-8 vdb-c-flex vdb-c-w-[250px] vdb-c-cursor-default vdb-c-flex-col vdb-c-gap-[8px] vdb-c-rounded-[12px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-[0px_0px_4px_0px_rgba(0,0,0,0.04),0px_0px_1px_0px_rgba(0,0,0,0.6)]"
+      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-50 vdb-c-mt-8 vdb-c-w-256 vdb-c-rounded-12 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-8"
+      style="
+        box-shadow:
+          0px 23px 6px 0px rgba(0, 0, 0, 0),
+          0px 15px 6px 0px rgba(0, 0, 0, 0.01),
+          0px 8px 5px 0px rgba(0, 0, 0, 0.02),
+          0px 4px 4px 0px rgba(0, 0, 0, 0.03),
+          0px 1px 2px 0px rgba(0, 0, 0, 0.03);
+      "
     >
-      <!-- Alphabetical -->
-      <div class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]">
-        <TitleWithTooltip title="Alphabetical" tooltip-text="" />
-        <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
-          <RadioInput
-            name="sort"
-            value="az"
-            label="A to Z"
-            :model-value="modelValue"
-            @update:model-value="updateSort"
-          />
-          <RadioInput
-            name="sort"
-            value="za"
-            label="Z to A"
-            :model-value="modelValue"
-            @update:model-value="updateSort"
-          />
+      <div class="vdb-c-flex vdb-c-max-h-352 vdb-c-flex-col vdb-c-gap-8 vdb-c-overflow-y-auto">
+        <!-- Alphabetical -->
+        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-4 vdb-c-bg-white">
+          <div
+            class="vdb-c-flex vdb-c-items-center vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6"
+          >
+            <p
+              class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+            >
+              Alphabetical
+            </p>
+          </div>
+          <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-2 vdb-c-pl-12">
+            <RadioOption label="A to Z" value="az" :model-value="modelValue" @change="updateSort" />
+            <RadioOption label="Z to A" value="za" :model-value="modelValue" @change="updateSort" />
+          </div>
         </div>
-      </div>
 
-      <!-- Duration (hidden for Images and Voices) -->
-      <div
-        v-if="showDurationSort"
-        class="w-full vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[4px]"
-      >
-        <TitleWithTooltip title="Duration" tooltip-text="" />
-        <div class="w-full vdb-c-ml-10 vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px]">
-          <RadioInput
-            name="sort"
-            value="short_long"
-            label="Short to Long"
-            :model-value="modelValue"
-            @update:model-value="updateSort"
-          />
-          <RadioInput
-            name="sort"
-            value="long_short"
-            label="Long to Short"
-            :model-value="modelValue"
-            @update:model-value="updateSort"
-          />
+        <!-- Duration (hidden for Images and Voices) -->
+        <div v-if="showDurationSort" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-4 vdb-c-bg-white">
+          <div
+            class="vdb-c-flex vdb-c-items-center vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6"
+          >
+            <p
+              class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+            >
+              Duration
+            </p>
+          </div>
+          <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-2 vdb-c-pl-12">
+            <RadioOption
+              label="Short to Long"
+              value="short_long"
+              :model-value="modelValue"
+              @change="updateSort"
+            />
+            <RadioOption
+              label="Long to Short"
+              value="long_short"
+              :model-value="modelValue"
+              @change="updateSort"
+            />
+          </div>
+        </div>
+
+        <!-- File size (hidden for Images and Voices) -->
+        <div v-if="showFileSizeSort" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-4 vdb-c-bg-white">
+          <div
+            class="vdb-c-flex vdb-c-items-center vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6"
+          >
+            <p
+              class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+            >
+              File size
+            </p>
+          </div>
+          <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-2 vdb-c-pl-12">
+            <RadioOption
+              label="Small to Large"
+              value="small_large"
+              :model-value="modelValue"
+              @change="updateSort"
+            />
+            <RadioOption
+              label="Large to Small"
+              value="large_small"
+              :model-value="modelValue"
+              @change="updateSort"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -77,8 +113,7 @@
 <script setup>
 import { computed } from 'vue';
 import ChevronDownIcon from '../../chat/v2/icons/ChevronDownIcon.vue';
-import TitleWithTooltip from '../collection/components/TitleWithTooltip.vue';
-import RadioInput from '../../chat/v2/elements/RadioInput.vue';
+import RadioOption from './RadioOption.vue';
 
 const props = defineProps({
   isOpen: Boolean,
@@ -102,7 +137,12 @@ const showDurationSort = computed(() => {
   return props.activeTab !== 'Images' && props.activeTab !== 'Voices';
 });
 
+const showFileSizeSort = computed(() => {
+  return props.activeTab !== 'Images' && props.activeTab !== 'Voices';
+});
+
 const updateSort = (value) => {
   emit('update:modelValue', value);
+  emit('toggle');
 };
 </script>

@@ -12,7 +12,6 @@
       class="vdb-c-shadow-xl vdb-c-mx-16 vdb-c-flex vdb-c-h-[90vh] vdb-c-w-full vdb-c-max-w-[1200px] vdb-c-flex-col vdb-c-overflow-hidden vdb-c-rounded-16 vdb-c-bg-white"
       @click.stop
     >
-      <!-- Header -->
       <div
         class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-between vdb-c-gap-16 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
       >
@@ -24,7 +23,7 @@
         </div>
         <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-16">
           <SearchInput
-            :items="combinedAssets"
+            :items="assets"
             @select-item="handleSelectItem"
             @update:query="handleSearchQueryUpdate"
             :placeholder="`Search files in '${collectionName}'`"
@@ -38,18 +37,14 @@
         </div>
       </div>
 
-      <!-- Main Content -->
       <div
         class="vdb-c-flex vdb-c-flex-1 vdb-c-flex-col vdb-c-items-center vdb-c-justify-start vdb-c-gap-[40px] vdb-c-overflow-hidden vdb-c-px-[40px] vdb-c-py-[30px]"
       >
-        <!-- Controls Bar -->
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-flex-wrap vdb-c-items-center vdb-c-justify-between vdb-c-gap-16"
         >
-          <!-- Type Tabs -->
           <AssetTabs :tabs="['Video', 'Audio', 'Voices']" v-model="activeTab" />
 
-          <!-- Filters & Sorts -->
           <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-12">
             <div ref="sortRef">
               <SortDropdown
@@ -71,69 +66,79 @@
           </div>
         </div>
 
-        <!-- Asset Grid -->
-        <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col vdb-c-overflow-hidden">
+        <div
+          class="vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col vdb-c-overflow-hidden"
+        >
           <div
-            v-if="isLoadingAssets && filteredAssets.length === 0"
+            v-if="isLoading && filteredAssets.length === 0"
             class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-12 vdb-c-py-60 vdb-c-text-center"
           >
             <EmptyFolderIcon />
             <p class="vdb-c-font-medium vdb-c-text-vdb-darkishgrey">Loading assets...</p>
           </div>
           <div
-            v-else-if="!isLoadingAssets && filteredAssets.length === 0"
+            v-else-if="!isLoading && filteredAssets.length === 0"
             class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-12 vdb-c-py-60 vdb-c-text-center"
           >
             <EmptyFolderIcon />
             <p class="vdb-c-font-medium vdb-c-text-vdb-darkishgrey">No files found</p>
           </div>
-          <div
-            v-else
-            class="vdb-c-grid vdb-c-grid-cols-4 vdb-c-gap-20 vdb-c-overflow-y-auto vdb-c-pb-4"
-          >
+          <template v-else>
             <div
-              v-for="(asset, index) in filteredAssets"
-              :key="`asset-${asset.id}-${index}`"
-              class="vdb-c-col-span-1"
+              v-if="isLoading"
+              class="vdb-c-pointer-events-none vdb-c-absolute vdb-c-inset-0 vdb-c-z-[100] vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-lg vdb-c-bg-white/60 vdb-c-backdrop-blur-[2px]"
             >
-              <VideoCard
-                v-if="asset.type === 'video'"
-                :item="asset"
-                :index="index"
-                :enabled-selection="true"
-                :is-selected="isAssetSelected(asset)"
-                :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
-                :disable-options="true"
-                @select="handleAssetSelect"
-              />
-              <AudioCard
-                v-else-if="asset.type === 'audio'"
-                :item="asset"
-                :index="index"
-                :get-audio-url="getAudioUrl"
-                :enabled-selection="true"
-                :is-selected="isAssetSelected(asset)"
-                :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
-                :disable-options="true"
-                @select="handleAssetSelect"
-              />
-              <AudioCard
-                v-else-if="asset.type === 'voices'"
-                :item="asset"
-                :index="index"
-                :get-audio-url="getAudioUrl"
-                :enabled-selection="true"
-                :is-selected="isAssetSelected(asset)"
-                :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
-                :disable-options="true"
-                @select="handleAssetSelect"
-              />
+              <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
+                <div class="vdb-c-h-[24px] vdb-c-w-[24px]">
+                  <SpinnerIcon />
+                </div>
+                <span class="vdb-c-text-sm vdb-c-font-medium vdb-c-text-[#1E1E1E]">Loading...</span>
+              </div>
             </div>
-          </div>
+            <div class="vdb-c-grid vdb-c-grid-cols-4 vdb-c-gap-20 vdb-c-overflow-y-auto vdb-c-pb-4">
+              <div
+                v-for="(asset, index) in filteredAssets"
+                :key="`asset-${asset.id}-${index}`"
+                class="vdb-c-col-span-1"
+              >
+                <VideoCard
+                  v-if="asset.type === 'video'"
+                  :item="asset"
+                  :index="index"
+                  :enabled-selection="true"
+                  :is-selected="isAssetSelected(asset)"
+                  :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
+                  :disable-options="true"
+                  @select="handleAssetSelect"
+                />
+                <AudioCard
+                  v-else-if="asset.type === 'audio'"
+                  :item="asset"
+                  :index="index"
+                  :get-audio-url="getAudioUrl"
+                  :enabled-selection="true"
+                  :is-selected="isAssetSelected(asset)"
+                  :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
+                  :disable-options="true"
+                  @select="handleAssetSelect"
+                />
+                <AudioCard
+                  v-else-if="asset.type === 'voices'"
+                  :item="asset"
+                  :index="index"
+                  :get-audio-url="getAudioUrl"
+                  :enabled-selection="true"
+                  :is-selected="isAssetSelected(asset)"
+                  :selection-mode="props.singleSelection ? 'radio' : 'checkbox'"
+                  :disable-options="true"
+                  @select="handleAssetSelect"
+                />
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
-      <!-- Footer -->
       <div
         class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-end vdb-c-gap-10 vdb-c-rounded-b-16 vdb-c-border-t vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-20 vdb-c-py-12"
       >
@@ -153,7 +158,7 @@
               : 'vdb-c-bg-[#EC5B16] vdb-c-text-white hover:vdb-c-bg-[#D94E14]',
           ]"
         >
-          {{ props.singleSelection ? 'Select' : 'Select' }}
+          Select
         </button>
       </div>
     </div>
@@ -169,10 +174,9 @@ import AssetTabs from '../../assets/AssetTabs.vue';
 import SortDropdown from '../../assets/SortDropdown.vue';
 import FilterDropdown from '../../assets/FilterDropdown.vue';
 import EmptyFolderIcon from '../../../chat/v2/icons/EmptyFolderIcon.vue';
+import SpinnerIcon from '../../../chat/v2/icons/SpinnerIcon.vue';
 import VideoCard from '../../../chat/v2/collection/VideoCard.vue';
 import AudioCard from '../../../chat/v2/collection/AudioCard.vue';
-import { useAssetSearch } from '../../assets/hooks/useAssetSearch.js';
-import { useAssetFilters } from '../../assets/hooks/useAssetFilters.js';
 
 const props = defineProps({
   isOpen: {
@@ -193,117 +197,16 @@ const emit = defineEmits(['close', 'select']);
 
 const context = props.context || inject('videodb-chat-context', {});
 
-const {
-  activeCollectionData,
-  activeCollectionVideos,
-  activeCollectionAudios,
-  activeCollectionImages,
-  generateImageUrl,
-  generateAudioUrl,
-  fetchAssets,
-} = context || {};
+const { activeCollectionData, generateAudioUrl, fetchAssets } = context || {};
 
 const collectionName = computed(() => {
   const collection = activeCollectionData?.value || activeCollectionData;
   return collection?.name || 'Collection';
 });
 
-// State for voices
-const activeCollectionVoices = ref([]);
-const isLoadingAssets = ref(false);
-
-// Fetch voices when modal opens
-watch(
-  () => props.isOpen,
-  async (isOpen) => {
-    if (isOpen && fetchAssets) {
-      isLoadingAssets.value = true;
-      const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
-      if (collectionId) {
-        try {
-          const voicesRes = await fetchAssets({
-            collection_id: collectionId,
-            asset_type: 'voices',
-            page: 1,
-            page_size: 10000,
-          });
-          if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
-            activeCollectionVoices.value = voicesRes.data.data.assets;
-          } else {
-            activeCollectionVoices.value = [];
-          }
-        } catch (error) {
-          console.error('Error fetching voices:', error);
-          activeCollectionVoices.value = [];
-        } finally {
-          isLoadingAssets.value = false;
-        }
-      } else {
-        isLoadingAssets.value = false;
-      }
-    } else if (!isOpen) {
-      activeCollectionVoices.value = [];
-      isLoadingAssets.value = false;
-    }
-  },
-  { immediate: true }
-);
-
-// Combine videos, audios, and voices into a single array (no images)
-const combinedAssets = computed(() => {
-  const assets = [];
-  const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
-  const collectionNameValue = collectionName.value;
-
-  const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
-  const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
-  const voices = activeCollectionVoices?.value || [];
-
-  if (Array.isArray(videos)) {
-    videos.forEach((video) => {
-      assets.push({
-        ...video,
-        type: 'video',
-        collectionId: collectionId || video.collection_id,
-        collectionName: collectionNameValue,
-      });
-    });
-  }
-
-  if (Array.isArray(audios)) {
-    audios.forEach((audio) => {
-      assets.push({
-        ...audio,
-        type: 'audio',
-        collectionId: collectionId || audio.collection_id,
-        collectionName: collectionNameValue,
-      });
-    });
-  }
-
-  if (Array.isArray(voices)) {
-    voices.forEach((voice) => {
-      assets.push({
-        ...voice,
-        type: 'voices',
-        collectionId: collectionId || voice.collection_id,
-        collectionName: collectionNameValue,
-      });
-    });
-  }
-
-  return assets;
-});
-
-// Use search hook
-const { searchQuery, searchFilteredAssets, handleSelectItem } = useAssetSearch(combinedAssets);
-
-// Sync search query from SearchInput component
-const handleSearchQueryUpdate = (value) => {
-  searchQuery.value = value;
-};
-
-// State
+const assets = ref([]);
+const isLoading = ref(false);
+const searchQuery = ref('');
 const activeTab = ref('Video');
 const sortState = ref('');
 const filterState = reactive({
@@ -311,21 +214,179 @@ const filterState = reactive({
   dur_1_15: false,
   dur_15_30: false,
   dur_more_30: false,
+  size_less_10: false,
+  size_10_100: false,
+  size_100_500: false,
+  size_more_500: false,
 });
-
-// Selected assets
 const selectedAssets = ref([]);
 
-// Dropdown Management
 const activeDropdown = ref(null);
 const sortRef = ref(null);
 const filterRef = ref(null);
+
+const typeMap = { Video: 'video', Audio: 'audio', Voices: 'voices' };
+
+const apiParams = computed(() => {
+  let sort_by = 'created_at';
+  let sort_order = 'desc';
+
+  if (sortState.value === 'az') {
+    sort_by = 'name';
+    sort_order = 'asc';
+  } else if (sortState.value === 'za') {
+    sort_by = 'name';
+    sort_order = 'desc';
+  } else if (sortState.value === 'short_long') {
+    sort_by = 'duration';
+    sort_order = 'asc';
+  } else if (sortState.value === 'long_short') {
+    sort_by = 'duration';
+    sort_order = 'desc';
+  } else if (sortState.value === 'small_large') {
+    sort_by = 'size';
+    sort_order = 'asc';
+  } else if (sortState.value === 'large_small') {
+    sort_by = 'size';
+    sort_order = 'desc';
+  } else if (sortState.value === 'newest') {
+    sort_by = 'created_at';
+    sort_order = 'desc';
+  } else if (sortState.value === 'oldest') {
+    sort_by = 'created_at';
+    sort_order = 'asc';
+  }
+
+  let min_duration = null;
+  let max_duration = null;
+  let min_size = null;
+  let max_size = null;
+
+  if (filterState.dur_less_1) {
+    max_duration = 60;
+  } else if (filterState.dur_1_15) {
+    min_duration = 60;
+    max_duration = 900;
+  } else if (filterState.dur_15_30) {
+    min_duration = 900;
+    max_duration = 1800;
+  } else if (filterState.dur_more_30) {
+    min_duration = 1800;
+  }
+
+  if (filterState.size_less_10) {
+    max_size = 10 * 1024 * 1024;
+  } else if (filterState.size_10_100) {
+    min_size = 10 * 1024 * 1024;
+    max_size = 100 * 1024 * 1024;
+  } else if (filterState.size_100_500) {
+    min_size = 100 * 1024 * 1024;
+    max_size = 500 * 1024 * 1024;
+  } else if (filterState.size_more_500) {
+    min_size = 500 * 1024 * 1024;
+  }
+
+  const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
+
+  return {
+    asset_type: typeMap[activeTab.value],
+    collection_id: collectionId,
+    name_pattern: searchQuery.value.trim() || null,
+    sort_by,
+    sort_order,
+    min_duration,
+    max_duration,
+    min_size,
+    max_size,
+    page: 1,
+    page_size: 10000,
+  };
+});
+
+let currentRequestId = 0;
+let searchDebounceTimer = null;
+
+const loadAssets = async () => {
+  const collectionId = activeCollectionData?.value?.id || activeCollectionData?.id;
+  if (!collectionId || !fetchAssets) return;
+
+  const requestId = ++currentRequestId;
+  isLoading.value = true;
+
+  try {
+    const response = await fetchAssets(apiParams.value);
+
+    if (requestId !== currentRequestId) return;
+
+    if (response.status === 'success') {
+      const rawAssets = response.data?.data?.assets || [];
+      assets.value = rawAssets.map((asset) => ({
+        ...asset,
+        type: asset.asset_type || typeMap[activeTab.value],
+        collectionId: asset.collection_id || collectionId,
+        collectionName: collectionName.value,
+      }));
+    } else {
+      assets.value = [];
+    }
+  } catch (error) {
+    console.error('Error loading assets:', error);
+    if (requestId === currentRequestId) {
+      assets.value = [];
+    }
+  } finally {
+    if (requestId === currentRequestId) {
+      isLoading.value = false;
+    }
+  }
+};
+
+const filteredAssets = computed(() => {
+  return assets.value;
+});
+
+watch(
+  () => props.isOpen,
+  (isOpen) => {
+    if (isOpen) {
+      selectedAssets.value = [];
+      activeTab.value = 'Video';
+      sortState.value = '';
+      searchQuery.value = '';
+      Object.keys(filterState).forEach((key) => {
+        filterState[key] = false;
+      });
+      loadAssets();
+    } else {
+      assets.value = [];
+      selectedAssets.value = [];
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  [activeTab, sortState, filterState],
+  () => {
+    if (props.isOpen) {
+      loadAssets();
+    }
+  },
+  { deep: true }
+);
+
+watch(searchQuery, () => {
+  if (!props.isOpen) return;
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    loadAssets();
+  }, 300);
+});
 
 const toggleDropdown = (name) => {
   activeDropdown.value = activeDropdown.value === name ? null : name;
 };
 
-// Handle Click Outside to close dropdowns
 const handleClickOutside = (event) => {
   if (!activeDropdown.value) return;
   const target = event.target;
@@ -342,62 +403,43 @@ const handleFilterUpdate = (updatedFilterState) => {
   Object.assign(filterState, updatedFilterState);
 };
 
-// Use filter hook
-const { filteredAssets } = useAssetFilters(
-  searchFilteredAssets,
-  ref(null), // selectedCollection - not used in modal
-  activeTab,
-  sortState,
-  filterState
-);
-
-// Get image URL helper
-const getImageUrl = async (collectionId, imageId) => {
-  if (!generateImageUrl) return null;
-  const result = await generateImageUrl(collectionId, imageId);
-  return result?.url || null;
+const handleSelectItem = (item) => {
+  searchQuery.value = item.name || '';
 };
 
-// Get audio URL helper
+const handleSearchQueryUpdate = (value) => {
+  searchQuery.value = value;
+};
+
 const getAudioUrl = async (collectionId, audioId) => {
   if (!generateAudioUrl) return null;
   const result = await generateAudioUrl(collectionId, audioId);
   return result?.url || null;
 };
 
-// Check if asset is selected
 const isAssetSelected = (asset) => {
   return selectedAssets.value.some(
     (selected) => selected.id === asset.id && selected.type === asset.type
   );
 };
 
-// Handle asset selection
 const handleAssetSelect = (asset) => {
   if (props.singleSelection) {
-    // Radio mode: only one selection allowed
     const index = selectedAssets.value.findIndex(
       (selected) => selected.id === asset.id && selected.type === asset.type
     );
-
     if (index !== -1) {
-      // Deselect if already selected
       selectedAssets.value = [];
     } else {
-      // Select this asset and deselect others
       selectedAssets.value = [asset];
     }
   } else {
-    // Checkbox mode: multiple selections allowed
     const index = selectedAssets.value.findIndex(
       (selected) => selected.id === asset.id && selected.type === asset.type
     );
-
     if (index !== -1) {
-      // Deselect
       selectedAssets.value.splice(index, 1);
     } else {
-      // Select
       selectedAssets.value.push(asset);
     }
   }
@@ -408,22 +450,13 @@ const handleSelect = () => {
   emit('close');
 };
 
-// Reset selection when modal closes
-watch(
-  () => props.isOpen,
-  (newValue) => {
-    if (!newValue) {
-      selectedAssets.value = [];
-    }
-  }
-);
-
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 });
 </script>
 

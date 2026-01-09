@@ -5,7 +5,8 @@
     >
       <div
         v-if="showMore"
-        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-gap-[6px] vdb-c-pl-[10px]"
+        class="vdb-c-flex vdb-c-flex-1 vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-[6px] vdb-c-pl-[10px]"
+        @click="handleCollapse"
       >
         <HeavyFolderIcon
           :stroke-color="'#1E1E1E'"
@@ -19,7 +20,7 @@
       </div>
       <SearchInput
         v-if="showMore"
-        :items="combinedAssets"
+        :items="assets"
         @select-item="handleSelectItem"
         @update:query="handleSearchQueryUpdate"
         :placeholder="collectionName ? `Search files in '${collectionName}'` : 'Search files'"
@@ -34,7 +35,6 @@
       :class="[!hasAssets && !isLoadingAssets ? 'vdb-c-mb-[60px]' : '']"
       class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[60px] vdb-c-p-[40px]"
     >
-      <!-- Chat Input Section -->
       <div
         class="vdb-c-flex vdb-c-w-full vdb-c-max-w-[680px] vdb-c-flex-shrink-0 vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[30px]"
       >
@@ -94,29 +94,28 @@
         </div>
         <ChatInput :context="context" />
       </div>
-      <!-- Assets Section -->
+
       <div
         v-if="hasAssets || isLoadingAssets"
         class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[30px]"
       >
-        <!-- Tabs and Search -->
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-gap-[10px]"
         >
           <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
           <div class="vdb-c-flex-1"></div>
           <SearchInput
-            :items="combinedAssets.filter((asset) => asset.type === activeTab.toLowerCase())"
+            :items="assets"
             @select-item="handleSelectItem"
             @update:query="handleSearchQueryUpdate"
             :placeholder="`Search files in &quot;${collectionName}&quot;`"
             :disabled="isLoadingAssets"
           />
         </div>
-        <!-- Asset Grid -->
+
         <div class="vdb-c-w-full">
           <div
-            v-if="displayedAssets.length === 0"
+            v-if="assets.length === 0"
             class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-12 vdb-c-py-60 vdb-c-text-center"
           >
             <EmptyFolderIcon />
@@ -125,8 +124,9 @@
             </p>
           </div>
           <VideoList
-            v-if="displayedAssets.length > 0"
-            :asset-results="displayedAssets"
+            v-if="assets.length > 0"
+            :asset-results="assets"
+            :is-loading="isLoadingAssets"
             :get-image-url="getImageUrl"
             :get-audio-url="getAudioUrl"
             :handle-add-message="handleAddMessage"
@@ -141,9 +141,9 @@
             @save-editing="handleSaveEditing"
             @cancel-editing="handleCancelEditing"
           />
-          <!-- Show More Button -->
+
           <div
-            v-if="filteredAssets.length > 4 && !isLoadingAssets"
+            v-if="totalCount > 4 && !isLoadingAssets"
             class="vdb-c-mt-20 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center"
           >
             <button
@@ -156,23 +156,19 @@
         </div>
       </div>
     </div>
-    <!-- Show More View -->
+
     <div
       v-if="showMore"
       class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-overflow-hidden"
     >
-      <!-- Main Content (Scrollable) -->
       <div
         class="vdb-c-flex vdb-c-flex-1 vdb-c-flex-col vdb-c-items-center vdb-c-justify-start vdb-c-gap-[40px] vdb-c-overflow-y-auto vdb-c-pt-[30px]"
       >
-        <!-- Controls Bar -->
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-flex-wrap vdb-c-items-center vdb-c-justify-between vdb-c-gap-16 vdb-c-px-[40px]"
         >
-          <!-- Type Tabs -->
           <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
 
-          <!-- Filters & Sorts -->
           <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-12">
             <div ref="sortRef">
               <SortDropdown
@@ -194,24 +190,29 @@
           </div>
         </div>
 
-        <!-- Asset List -->
-        <!-- Use flex-1 here to ensure empty state centers in available space, removed h-full -->
         <div class="vdb-c-w-full vdb-c-flex-1 vdb-c-p-24 vdb-c-px-[40px]">
           <div
-            v-if="filteredAssets.length === 0"
+            v-if="assets.length === 0"
             class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-12 vdb-c-py-60 vdb-c-text-center"
           >
             <EmptyFolderIcon />
-            <p class="vdb-c-font-medium vdb-c-text-vdb-darkishgrey">No files found</p>
+            <p class="vdb-c-font-medium vdb-c-text-vdb-darkishgrey">
+              {{ isLoadingAssets ? 'Loading...' : 'No files found' }}
+            </p>
           </div>
           <VideoList
             v-else
-            :asset-results="filteredAssets"
+            :asset-results="assets"
+            :total-count="totalCount"
+            :current-page="currentPage"
+            :items-per-page="itemsPerPage"
+            :is-loading="isLoadingAssets"
             :get-image-url="getImageUrl"
             :get-audio-url="getAudioUrl"
             :handle-add-message="handleAddMessage"
             :editing-asset-id="editingAssetId"
             :show-pagination="true"
+            @update:currentPage="handlePageChange"
             @video-click="handleVideoClick"
             @delete-video="handleDeleteVideo"
             @delete-image="handleDeleteImage"
@@ -224,11 +225,9 @@
         </div>
       </div>
 
-      <!-- Fixed Chat Input at the bottom -->
       <ShowMoreChatInput :context="context" />
     </div>
 
-    <!-- Delete Collection Modal -->
     <DeleteCollectionModal
       :is-open="showDeleteCollectionModal"
       :collection-name="collectionToDelete?.name || ''"
@@ -237,7 +236,6 @@
       @delete="confirmDeleteCollection"
     />
 
-    <!-- Upload Modal -->
     <UploadModal
       :showUploadDialog="showUploadModal"
       :collections="currentCollectionArray"
@@ -273,8 +271,6 @@ import VideoList from '../../chat/v2/collection/VideoList.vue';
 import SortDropdown from '../assets/SortDropdown.vue';
 import FilterDropdown from '../assets/FilterDropdown.vue';
 import EmptyFolderIcon from '../../chat/v2/icons/EmptyFolderIcon.vue';
-import { useAssetSearch } from '../assets/hooks/useAssetSearch.js';
-import { useAssetFilters } from '../assets/hooks/useAssetFilters.js';
 import ShowMoreChatInput from './components/ShowMoreChatInput.vue';
 import DeleteCollectionModal from './DeleteCollectionModal.vue';
 import NotificationCenter from '../../chat/elements/NotificationCenter.vue';
@@ -297,9 +293,6 @@ const {
   chatLoading,
   chatInputPlaceholder = 'Ask Director',
   activeCollectionData,
-  activeCollectionVideos,
-  activeCollectionAudios,
-  activeCollectionImages,
   handleAddMessage,
   handleTagAgent,
   showChatInput = true,
@@ -307,9 +300,6 @@ const {
   isSetupComplete = false,
   handleUpdateCollectionName,
   deleteCollection,
-  fetchCollectionVideos,
-  fetchCollectionAudios,
-  fetchCollectionImages,
   fetchAssets,
   navState,
   actions,
@@ -342,10 +332,7 @@ const handleUploadWrapper = async (uploadData) => {
   showUploadModal.value = false;
   try {
     await context?.handleUpload(uploadData);
-    const collectionId = currentCollection.value?.id;
-    if (collectionId) {
-      await fetchCollectionAssets(collectionId);
-    }
+    await loadCollectionAssets();
   } catch (error) {
     console.error('Error uploading file:', error);
   }
@@ -399,7 +386,7 @@ const handleOptionsClick = () => {
   showCollectionOptions.value = !showCollectionOptions.value;
 };
 
-const handleRenameCollection = (collection) => {
+const handleRenameCollection = () => {
   showCollectionOptions.value = false;
   isEditing.value = true;
 };
@@ -468,83 +455,26 @@ const cancelDeleteCollection = () => {
   collectionToDelete.value = null;
 };
 
-// Assets section state
+const assets = ref([]);
+const totalCount = ref(0);
 const isLoadingAssets = ref(false);
-const activeCollectionVoices = ref(null);
-
-const fetchCollectionAssets = async (collectionId) => {
-  if (!collectionId) return;
-
-  isLoadingAssets.value = true;
-  try {
-    const [videosRes, audiosRes, imagesRes, voicesRes] = await Promise.all([
-      fetchCollectionVideos?.(collectionId) || Promise.resolve({ data: null }),
-      fetchCollectionAudios?.(collectionId) || Promise.resolve({ data: null }),
-      fetchCollectionImages?.(collectionId) || Promise.resolve({ data: null }),
-      fetchAssets?.({
-        collection_id: collectionId,
-        asset_type: 'voices',
-        page: 1,
-        page_size: 10000,
-      }) || Promise.resolve({ status: 'success', data: { assets: null } }),
-    ]);
-
-    if (collectionId !== activeCollectionData?.value?.id) {
-      return;
-    }
-    if (activeCollectionVideos) {
-      activeCollectionVideos.value = videosRes?.data || null;
-    }
-    if (activeCollectionAudios) {
-      activeCollectionAudios.value = audiosRes?.data || null;
-    }
-    if (activeCollectionImages) {
-      activeCollectionImages.value = imagesRes?.data || null;
-    }
-    if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
-      activeCollectionVoices.value = voicesRes.data.data.assets;
-    } else {
-      activeCollectionVoices.value = null;
-    }
-  } catch (error) {
-    console.error('Error fetching collection assets:', error);
-  } finally {
-    isLoadingAssets.value = false;
-  }
-};
-
-// Watch for when user navigates to collection page OR when collection changes
-watch(
-  () => ({
-    currentPage: navState?.currentPage,
-    collectionId: (activeCollectionData?.value || activeCollectionData)?.id,
-  }),
-  async (newState, oldState) => {
-    const isCollectionPage = newState.currentPage === 'collection';
-    const wasCollectionPage = oldState?.currentPage === 'collection';
-    const collectionChanged = newState.collectionId !== oldState?.collectionId;
-    const pageJustOpened = isCollectionPage && !wasCollectionPage;
-
-    if (collectionChanged) {
-      showMore.value = false;
-    }
-    if (isCollectionPage && newState.collectionId && (pageJustOpened || collectionChanged)) {
-      await fetchCollectionAssets(newState.collectionId);
-    }
-  },
-  { immediate: true, deep: true }
-);
 const activeTab = ref('Video');
 const editingAssetId = ref(null);
 const sortState = ref('');
+const searchQuery = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 8;
 const filterState = reactive({
   dur_less_1: false,
   dur_1_15: false,
   dur_15_30: false,
   dur_more_30: false,
+  size_less_10: false,
+  size_10_100: false,
+  size_100_500: false,
+  size_more_500: false,
 });
 
-// Dropdown Management
 const activeDropdown = ref(null);
 const sortRef = ref(null);
 const filterRef = ref(null);
@@ -553,7 +483,6 @@ const toggleDropdown = (name) => {
   activeDropdown.value = activeDropdown.value === name ? null : name;
 };
 
-// Handle Click Outside to close dropdowns
 const handleClickOutside = (event) => {
   if (!activeDropdown.value) return;
   const target = event.target;
@@ -570,140 +499,207 @@ const handleFilterUpdate = (updatedFilterState) => {
   Object.assign(filterState, updatedFilterState);
 };
 
-// Combine videos, audios, and images into a single array with proper structure
-const combinedAssets = computed(() => {
-  const assets = [];
-  const collectionId = currentCollection.value?.id;
-  const collectionName = currentCollection.value?.name || '';
+const typeMap = { Video: 'video', Audio: 'audio', Images: 'image', Voices: 'voices' };
 
-  // Get arrays (handle both ref and direct value)
-  const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
-  const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
-  const images = activeCollectionImages?.value || activeCollectionImages || [];
-  const voices = activeCollectionVoices?.value || [];
+const apiParams = computed(() => {
+  let sort_by = 'created_at';
+  let sort_order = 'desc';
 
-  // Add videos
-  if (Array.isArray(videos)) {
-    videos.forEach((video) => {
-      assets.push({
-        ...video,
-        type: 'video',
-        collectionId: collectionId || video.collection_id,
-        collectionName,
-      });
-    });
+  if (sortState.value === 'az') {
+    sort_by = 'name';
+    sort_order = 'asc';
+  } else if (sortState.value === 'za') {
+    sort_by = 'name';
+    sort_order = 'desc';
+  } else if (sortState.value === 'short_long') {
+    sort_by = 'duration';
+    sort_order = 'asc';
+  } else if (sortState.value === 'long_short') {
+    sort_by = 'duration';
+    sort_order = 'desc';
+  } else if (sortState.value === 'small_large') {
+    sort_by = 'size';
+    sort_order = 'asc';
+  } else if (sortState.value === 'large_small') {
+    sort_by = 'size';
+    sort_order = 'desc';
+  } else if (sortState.value === 'newest') {
+    sort_by = 'created_at';
+    sort_order = 'desc';
+  } else if (sortState.value === 'oldest') {
+    sort_by = 'created_at';
+    sort_order = 'asc';
   }
 
-  // Add audios
-  if (Array.isArray(audios)) {
-    audios.forEach((audio) => {
-      assets.push({
-        ...audio,
-        type: 'audio',
-        collectionId: collectionId || audio.collection_id,
-        collectionName,
-      });
-    });
+  let min_duration = null;
+  let max_duration = null;
+  let min_size = null;
+  let max_size = null;
+
+  if (filterState.dur_less_1) {
+    max_duration = 60;
+  } else if (filterState.dur_1_15) {
+    min_duration = 60;
+    max_duration = 900;
+  } else if (filterState.dur_15_30) {
+    min_duration = 900;
+    max_duration = 1800;
+  } else if (filterState.dur_more_30) {
+    min_duration = 1800;
   }
 
-  // Add images
-  if (Array.isArray(images)) {
-    images.forEach((image) => {
-      assets.push({
-        ...image,
-        type: 'image',
-        collectionId: collectionId || image.collection_id,
-        collectionName,
-      });
-    });
+  if (filterState.size_less_10) {
+    max_size = 10 * 1024 * 1024;
+  } else if (filterState.size_10_100) {
+    min_size = 10 * 1024 * 1024;
+    max_size = 100 * 1024 * 1024;
+  } else if (filterState.size_100_500) {
+    min_size = 100 * 1024 * 1024;
+    max_size = 500 * 1024 * 1024;
+  } else if (filterState.size_more_500) {
+    min_size = 500 * 1024 * 1024;
   }
 
-  // Add voices
-  if (Array.isArray(voices)) {
-    voices.forEach((voice) => {
-      assets.push({
-        ...voice,
-        type: 'voices',
-        collectionId: collectionId || voice.collection_id,
-        collectionName,
-      });
-    });
-  }
-
-  return assets;
+  return {
+    asset_type: typeMap[activeTab.value],
+    collection_id: currentCollection.value?.id,
+    name_pattern: searchQuery.value.trim() || null,
+    sort_by,
+    sort_order,
+    min_duration,
+    max_duration,
+    min_size,
+    max_size,
+    page: showMore.value ? currentPage.value : 1,
+    page_size: showMore.value ? itemsPerPage : 4,
+  };
 });
 
-// Use search hook
-const { searchQuery, searchFilteredAssets, handleSelectItem } = useAssetSearch(combinedAssets);
+let currentRequestId = 0;
 
-// Sync search query from SearchInput component
+const loadCollectionAssets = async () => {
+  const collectionId = currentCollection.value?.id;
+  if (!collectionId || !fetchAssets) return;
+
+  const requestId = ++currentRequestId;
+  isLoadingAssets.value = true;
+
+  try {
+    const response = await fetchAssets(apiParams.value);
+
+    if (requestId !== currentRequestId) return;
+
+    if (response.status === 'success') {
+      const rawAssets = response.data?.data?.assets || [];
+      assets.value = rawAssets.map((asset) => ({
+        ...asset,
+        type: asset.asset_type || typeMap[activeTab.value],
+        collectionId: asset.collection_id || collectionId,
+        collectionName: collectionName.value,
+      }));
+      totalCount.value =
+        response.data?.data?.pagination?.total_count ||
+        response.data?.data?.total_count ||
+        assets.value.length;
+    } else {
+      assets.value = [];
+      totalCount.value = 0;
+    }
+  } catch (error) {
+    console.error('Error loading collection assets:', error);
+    if (requestId === currentRequestId) {
+      assets.value = [];
+      totalCount.value = 0;
+    }
+  } finally {
+    if (requestId === currentRequestId) {
+      isLoadingAssets.value = false;
+    }
+  }
+};
+
+let searchDebounceTimer = null;
+
+watch(
+  [activeTab, sortState, filterState, showMore],
+  () => {
+    currentPage.value = 1;
+    loadCollectionAssets();
+  },
+  { deep: true }
+);
+
+watch(searchQuery, () => {
+  currentPage.value = 1;
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    loadCollectionAssets();
+  }, 300);
+});
+
+watch(currentPage, () => {
+  loadCollectionAssets();
+});
+
+watch(
+  () => ({
+    currentPage: navState?.currentPage,
+    collectionId: currentCollection.value?.id,
+  }),
+  async (newState, oldState) => {
+    const isCollectionPage = newState.currentPage === 'collection';
+    const wasCollectionPage = oldState?.currentPage === 'collection';
+    const collectionChanged = newState.collectionId !== oldState?.collectionId;
+    const pageJustOpened = isCollectionPage && !wasCollectionPage;
+
+    if (collectionChanged) {
+      assets.value = [];
+      totalCount.value = 0;
+      showMore.value = false;
+      currentPage.value = 1;
+      searchQuery.value = '';
+    }
+
+    if (isCollectionPage && newState.collectionId && (pageJustOpened || collectionChanged)) {
+      await loadCollectionAssets();
+    }
+  },
+  { immediate: true, deep: true }
+);
+
+const hasAssets = computed(() => {
+  return assets.value.length > 0 || totalCount.value > 0;
+});
+
+const totalFilesCount = computed(() => {
+  return totalCount.value;
+});
+
+const handleSelectItem = (item) => {
+  searchQuery.value = item.name || '';
+};
+
 const handleSearchQueryUpdate = (value) => {
   searchQuery.value = value;
 };
 
-// Use filter hook
-const { filteredAssets } = useAssetFilters(
-  searchFilteredAssets,
-  ref(null), // selectedCollection - not used in collection page
-  activeTab,
-  sortState,
-  filterState
-);
-
-// Display only first 4 results
-const displayedAssets = computed(() => {
-  return filteredAssets.value.slice(0, 4);
-});
-
-// Check if there are any assets
-const hasAssets = computed(() => {
-  return combinedAssets.value.length > 0;
-});
-
-// Total files count for delete modal
-const totalFilesCount = computed(() => {
-  if (!collectionToDelete.value) return 0;
-
-  const videos = activeCollectionVideos?.value || activeCollectionVideos || [];
-  const audios = activeCollectionAudios?.value || activeCollectionAudios || [];
-  const images = activeCollectionImages?.value || activeCollectionImages || [];
-  const voices = activeCollectionVoices?.value || [];
-
-  return (
-    (Array.isArray(videos) ? videos.length : 0) +
-    (Array.isArray(audios) ? audios.length : 0) +
-    (Array.isArray(images) ? images.length : 0) +
-    (Array.isArray(voices) ? voices.length : 0)
-  );
-});
-
-// Get image URL helper
 const getImageUrl = async (collectionId, imageId) => {
   if (!generateImageUrl) return null;
   const result = await generateImageUrl(collectionId, imageId);
   return result?.url || null;
 };
 
-// Get audio URL helper
 const getAudioUrl = async (collectionId, audioId) => {
   if (!generateAudioUrl) return null;
   const result = await generateAudioUrl(collectionId, audioId);
   return result?.url || null;
 };
 
-// Delete handlers
 const handleDeleteVideo = async (video) => {
   if (deleteVideo && video.collectionId && video.id) {
     try {
       await deleteVideo(video.collectionId, video.id);
-      // Refetch assets
-      const collectionId = currentCollection.value?.id;
-      if (collectionId) {
-        const videosRes = await fetchCollectionVideos?.(collectionId);
-        if (activeCollectionVideos) {
-          activeCollectionVideos.value = videosRes?.data || null;
-        }
-      }
+      await loadCollectionAssets();
     } catch (error) {
       console.error('Error deleting video:', error);
     }
@@ -714,14 +710,7 @@ const handleDeleteAudio = async (audio) => {
   if (deleteAudio && audio.collectionId && audio.id) {
     try {
       await deleteAudio(audio.collectionId, audio.id);
-      // Refetch assets
-      const collectionId = currentCollection.value?.id;
-      if (collectionId) {
-        const audiosRes = await fetchCollectionAudios?.(collectionId);
-        if (activeCollectionAudios) {
-          activeCollectionAudios.value = audiosRes?.data || null;
-        }
-      }
+      await loadCollectionAssets();
     } catch (error) {
       console.error('Error deleting audio:', error);
     }
@@ -732,14 +721,7 @@ const handleDeleteImage = async (image) => {
   if (deleteImage && image.collectionId && image.id) {
     try {
       await deleteImage(image.collectionId, image.id);
-      // Refetch assets
-      const collectionId = currentCollection.value?.id;
-      if (collectionId) {
-        const imagesRes = await fetchCollectionImages?.(collectionId);
-        if (activeCollectionImages) {
-          activeCollectionImages.value = imagesRes?.data || null;
-        }
-      }
+      await loadCollectionAssets();
     } catch (error) {
       console.error('Error deleting image:', error);
     }
@@ -750,18 +732,7 @@ const handleDeleteVoice = async (voice) => {
   if (deleteVoice && voice.collectionId && voice.id) {
     try {
       await deleteVoice(voice.collectionId, voice.id);
-      const collectionId = currentCollection.value?.id;
-      if (collectionId && fetchAssets) {
-        const voicesRes = await fetchAssets({
-          collection_id: collectionId,
-          asset_type: 'voices',
-          page: 1,
-          page_size: 10000,
-        });
-        if (voicesRes?.status === 'success' && voicesRes?.data?.data?.assets) {
-          activeCollectionVoices.value = voicesRes.data.data.assets;
-        }
-      }
+      await loadCollectionAssets();
     } catch (error) {
       console.error('Error deleting voice:', error);
     }
@@ -780,17 +751,12 @@ const handleStartEditing = (asset) => {
 
 const handleSaveEditing = async ({ assetId, name }) => {
   try {
-    // Find the asset in the current results
-    const asset = combinedAssets.value.find((item) => item.id === assetId);
+    const asset = assets.value.find((item) => item.id === assetId);
     if (!asset) return;
 
-    // Store original name for rollback
     const originalName = asset.name;
-
-    // Optimistically update the name
     asset.name = name;
 
-    // Call the appropriate API based on asset type
     let result;
     const collectionId = asset.collectionId || asset.collection_id;
     if (asset.type === 'video') {
@@ -816,17 +782,14 @@ const handleSaveEditing = async ({ assetId, name }) => {
     }
 
     if (result?.status === 'success') {
-      // API call successful, name is already updated optimistically
       editingAssetId.value = null;
     } else {
-      // Revert on failure
       asset.name = originalName;
       throw new Error('Rename failed');
     }
   } catch (error) {
     console.error('Error saving asset name:', error);
-    // Revert the optimistic update on error
-    const asset = combinedAssets.value.find((item) => item.id === assetId);
+    const asset = assets.value.find((item) => item.id === assetId);
     if (asset) {
       asset.name = asset.originalName || asset.name;
     }
@@ -842,12 +805,24 @@ const handleShowMore = () => {
   showMore.value = true;
 };
 
+const handleCollapse = () => {
+  showMore.value = false;
+  currentPage.value = 1;
+  assets.value = [];
+  loadCollectionAssets();
+};
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 });
 </script>
 
