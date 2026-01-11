@@ -226,7 +226,7 @@ const isExpanded = computed(
 );
 
 const isTroveoAgentTagged = computed(() => {
-  return chatInput.value.includes("@troveo_search");
+  return chatInput.value.includes("search");
 });
 
 const shouldShowTroveoConfig = computed(() => {
