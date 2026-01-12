@@ -25,8 +25,8 @@
             </button>
           </div>
 
-          <p class="vdb-c-text-sm vdb-c-font-normal vdb-c-leading-5 vdb-c-text-[#969696]">
-            Your name and any message you add after sharing stay private.
+          <p class="vdb-c-text-sm vdb-c-font-normal vdb-c-leading-5 vdb-c-text-[#1e1e1e]">
+            This will make the chat visible to everyone with access to the link.
           </p>
 
           <div
