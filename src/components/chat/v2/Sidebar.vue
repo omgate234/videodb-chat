@@ -19,7 +19,9 @@
             class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-bg-black vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-pam disabled:vdb-c-bg-[#B9B9B9]"
             :disabled="newSessionButtonDisabled"
             @click="context.handleCreateNewSession()"
-            @mouseenter="showNewChatTooltip = hasNoCollections"
+            @mouseenter="
+              showNewChatTooltip = newSessionButtonDisabled && currentPage !== 'collection'
+            "
             @mouseleave="showNewChatTooltip = false"
           >
             <ComposeAltIcon :stroke-color="'white'" />
@@ -36,7 +38,7 @@
                 left: `${newChatButtonRef.getBoundingClientRect().right + 8}px`,
               }"
             >
-              <Tooltip text="Please create collection and upload content to chat" />
+              <Tooltip :text="newChatTooltipText" />
             </div>
           </Teleport>
         </div>
@@ -356,6 +358,9 @@ const hasNoCollections = computed(() => {
 
 const newSessionButtonDisabled = computed(() => {
   if (currentPage.value === 'collection') return true;
+  if (currentPage.value === 'default') return true;
+  if (currentPage.value === 'assets') return true;
+  if (currentPage.value === 'agents') return true;
   if (isLoadingCollections.value || hasNoCollections.value) return true;
   return false;
 });
@@ -415,6 +420,16 @@ const agentsButtonRef = ref(null);
 const showNewChatTooltip = ref(false);
 const showAssetLibraryTooltip = ref(false);
 const showAgentsTooltip = ref(false);
+
+const newChatTooltipText = computed(() => {
+  if (hasNoCollections.value) {
+    return 'Please create collection and upload content to chat';
+  }
+  if (['default', 'assets', 'agents'].includes(currentPage.value)) {
+    return 'Navigate to a collection to start a new chat';
+  }
+  return '';
+});
 let resizeObserver = null;
 
 const visibleSections = computed(() => sidebarSections);
