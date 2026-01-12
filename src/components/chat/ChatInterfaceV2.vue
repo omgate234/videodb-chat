@@ -887,8 +887,17 @@ const handleUpload = async (uploadData) => {
 
   const uploadId = uploadNotificationsRef.value.addUpload(name);
 
+  const onProgress = (progress) => {
+    if (progress.phase === 'indexing') {
+      uploadNotificationsRef.value.updateUploadDescription(
+        uploadId,
+        'Uploaded. Indexing in progress...'
+      );
+    }
+  };
+
   try {
-    const response = await uploadMedia(uploadData);
+    const response = await uploadMedia(uploadData, onProgress);
 
     if (response?.ok || response?.status === 'READY') {
       uploadNotificationsRef.value.updateUploadStatus(uploadId, 'success');

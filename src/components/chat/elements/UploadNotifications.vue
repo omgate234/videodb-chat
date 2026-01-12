@@ -9,9 +9,7 @@
         :key="upload.id"
         class="vdb-c-flex vdb-c-h-[80px] vdb-c-w-[400px] vdb-c-cursor-pointer vdb-c-items-center vdb-c-rounded-lg vdb-c-border-2 vdb-c-border-roy vdb-c-bg-white hover:vdb-c-bg-gray-100"
       >
-        <div
-          class="flex items-center justify-center vdb-c-rounded-full vdb-c-px-20 vdb-c-py-14"
-        >
+        <div class="flex items-center justify-center vdb-c-rounded-full vdb-c-px-20 vdb-c-py-14">
           <div
             class="vdb-c-flex vdb-c-h-54 vdb-c-w-54 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full"
             :class="{
@@ -82,9 +80,7 @@
                 <template v-if="upload.status === 'loading'">
                   Uploading<span class="loading-dots"></span>
                 </template>
-                <template v-else-if="upload.status === 'success'">
-                  Upload complete
-                </template>
+                <template v-else-if="upload.status === 'success'"> Upload complete </template>
                 <template v-else> Upload failed </template>
               </template>
             </span>
@@ -96,8 +92,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import FileUpload from "../../icons/FileUpload.vue";
+import { ref, onMounted } from 'vue';
+import FileUpload from '../../icons/FileUpload.vue';
 
 const uploads = ref([]);
 let uploadCounter = 0;
@@ -108,24 +104,27 @@ const addUpload = (name, description = null) => {
     id,
     name,
     description,
-    status: "loading",
+    status: 'loading',
   };
   uploads.value.push(upload);
   return id;
 };
 
-const updateUploadStatus = (id, status) => {
+const updateUploadStatus = (id, status, description = null) => {
   const upload = uploads.value.find((u) => u.id === id);
   if (upload) {
     upload.status = status;
+    if (description !== null) {
+      upload.description = description;
+    }
     // Remove successful uploads after 3 seconds
-    if (status === "success") {
+    if (status === 'success') {
       setTimeout(() => {
         uploads.value = uploads.value.filter((u) => u.id !== id);
       }, 3000);
     }
     // Remove failed uploads after 5 seconds
-    if (status === "error") {
+    if (status === 'error') {
       setTimeout(() => {
         uploads.value = uploads.value.filter((u) => u.id !== id);
       }, 5000);
@@ -133,9 +132,17 @@ const updateUploadStatus = (id, status) => {
   }
 };
 
+const updateUploadDescription = (id, description) => {
+  const upload = uploads.value.find((u) => u.id === id);
+  if (upload) {
+    upload.description = description;
+  }
+};
+
 defineExpose({
   addUpload,
   updateUploadStatus,
+  updateUploadDescription,
 });
 </script>
 
@@ -153,13 +160,13 @@ defineExpose({
 
 @keyframes loadingDots {
   0% {
-    content: ".";
+    content: '.';
   }
   33% {
-    content: "..";
+    content: '..';
   }
   66% {
-    content: "...";
+    content: '...';
   }
 }
 
@@ -169,7 +176,7 @@ defineExpose({
 }
 
 .loading-dots::after {
-  content: "";
+  content: '';
   animation: loadingDots 1.5s infinite;
 }
 </style>
