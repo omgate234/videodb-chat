@@ -29,43 +29,45 @@
             Your name and any message you add after sharing stay private.
           </p>
 
-          <div v-if="isLoading" class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
-            <div
-              class="vdb-c-h-16 vdb-c-w-16 vdb-c-animate-spin vdb-c-rounded-full vdb-c-border-2 vdb-c-border-[#EFEFEF] vdb-c-border-t-[#EC5B16]"
-            ></div>
-            <span class="vdb-c-text-sm vdb-c-font-medium vdb-c-leading-5 vdb-c-text-[#1e1e1e]"
-              >Creating public link...</span
+          <div
+            v-if="isLoading"
+            class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-rounded-12 vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-py-8 vdb-c-pl-10 vdb-c-pr-8"
+          >
+            <span class="vdb-c-text-[16px] vdb-c-font-normal vdb-c-text-[#969696]">
+              https://chat.videodb.io/share/...
+            </span>
+            <button
+              disabled
+              class="vdb-c-flex vdb-c-h-[36px] vdb-c-shrink-0 vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-8 vdb-c-bg-[#c14103] vdb-c-py-8 vdb-c-pl-8 vdb-c-pr-12 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-white"
             >
+              <BlinkingDotIcon class="vdb-c-size-16" />
+              <span>Creating link...</span>
+            </button>
           </div>
 
-          <div v-else-if="publicLink" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-8">
-            <div
-              class="vdb-c-flex vdb-c-items-center vdb-c-gap-8 vdb-c-rounded-10 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-12 vdb-c-py-10"
+          <div
+            v-else-if="publicLink"
+            class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-gap-12 vdb-c-rounded-12 vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-py-8 vdb-c-pl-10 vdb-c-pr-8"
+          >
+            <span class="vdb-c-truncate vdb-c-text-[16px] vdb-c-font-normal vdb-c-text-[#1e1e1e]">
+              {{ publicLink }}
+            </span>
+            <button
+              @click="copyLink"
+              :class="[
+                'vdb-c-flex vdb-c-h-[36px] vdb-c-shrink-0 vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-8 vdb-c-py-8 vdb-c-pl-8 vdb-c-pr-12 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-white vdb-c-transition-all vdb-c-duration-200',
+                copied ? 'vdb-c-bg-[#057a55]' : 'vdb-c-bg-[#c14103] hover:vdb-c-bg-[#a53702]',
+              ]"
             >
-              <input
-                :value="publicLink"
-                readonly
-                class="vdb-c-flex-1 vdb-c-border-none vdb-c-bg-transparent vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-[#1e1e1e] vdb-c-outline-none"
-              />
-              <button
-                @click="copyLink"
-                :class="[
-                  'vdb-c-flex vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-12 vdb-c-py-8 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-transition-all vdb-c-duration-200',
-                  copied
-                    ? 'vdb-c-bg-[#53B745] vdb-c-text-white'
-                    : 'vdb-c-bg-[#EC5B16] vdb-c-text-white hover:vdb-c-bg-[#D96A1F]',
-                ]"
-              >
-                <template v-if="copied">
-                  <CheckIcon fill="#FFFFFF" />
-                  <span>Copied</span>
-                </template>
-                <template v-else>
-                  <CopyLinkIcon strokeColor="#FFFFFF" />
-                  <span>Copy link</span>
-                </template>
-              </button>
-            </div>
+              <template v-if="copied">
+                <CheckCircleIcon class="vdb-c-size-[17px]" />
+                <span>Link copied!</span>
+              </template>
+              <template v-else>
+                <CopyLinkIcon strokeColor="#FFFFFF" class="vdb-c-size-24" />
+                <span>Copy link</span>
+              </template>
+            </button>
           </div>
 
           <!-- Error State -->
@@ -86,8 +88,9 @@
 <script setup>
 import { ref, watch } from 'vue';
 import CrossIcon from '../../icons/Cross.vue';
-import CheckIcon from '../../icons/Check.vue';
 import CopyLinkIcon from './icons/CopyLinkIcon.vue';
+import BlinkingDotIcon from './icons/BlinkingDotIcon.vue';
+import CheckCircleIcon from './icons/CheckCircleIcon.vue';
 
 const props = defineProps({
   isOpen: {
