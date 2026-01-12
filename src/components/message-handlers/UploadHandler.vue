@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, watch } from 'vue';
 import SpinnerIcon from '../chat/v2/icons/SpinnerIcon.vue';
 import SuccessIcon from '../chat/v2/icons/SuccessIcon.vue';
 import VideoFileDisplay from '../pages/collection/components/VideoFileDisplay.vue';
@@ -117,6 +117,32 @@ const allUploadsComplete = computed(() => {
     return false;
   }
   return props.content.files.every((file) => file.status === 'success');
+});
+
+const handleBeforeUnload = (e) => {
+  if (!allUploadsComplete.value) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+};
+
+onMounted(() => {
+  if (!allUploadsComplete.value) {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+  }
+});
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+});
+
+watch(allUploadsComplete, (newValue) => {
+  if (newValue) {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  } else {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+  }
 });
 </script>
 
