@@ -39,6 +39,7 @@
         />
 
         <div
+          v-if="url"
           class="play-button vdb-c-absolute vdb-c-left-1/2 vdb-c-top-1/2 vdb-c-flex vdb-c-h-48 vdb-c-w-48 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all vdb-c-duration-300"
           @click.stop="toggleAudio(url)"
         >
