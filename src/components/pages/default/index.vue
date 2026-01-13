@@ -349,7 +349,7 @@ import { computed, inject, ref, nextTick } from 'vue';
 import FolderImage from '../../chat/v2/icons/FolderImage.vue';
 import CreateFolderIcon from '../../chat/v2/icons/CreateFolderIcon.vue';
 import CreateCollectionModal from '../../chat/v2/CreateCollectionModal.vue';
-import HomeIcon from '../../chat/v2/icons/HomeIcon.vue';
+import HomeIcon from '../../chat/v2/icons/header/HomeIcon.vue';
 import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 import SearchInput from '../assets/SearchInput.vue';
 import ThreeDotsIcon from '../../chat/v2/icons/ThreeDotsIcon.vue';
