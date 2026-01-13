@@ -1,12 +1,14 @@
 <template>
-  <AssetsPage v-if="navState.currentPage === 'assets'" :context="context" />
-  <AgentsPage v-else-if="navState.currentPage === 'agents'" :context="context" />
-  <CollectionPage
-    v-else-if="navState.currentPage === 'collection' && navState.activeParams?.id"
-    :context="context"
-  />
-  <ChatPage v-else-if="navState.currentPage === 'chat'" :context="context" />
-  <DefaultPage v-else :context="context" />
+  <div class="vdb-c-flex-1 vdb-c-overflow-hidden">
+    <AssetsPage v-if="navState.currentPage === 'assets'" :context="context" />
+    <AgentsPage v-else-if="navState.currentPage === 'agents'" :context="context" />
+    <CollectionPage
+      v-else-if="navState.currentPage === 'collection' && navState.activeParams?.id"
+      :context="context"
+    />
+    <ChatPage v-else-if="navState.currentPage === 'chat'" :context="context" />
+    <DefaultPage v-else :context="context" />
+  </div>
 </template>
 
 <script setup>
