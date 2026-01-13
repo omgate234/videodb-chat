@@ -105,20 +105,13 @@
         </div>
 
         <!-- URL Input -->
-        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[8px]">
-          <label
-            class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-normal vdb-c-tracking-[0.07px] vdb-c-text-[#1E1E1E]"
-          >
-            Or upload from URL
-          </label>
-          <input
-            type="text"
-            placeholder="Add file URL"
-            class="vdb-c-w-full vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-[16px] vdb-c-py-[14px] vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-tracking-[0.07px] vdb-c-text-[#1E1E1E] placeholder:vdb-c-text-[#969696] focus:vdb-c-border-[#EC5B16] focus:vdb-c-outline-none"
-            v-model="url"
-            @input="handleUrlInput"
-          />
-        </div>
+        <BigInput
+          v-model="url"
+          label="Or upload from URL"
+          placeholder="Add file URL"
+          type="text"
+          :allow-clear="true"
+        />
 
         <!-- Collection Selection -->
         <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[8px]">
@@ -265,6 +258,7 @@ import CheckIcon from './icons/CheckIcon.vue';
 import VideoFileDisplay from '../../pages/collection/components/VideoFileDisplay.vue';
 import AudioFileDisplay from '../../pages/collection/components/AudioFileDisplay.vue';
 import ImageFileDisplay from './UploadImageFileDisplay.vue';
+import BigInput from './elements/BigInput.vue';
 import { ref, watch, computed } from 'vue';
 
 const emit = defineEmits(['cancel-upload', 'upload']);
