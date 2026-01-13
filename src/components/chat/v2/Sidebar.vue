@@ -1,268 +1,271 @@
 <template>
   <div
     ref="sidebarRef"
-    id="sidebar-container"
-    class="vdb-c-border-r-1 vdb-c-border-r-solid vdb-c-relative vdb-c-overflow-auto vdb-c-border-r vdb-c-border-r-[#E5E7EB] vdb-c-pl-6 vdb-c-pr-16"
+    class="vdb-c-relative vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-border-r vdb-c-border-r-[#E5E7EB]"
   >
-    <div class="vdb-c-sticky vdb-c-top-0 vdb-c-z-10 vdb-c-bg-white">
-      <div class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-px-10 vdb-c-pt-20">
-        <div class="vdb-c-cursor-pointer">
-          <component v-if="config.icon" :is="config.icon" class="vdb-c-mb-20 vdb-c-h-24" />
+    <div id="sidebar-container" class="vdb-c-flex-1 vdb-c-overflow-auto vdb-c-pl-6 vdb-c-pr-6">
+      <div class="vdb-c-sticky vdb-c-top-0 vdb-c-z-10 vdb-c-bg-white">
+        <div class="vdb-c-flex vdb-c-items-center vdb-c-justify-between vdb-c-px-10 vdb-c-pt-20">
+          <div class="vdb-c-cursor-pointer">
+            <component v-if="config.icon" :is="config.icon" class="vdb-c-mb-20 vdb-c-h-24" />
+          </div>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-1">
+          <div class="vdb-c-relative">
+            <button
+              ref="newChatButtonRef"
+              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-bg-black vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-pam disabled:vdb-c-bg-[#B9B9B9]"
+              :disabled="newSessionButtonDisabled"
+              @click="context.handleCreateNewSession()"
+              @mouseenter="
+                showNewChatTooltip = newSessionButtonDisabled && currentPage !== 'collection'
+              "
+              @mouseleave="showNewChatTooltip = false"
+            >
+              <ComposeAltIcon :stroke-color="'white'" />
+              <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-white"
+                >New chat</span
+              >
+            </button>
+            <Teleport to="body">
+              <div
+                v-if="showNewChatTooltip && newChatButtonRef"
+                class="vdb-c-fixed"
+                :style="{
+                  top: `${newChatButtonRef.getBoundingClientRect().top + newChatButtonRef.getBoundingClientRect().height / 2 - 16}px`,
+                  left: `${newChatButtonRef.getBoundingClientRect().right + 8}px`,
+                }"
+              >
+                <Tooltip :text="newChatTooltipText" />
+              </div>
+            </Teleport>
+          </div>
+
+          <button
+            @click="context.handleNavigateToDefault()"
+            class="vdb-c-mt-8 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
+            :class="{
+              'vdb-c-bg-[#FFE9D3]': currentPage === 'default',
+              'vdb-c-text-[#821F0C]': currentPage === 'default',
+              'vdb-c-text-vdb-darkishgrey hover:vdb-c-bg-[#EFEFEF] hover:vdb-c-text-black':
+                currentPage !== 'default',
+            }"
+          >
+            <HomeIcon />
+            <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Home</span>
+          </button>
+
+          <div class="vdb-c-relative">
+            <button
+              ref="assetLibraryButtonRef"
+              @click="!assetLibraryButtonDisabled && context.handleNavigateToAssets()"
+              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
+              :class="{
+                'vdb-c-bg-[#FFE9D3] vdb-c-text-[#821F0C]':
+                  currentPage === 'assets' && !assetLibraryButtonDisabled,
+                'vdb-c-text-vdb-darkishgrey hover:vdb-c-bg-[#EFEFEF] hover:vdb-c-text-black':
+                  !assetLibraryButtonDisabled && currentPage !== 'assets',
+                'vdb-c-cursor-not-allowed vdb-c-text-[#B9B9B9]': assetLibraryButtonDisabled,
+              }"
+              @mouseenter="showAssetLibraryTooltip = hasNoCollections"
+              @mouseleave="showAssetLibraryTooltip = false"
+            >
+              <LibraryIcon :stroke-color="assetLibraryButtonDisabled ? '#B9B9B9' : undefined" />
+              <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Asset Library</span>
+            </button>
+            <Teleport to="body">
+              <div
+                v-if="showAssetLibraryTooltip && assetLibraryButtonRef"
+                class="vdb-c-fixed"
+                :style="{
+                  top: `${assetLibraryButtonRef.getBoundingClientRect().top + assetLibraryButtonRef.getBoundingClientRect().height / 2 - 16}px`,
+                  left: `${assetLibraryButtonRef.getBoundingClientRect().right + 8}px`,
+                }"
+              >
+                <Tooltip text="Please create collection and upload content to view assets" />
+              </div>
+            </Teleport>
+          </div>
+
+          <div class="vdb-c-relative">
+            <button
+              ref="agentsButtonRef"
+              @click="!agentsButtonDisabled && context.handleNavigateToAgents()"
+              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
+              :class="{
+                'vdb-c-bg-[#FFE9D3] vdb-c-text-[#821F0C]':
+                  currentPage === 'agents' && !agentsButtonDisabled,
+                'vdb-c-text-vdb-darkishgrey hover:vdb-c-bg-[#EFEFEF] hover:vdb-c-text-black':
+                  !agentsButtonDisabled && currentPage !== 'agents',
+                'vdb-c-cursor-not-allowed vdb-c-text-[#B9B9B9]': agentsButtonDisabled,
+              }"
+              @mouseenter="showAgentsTooltip = hasNoCollections"
+              @mouseleave="showAgentsTooltip = false"
+            >
+              <AgentsIcon :stroke-color="agentsButtonDisabled ? '#B9B9B9' : undefined" />
+              <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Agents</span>
+            </button>
+            <Teleport to="body">
+              <div
+                v-if="showAgentsTooltip && agentsButtonRef"
+                class="vdb-c-fixed"
+                :style="{
+                  top: `${agentsButtonRef.getBoundingClientRect().top + agentsButtonRef.getBoundingClientRect().height / 2 - 16}px`,
+                  left: `${agentsButtonRef.getBoundingClientRect().right + 8}px`,
+                }"
+              >
+                <Tooltip text="Please create collection and upload content to use agents" />
+              </div>
+            </Teleport>
+          </div>
         </div>
       </div>
-
-      <!-- Action Panel -->
-      <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-1">
-        <div class="vdb-c-relative">
-          <button
-            ref="newChatButtonRef"
-            class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-bg-black vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-pam disabled:vdb-c-bg-[#B9B9B9]"
-            :disabled="newSessionButtonDisabled"
-            @click="context.handleCreateNewSession()"
-            @mouseenter="
-              showNewChatTooltip = newSessionButtonDisabled && currentPage !== 'collection'
-            "
-            @mouseleave="showNewChatTooltip = false"
-          >
-            <ComposeAltIcon :stroke-color="'white'" />
-            <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-white"
-              >New chat</span
-            >
-          </button>
-          <Teleport to="body">
-            <div
-              v-if="showNewChatTooltip && newChatButtonRef"
-              class="vdb-c-fixed"
-              :style="{
-                top: `${newChatButtonRef.getBoundingClientRect().top + newChatButtonRef.getBoundingClientRect().height / 2 - 16}px`,
-                left: `${newChatButtonRef.getBoundingClientRect().right + 8}px`,
-              }"
-            >
-              <Tooltip :text="newChatTooltipText" />
-            </div>
-          </Teleport>
-        </div>
-
-        <button
-          @click="context.handleNavigateToDefault()"
-          class="vdb-c-mt-8 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
+      <div
+        @click="handleSidebarClick"
+        class="vdb-c-flex vdb-c-h-full vdb-c-w-[260px] vdb-c-flex-col vdb-c-gap-24 vdb-c-bg-white vdb-c-text-black"
+      >
+        <div
+          class="vdb-c-mt-24 vdb-c-flex vdb-c-flex-grow vdb-c-flex-col vdb-c-gap-24 vdb-c-px-6 vdb-c-pb-24"
           :class="{
-            'vdb-c-bg-[#FFE9D3]': currentPage === 'default',
-            'vdb-c-text-[#821F0C]': currentPage === 'default',
-            'vdb-c-text-vdb-darkishgrey hover:vdb-c-bg-[#EFEFEF] hover:vdb-c-text-black':
-              currentPage !== 'default',
+            'vdb-c-pointer-events-none vdb-c-opacity-20': status === 'inactive',
           }"
         >
-          <HomeIcon />
-          <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Home</span>
-        </button>
-
-        <div class="vdb-c-relative">
-          <button
-            ref="assetLibraryButtonRef"
-            @click="!assetLibraryButtonDisabled && context.handleNavigateToAssets()"
-            class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
-            :class="{
-              'vdb-c-bg-[#FFE9D3] vdb-c-text-[#821F0C]':
-                currentPage === 'assets' && !assetLibraryButtonDisabled,
-              'vdb-c-text-vdb-darkishgrey hover:vdb-c-bg-[#EFEFEF] hover:vdb-c-text-black':
-                !assetLibraryButtonDisabled && currentPage !== 'assets',
-              'vdb-c-cursor-not-allowed vdb-c-text-[#B9B9B9]': assetLibraryButtonDisabled,
-            }"
-            @mouseenter="showAssetLibraryTooltip = hasNoCollections"
-            @mouseleave="showAssetLibraryTooltip = false"
-          >
-            <LibraryIcon :stroke-color="assetLibraryButtonDisabled ? '#B9B9B9' : undefined" />
-            <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Asset Library</span>
-          </button>
-          <Teleport to="body">
+          <template v-for="section in visibleSections" :key="section">
+            <!-- Collections -->
             <div
-              v-if="showAssetLibraryTooltip && assetLibraryButtonRef"
-              class="vdb-c-fixed"
-              :style="{
-                top: `${assetLibraryButtonRef.getBoundingClientRect().top + assetLibraryButtonRef.getBoundingClientRect().height / 2 - 16}px`,
-                left: `${assetLibraryButtonRef.getBoundingClientRect().right + 8}px`,
-              }"
+              v-if="section === 'collections'"
+              class="sidebar-section vdb-c-flex vdb-c-flex-col vdb-c-gap-0"
             >
-              <Tooltip text="Please create collection and upload content to view assets" />
-            </div>
-          </Teleport>
-        </div>
-
-        <div class="vdb-c-relative">
-          <button
-            ref="agentsButtonRef"
-            @click="!agentsButtonDisabled && context.handleNavigateToAgents()"
-            class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
-            :class="{
-              'vdb-c-bg-[#FFE9D3] vdb-c-text-[#821F0C]':
-                currentPage === 'agents' && !agentsButtonDisabled,
-              'vdb-c-text-vdb-darkishgrey hover:vdb-c-bg-[#EFEFEF] hover:vdb-c-text-black':
-                !agentsButtonDisabled && currentPage !== 'agents',
-              'vdb-c-cursor-not-allowed vdb-c-text-[#B9B9B9]': agentsButtonDisabled,
-            }"
-            @mouseenter="showAgentsTooltip = hasNoCollections"
-            @mouseleave="showAgentsTooltip = false"
-          >
-            <AgentsIcon :stroke-color="agentsButtonDisabled ? '#B9B9B9' : undefined" />
-            <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Agents</span>
-          </button>
-          <Teleport to="body">
-            <div
-              v-if="showAgentsTooltip && agentsButtonRef"
-              class="vdb-c-fixed"
-              :style="{
-                top: `${agentsButtonRef.getBoundingClientRect().top + agentsButtonRef.getBoundingClientRect().height / 2 - 16}px`,
-                left: `${agentsButtonRef.getBoundingClientRect().right + 8}px`,
-              }"
-            >
-              <Tooltip text="Please create collection and upload content to use agents" />
-            </div>
-          </Teleport>
-        </div>
-      </div>
-    </div>
-    <div
-      @click="handleSidebarClick"
-      class="vdb-c-flex vdb-c-h-full vdb-c-w-[260px] vdb-c-flex-col vdb-c-gap-24 vdb-c-bg-white vdb-c-text-black"
-    >
-      <div
-        class="vdb-c-mt-24 vdb-c-flex vdb-c-flex-grow vdb-c-flex-col vdb-c-gap-24 vdb-c-px-6"
-        :class="{
-          'vdb-c-pointer-events-none vdb-c-opacity-20': status === 'inactive',
-        }"
-      >
-        <template v-for="section in visibleSections" :key="section">
-          <!-- Collections -->
-          <div
-            v-if="section === 'collections'"
-            class="sidebar-section vdb-c-flex vdb-c-flex-col vdb-c-gap-0"
-          >
-            <div
-              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-px-10 vdb-c-py-6"
-            >
-              <span
-                class="vdb-c-text-sm vdb-c-font-semibold vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-                >Collections</span
+              <div
+                class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-px-10 vdb-c-py-6"
               >
-              <button
-                v-if="collections.length > 0"
-                class="cursor-pointer vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center"
-                aria-label="Create Collection"
-                @click="openCreateCollectionModal"
-                @mouseenter="isAddIconHovered = true"
-                @mouseleave="isAddIconHovered = false"
-              >
-                <HoveredAddIcon v-if="isAddIconHovered" />
-                <AddIcon v-else stroke-color="#1E1E1E" />
-              </button>
-            </div>
-            <div v-if="status !== 'inactive' && showCollections" class="vdb-c-overflow-y-auto">
-              <template v-if="collections.length === 0">
-                <button
-                  class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]"
-                  @click="openCreateCollectionModal"
+                <span
+                  class="vdb-c-text-sm vdb-c-font-semibold vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+                  >Collections</span
                 >
-                  <CreateFolderIcon fill="#1E1E1E" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
-                  <span
-                    class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-                    >Create New Collection</span
-                  >
+                <button
+                  v-if="collections.length > 0"
+                  class="cursor-pointer vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center"
+                  aria-label="Create Collection"
+                  @click="openCreateCollectionModal"
+                  @mouseenter="isAddIconHovered = true"
+                  @mouseleave="isAddIconHovered = false"
+                >
+                  <HoveredAddIcon v-if="isAddIconHovered" />
+                  <AddIcon v-else stroke-color="#1E1E1E" />
                 </button>
-              </template>
-              <template v-else>
-                <template v-for="collection in visibleCollections" :key="collection.id">
-                  <CollectionPill
-                    :ref="(el) => setCollectionPillRef(collection.id, el)"
-                    :collection="collection"
-                    :is-selected="
-                      showSelectedCollection && collection.id === computedSelectedCollection
-                    "
-                    :editing-collection-id="editingCollectionId"
-                    :is-options-menu-open="
-                      showCollectionOptions && selectedCollectionForOptions?.id === collection.id
-                    "
-                    :fetch-collection-videos="context.fetchCollectionVideos"
-                    @click="handleCollectionClick"
-                    @options-click="handleCollectionOptionsClick"
-                    @start-editing="handleStartEditingCollection"
-                    @save-editing="handleSaveEditingCollection"
-                    @cancel-editing="handleCancelEditingCollection"
-                    @delete-collection="handleDeleteCollection"
-                  />
-                </template>
-                <div class="vdb-c-relative">
+              </div>
+              <div v-if="status !== 'inactive' && showCollections" class="vdb-c-overflow-y-auto">
+                <template v-if="collections.length === 0">
                   <button
-                    v-if="collections.length > MAX_VISIBLE_COLLECTIONS"
-                    ref="seeMoreButton"
-                    data-compid="see-more-button"
-                    class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-roy"
-                    @click="toggleSeeMoreDropdown"
+                    class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]"
+                    @click="openCreateCollectionModal"
                   >
-                    <MoreHorizontalIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
+                    <CreateFolderIcon fill="#1E1E1E" class="vdb-c-size-20 vdb-c-flex-shrink-0" />
                     <span
-                      class="vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-                      >See more</span
+                      class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+                      >Create New Collection</span
                     >
                   </button>
-                  <CollectionDropdown
-                    v-if="seeMoreButton"
-                    :is-open="showSeeMoreDropdown"
-                    :collections="hiddenCollections"
-                    :trigger-element="seeMoreButton"
-                    @close="showSeeMoreDropdown = false"
-                    @collection-select="handleCollectionFromSeeMore"
-                  />
+                </template>
+                <template v-else>
+                  <template v-for="collection in visibleCollections" :key="collection.id">
+                    <CollectionPill
+                      :ref="(el) => setCollectionPillRef(collection.id, el)"
+                      :collection="collection"
+                      :is-selected="
+                        showSelectedCollection && collection.id === computedSelectedCollection
+                      "
+                      :editing-collection-id="editingCollectionId"
+                      :is-options-menu-open="
+                        showCollectionOptions && selectedCollectionForOptions?.id === collection.id
+                      "
+                      :fetch-collection-videos="context.fetchCollectionVideos"
+                      @click="handleCollectionClick"
+                      @options-click="handleCollectionOptionsClick"
+                      @start-editing="handleStartEditingCollection"
+                      @save-editing="handleSaveEditingCollection"
+                      @cancel-editing="handleCancelEditingCollection"
+                      @delete-collection="handleDeleteCollection"
+                    />
+                  </template>
+                  <div class="vdb-c-relative">
+                    <button
+                      v-if="collections.length > MAX_VISIBLE_COLLECTIONS"
+                      ref="seeMoreButton"
+                      data-compid="see-more-button"
+                      class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-roy"
+                      @click="toggleSeeMoreDropdown"
+                    >
+                      <MoreHorizontalIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
+                      <span
+                        class="vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+                        >See more</span
+                      >
+                    </button>
+                    <CollectionDropdown
+                      v-if="seeMoreButton"
+                      :is-open="showSeeMoreDropdown"
+                      :collections="hiddenCollections"
+                      :trigger-element="seeMoreButton"
+                      @close="showSeeMoreDropdown = false"
+                      @collection-select="handleCollectionFromSeeMore"
+                    />
 
-                  <CollectionOptionsMenu
-                    v-if="collectionOptionsButton"
-                    :is-open="showCollectionOptions"
-                    :collection="selectedCollectionForOptions"
-                    :trigger-element="collectionOptionsButton"
-                    @close="showCollectionOptions = false"
-                    @rename="handleRenameCollection"
-                    @delete="handleDeleteCollectionFromOptions"
-                  />
-                </div>
-              </template>
+                    <CollectionOptionsMenu
+                      v-if="collectionOptionsButton"
+                      :is-open="showCollectionOptions"
+                      :collection="selectedCollectionForOptions"
+                      :trigger-element="collectionOptionsButton"
+                      @close="showCollectionOptions = false"
+                      @rename="handleRenameCollection"
+                      @delete="handleDeleteCollectionFromOptions"
+                    />
+                  </div>
+                </template>
+              </div>
             </div>
-          </div>
 
-          <!-- Sessions -->
-          <div
-            v-if="section === 'sessions'"
-            class="sidebar-section vdb-c-flex vdb-c-flex-col vdb-c-gap-0"
-          >
+            <!-- Sessions -->
             <div
-              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-start vdb-c-px-10 vdb-c-py-6"
+              v-if="section === 'sessions'"
+              class="sidebar-section vdb-c-flex vdb-c-flex-col vdb-c-gap-0"
             >
-              <span
-                class="vdb-c-text-sm vdb-c-font-semibold vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-                >Your chats</span
+              <div
+                class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-start vdb-c-px-10 vdb-c-py-6"
               >
+                <span
+                  class="vdb-c-text-sm vdb-c-font-semibold vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+                  >Your chats</span
+                >
+              </div>
+              <div v-if="status !== 'inactive' && showSessions" class="vdb-c-overflow-y-auto">
+                <transition-group name="fade" tag="div">
+                  <SessionPill
+                    v-for="session in sessions"
+                    :key="session.session_id"
+                    :session="session"
+                    :is-selected="session.session_id === selectedSession"
+                    :editing-session-id="editingSessionId"
+                    :on-make-public="context.makeSessionPublic"
+                    @click="handleSessionClick"
+                    @start-editing="handleStartEditing"
+                    @save-editing="handleSaveEditing"
+                    @cancel-editing="handleCancelEditing"
+                    @delete-session="handleDeleteSession"
+                  />
+                </transition-group>
+              </div>
             </div>
-            <div v-if="status !== 'inactive' && showSessions" class="vdb-c-overflow-y-auto">
-              <transition-group name="fade" tag="div">
-                <SessionPill
-                  v-for="session in sessions"
-                  :key="session.session_id"
-                  :session="session"
-                  :is-selected="session.session_id === selectedSession"
-                  :editing-session-id="editingSessionId"
-                  :on-make-public="context.makeSessionPublic"
-                  @click="handleSessionClick"
-                  @start-editing="handleStartEditing"
-                  @save-editing="handleSaveEditing"
-                  @cancel-editing="handleCancelEditing"
-                  @delete-session="handleDeleteSession"
-                />
-              </transition-group>
-              <div class="vdb-c-h-[78px]"></div>
-            </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
     </div>
+    <!-- End of scrollable container -->
+
+    <!-- Footer fixed at bottom, outside scroll -->
     <SidebarFooter
       :width="sidebarWidth"
       :active="footerActive"
@@ -270,6 +273,7 @@
       :buttons="config.footerConfig?.buttons || []"
       @profile-click="handleProfileClick"
     />
+
     <CreateCollectionModal
       :showDialog="showCreateCollectionModal"
       :isCreating="isCreatingCollection"
@@ -866,5 +870,40 @@ defineExpose({
 
 .sidebar-section {
   overflow: auto;
+}
+
+#sidebar-container {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+#sidebar-container:hover,
+#sidebar-container:active {
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+#sidebar-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+#sidebar-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#sidebar-container::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+#sidebar-container:hover::-webkit-scrollbar-thumb,
+#sidebar-container:active::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+#sidebar-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 </style>
