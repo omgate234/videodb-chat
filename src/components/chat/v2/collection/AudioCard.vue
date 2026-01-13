@@ -49,16 +49,24 @@
 
         <!-- Copy Icon - Top Right -->
         <div
-          class="copy-button vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-10 vdb-c-cursor-pointer vdb-c-rounded-full vdb-c-border vdb-c-p-6 vdb-c-transition-all vdb-c-duration-300"
+          class="copy-button vdb-c-h-26 vdb-c-w-26 vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-20 vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-p-4 vdb-c-transition-all vdb-c-duration-200"
+          :class="
+            isCopied || copyButtonHovered
+              ? 'vdb-c-bg-[rgba(30,30,30,0.8)]'
+              : 'vdb-c-bg-[rgba(30,30,30,0.5)]'
+          "
+          @mouseenter="copyButtonHovered = true"
+          @mouseleave="copyButtonHovered = false"
           @click.stop="copyId(item.id)"
         >
-          <CopyIcon />
+          <CheckIcon v-if="isCopied" class="vdb-c-h-18 vdb-c-w-18" style="stroke: white" />
+          <CopyIcon v-else class="vdb-c-h-18 vdb-c-w-18" />
         </div>
 
         <!-- Duration Pill - Bottom Right -->
         <div
           v-if="item.type !== 'voices'"
-          class="vdb-c-absolute vdb-c-bottom-8 vdb-c-right-8 vdb-c-z-10 vdb-c-inline-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-[13.281px] vdb-c-rounded-20 vdb-c-bg-black/50 vdb-c-px-6 vdb-c-py-4 vdb-c-text-right vdb-c-text-xs vdb-c-font-medium vdb-c-leading-normal vdb-c-text-white"
+          class="vdb-c-absolute vdb-c-bottom-8 vdb-c-right-8 vdb-c-z-0 vdb-c-inline-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-[13.281px] vdb-c-rounded-20 vdb-c-bg-black/50 vdb-c-px-6 vdb-c-py-4 vdb-c-text-right vdb-c-text-xs vdb-c-font-medium vdb-c-leading-normal vdb-c-text-white"
         >
           {{ formatDuration(item.length) }}
         </div>
@@ -196,6 +204,8 @@ const menuButtonRef = ref(null);
 const showDeleteModal = ref(false);
 const editingName = ref('');
 const showAudioModal = ref(false);
+const isCopied = ref(false);
+const copyButtonHovered = ref(false);
 
 const props = defineProps({
   item: {
@@ -339,6 +349,10 @@ function copyId(id) {
     .writeText(id)
     .then(() => {
       notificationCenterRef.value.addNotification('Audio ID Copied');
+      isCopied.value = true;
+      setTimeout(() => {
+        isCopied.value = false;
+      }, 2000);
     })
     .catch((e) => {
       console.error(e);
@@ -471,18 +485,6 @@ function handleSelect() {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.05);
   background: rgba(0, 0, 0, 0.6);
-}
-
-/* Copy Button - Top Right */
-.copy-button {
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(16px);
-}
-
-.copy-button:hover {
-  transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.45);
 }
 
 .three-dots-button:hover {

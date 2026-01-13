@@ -23,7 +23,7 @@
 
     <div
       v-if="isOpen"
-      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-20 vdb-c-mt-8 vdb-c-w-256 vdb-c-rounded-12 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-8"
+      class="vdb-c-absolute vdb-c-right-0 vdb-c-top-full vdb-c-z-50 vdb-c-mt-8 vdb-c-w-256 vdb-c-rounded-12 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-8"
       style="
         box-shadow:
           0px 23px 6px 0px rgba(0, 0, 0, 0),
