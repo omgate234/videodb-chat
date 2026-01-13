@@ -116,10 +116,10 @@ const wrapperClasses = computed(() => [
   !props.disabled &&
     !props.error && [
       isFocused.value
-        ? 'vdb-c-border-vdb-orange vdb-c-bg-white'
+        ? 'vdb-c-border-[#EC5B16] vdb-c-bg-white vdb-c-shadow-[0_0_0_2px_rgba(236,91,22,0.25)]'
         : hasValue.value
-          ? 'vdb-c-border-[#1E1E1E] vdb-c-bg-white'
-          : 'vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] hover:vdb-c-border-[#1E1E1E] hover:vdb-c-bg-white',
+          ? 'vdb-c-border-[#EFEFEF] vdb-c-bg-white'
+          : 'vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7]',
     ],
 ]);
 
