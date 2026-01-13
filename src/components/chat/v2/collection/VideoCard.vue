@@ -194,7 +194,7 @@
             class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
             @click.stop="handleDownload"
           >
-            <UploadIcon :stroke-color="'#1E1E1E'" />
+            <DownloadIcon />
             <span>Download</span>
           </li>
           <li
@@ -246,7 +246,7 @@ import CopyIcon from '../../../icons/CopyIcon.vue';
 import ThreeDotsIcon from '../icons/ThreeDotsIcon.vue';
 import ComposeAltIcon from '../icons/ComposeAltIcon.vue';
 import EditIcon from '../icons/EditIcon.vue';
-import UploadIcon from '../icons/UploadIcon.vue';
+import DownloadIcon from '../icons/DownloadIcon.vue';
 import TrashIcon from '../icons/TrashIcon.vue';
 import CheckIcon from '../icons/CheckIcon.vue';
 import VideoModal from './VideoModal.vue';
