@@ -367,7 +367,15 @@ let mediaStream = null;
 let recordedMimeType = 'audio/webm';
 
 const getSupportedMimeType = () => {
-  const mimeTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+  const mimeTypes = [
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+    'audio/webm;codecs=opus',
+    'audio/webm',
+  ];
   for (const mimeType of mimeTypes) {
     if (MediaRecorder.isTypeSupported(mimeType)) {
       return mimeType;
@@ -377,6 +385,7 @@ const getSupportedMimeType = () => {
 };
 
 const getFileExtension = (mimeType) => {
+  if (mimeType.startsWith('audio/mpeg') || mimeType.startsWith('audio/mp3')) return 'mp3';
   if (mimeType.startsWith('audio/mp4')) return 'm4a';
   if (mimeType.startsWith('audio/ogg')) return 'ogg';
   return 'webm';

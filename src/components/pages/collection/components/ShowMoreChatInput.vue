@@ -222,7 +222,24 @@
           </button>
         </div>
 
-        <div class="vdb-c-flex vdb-c-items-center">
+        <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[8px]">
+          <!-- Mic Button -->
+          <button
+            @click="handleMicClick"
+            :disabled="chatLoading"
+            :class="[
+              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
+              chatLoading
+                ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-[#F7F7F7]'
+                : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-[#F7F7F7]',
+            ]"
+            title="Voice input"
+          >
+            <MicrophoneIcon
+              :fill="chatLoading ? '#969696' : '#1E1E1E'"
+              class="vdb-c-h-[18px] vdb-c-w-[18px]"
+            />
+          </button>
           <button
             v-if="chatLoading"
             @click="handleStopMessage"
@@ -256,6 +273,13 @@
       @close="showUploadFromCollectionModal = false"
       @select="handleCollectionAssetsSelected"
     />
+
+    <SpeechToTextModal
+      :is-open="showSpeechToTextModal"
+      :speech-to-text="context?.speechToText"
+      @close="showSpeechToTextModal = false"
+      @send="handleSpeechToTextSend"
+    />
   </div>
 </template>
 
@@ -263,6 +287,7 @@
 import { ref, computed, inject, onUnmounted, watch, nextTick, onMounted } from 'vue';
 import AttachIcon from '../../../chat/v2/icons/AttachIcon.vue';
 import ModelIcon from '../../../chat/v2/icons/ModelIcon.vue';
+import MicrophoneIcon from '../../../chat/v2/icons/MicrophoneIcon.vue';
 import SearchIcon from '../../../chat/v2/icons/agents/SearchIcon.vue';
 import VoiceIcon from '../../../chat/v2/icons/agents/VoiceIcon.vue';
 import CensorIcon from '../../../chat/v2/icons/agents/CensorIcon.vue';
@@ -291,6 +316,7 @@ import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
 import StopIcon from '../../../icons/StopIcon.vue';
 import TrashIcon from '../../../chat/v2/icons/TrashIcon.vue';
 import ChevronDownIcon from '../../../chat/v2/icons/ChevronDownIcon.vue';
+import SpeechToTextModal from './SpeechToTextModal.vue';
 
 const props = defineProps({
   context: {
@@ -354,6 +380,7 @@ const showAttachDropdown = ref(false);
 const showModelDropdown = ref(false);
 const showDropUp = ref(false);
 const showUploadFromCollectionModal = ref(false);
+const showSpeechToTextModal = ref(false);
 const showCursor = ref(true);
 const selectedAgent = ref(null);
 const llmProviders = ref([]);
@@ -756,6 +783,29 @@ const handleUploadFromCollection = () => {
   if (chatLoading.value) return;
   showUploadFromCollectionModal.value = true;
   showDropUp.value = false;
+};
+
+const handleMicClick = () => {
+  if (chatLoading.value) return;
+  showSpeechToTextModal.value = true;
+};
+
+const handleSpeechToTextSend = (text) => {
+  if (!text || text.trim().length === 0) return;
+
+  const payload = {
+    text: text.trim(),
+    agents: [],
+  };
+
+  const modelId = selectedModel?.value?.id || selectedModel?.id;
+  if (modelId) {
+    payload.model_name = modelId;
+  }
+
+  if (context?.handleAddMessage) {
+    context.handleAddMessage(payload);
+  }
 };
 
 const handleCollectionAssetsSelected = async (selectedAssets) => {

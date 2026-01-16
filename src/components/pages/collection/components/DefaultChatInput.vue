@@ -170,6 +170,15 @@
       <!-- Spacer -->
       <div class="vdb-c-flex-1"></div>
 
+      <!-- Mic Button -->
+      <button
+        @click="handleMicClick"
+        class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-transition-all hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-[#F7F7F7]"
+        title="Voice input"
+      >
+        <MicrophoneIcon fill="#1E1E1E" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
+      </button>
+
       <!-- Send Button -->
       <button
         @click="handleSend"
@@ -198,6 +207,13 @@
       @close="showUploadFromCollectionModal = false"
       @select="handleCollectionAssetsSelected"
     />
+
+    <SpeechToTextModal
+      :is-open="showSpeechToTextModal"
+      :speech-to-text="context?.speechToText"
+      @close="showSpeechToTextModal = false"
+      @send="handleSpeechToTextSend"
+    />
   </div>
 </template>
 <script setup>
@@ -224,6 +240,8 @@ import AudioFileDisplay from './AudioFileDisplay.vue';
 import SearchOptions from './SearchOptions.vue';
 import Tooltip from '../../../chat/v2/elements/Tooltip.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
+import SpeechToTextModal from './SpeechToTextModal.vue';
+import MicrophoneIcon from '../../../chat/v2/icons/MicrophoneIcon.vue';
 
 const props = defineProps({
   context: {
@@ -250,6 +268,7 @@ const showAgentsDropdown = ref(false);
 const showAttachDropdown = ref(false);
 const showModelDropdown = ref(false);
 const showUploadFromCollectionModal = ref(false);
+const showSpeechToTextModal = ref(false);
 const showCursor = ref(true);
 const selectedAgent = ref(null);
 const llmProviders = ref([]);
@@ -573,7 +592,28 @@ const handleUploadFromDevice = () => {
 
 const handleUploadFromCollection = () => {
   showUploadFromCollectionModal.value = true;
-  // TODO: Implement file selection from collection
+};
+
+const handleMicClick = () => {
+  showSpeechToTextModal.value = true;
+};
+
+const handleSpeechToTextSend = (text) => {
+  if (!text || text.trim().length === 0) return;
+
+  const payload = {
+    text: text.trim(),
+    agents: [],
+  };
+
+  const modelId = selectedModel?.value?.id || selectedModel?.id;
+  if (modelId) {
+    payload.model_name = modelId;
+  }
+
+  if (context?.handleAddMessage) {
+    context.handleAddMessage(payload);
+  }
 };
 
 const handleInput = (event) => {
