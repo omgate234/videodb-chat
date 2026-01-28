@@ -142,27 +142,34 @@
           />
         </div>
 
-        <!-- Selected Agent Pills (max 2) -->
+        <!-- Agent Pills (always 2: selected agents + placeholders) -->
         <button
           v-for="agent in visibleAgentPills"
-          :key="agent.name"
-          @click="removeSelectedAgent(agent)"
+          :key="'pill-' + agent.name"
+          :disabled="agent.disabled"
+          @click="isAgentSelected(agent) ? removeSelectedAgent(agent) : handleAgentClick(agent)"
           :class="[
             'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
-            getAgentButtonClasses(agent),
+            getAgentButtonClasses(agent, isAgentSelected(agent)),
           ]"
         >
+          <Tooltip
+            v-if="agent.disabled && !collectionHasVideos"
+            text="Add or generate videos in your collection to enable this"
+            class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-[calc(100%+15px)] vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
+          />
           <component
             :is="agent.icon"
             :class="[
               'vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-flex-shrink-0',
-              getAgentIconClasses(agent),
+              getAgentIconClasses(agent, isAgentSelected(agent)),
             ]"
           />
-          <span :class="getAgentTextClasses(agent)">
+          <span :class="getAgentTextClasses(agent, isAgentSelected(agent))">
             {{ agent.name }}
           </span>
           <CrossIcon
+            v-if="isAgentSelected(agent)"
             :fill="'#821F0C'"
             class="vdb-c-ml-4 vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-flex-shrink-0"
           />
@@ -376,10 +383,6 @@ const agentsList = [
     icon: SearchIcon,
   },
   {
-    name: 'Voice',
-    icon: VoiceIcon,
-  },
-  {
     name: 'Censor',
     icon: CensorIcon,
   },
@@ -427,22 +430,45 @@ const displayAgentsButtons = computed(() => {
   });
 });
 
-// Agents to show as pills (max 2 selected agents)
+// Visible agent pills (always 2: selected agents first, then Search/Edit as placeholders)
 const visibleAgentPills = computed(() => {
-  return selectedAgents.value.slice(0, 2).map((agent) => {
+  const pills = [];
+  const maxPills = 2;
+
+  // First, add all selected agents (up to max)
+  for (const agent of selectedAgents.value) {
+    if (pills.length >= maxPills) break;
     const fullAgent = displayAgentsButtons.value.find((a) => a.name === agent.name);
-    return fullAgent || agent;
-  });
+    pills.push(fullAgent || agent);
+  }
+
+  // Fill remaining slots with unselected Search, then Edit
+  const placeholders = ['Search', 'Edit'];
+  for (const name of placeholders) {
+    if (pills.length >= maxPills) break;
+    // Only add if not already in pills (i.e., not selected)
+    if (!pills.some((p) => p.name === name)) {
+      const agent = displayAgentsButtons.value.find((a) => a.name === name);
+      if (agent) {
+        pills.push(agent);
+      }
+    }
+  }
+
+  return pills;
 });
 
-// Count of additional selected agents (beyond the 2 shown as pills)
+// Count of additional selected agents (beyond the 2 visible)
 const additionalSelectedCount = computed(() => {
   return Math.max(0, selectedAgents.value.length - 2);
 });
 
-// For the AgentDropdown - show all agents with their selected state
+// For the AgentDropdown - exclude agents visible as pills
 const agentsForDropdown = computed(() => {
-  return displayAgentsButtons.value;
+  const visiblePillNames = visibleAgentPills.value.map((a) => a.name);
+  return displayAgentsButtons.value.filter(
+    (agent) => !visiblePillNames.includes(agent.name)
+  );
 });
 
 // Agents available for @ mention (not yet selected)
@@ -475,17 +501,34 @@ const isAgentSelected = (agent) => {
   return selectedAgents.value.some((a) => a.name === agent.name);
 };
 
-const getAgentButtonClasses = (agent) => {
-  // For pills, they are always selected (highlighted style)
-  return 'vdb-c-bg-[#FFE9D3] vdb-c-border-[#FFCFA5]';
+const getAgentButtonClasses = (agent, isPill = false) => {
+  if (isPill || isAgentSelected(agent)) {
+    return 'vdb-c-bg-[#FFE9D3] vdb-c-border-[#FFCFA5]';
+  }
+  if (agent.disabled) {
+    return 'vdb-c-bg-roy vdb-c-border-[#DBDBDB] vdb-c-cursor-not-allowed';
+  }
+  return 'vdb-c-bg-white vdb-c-border-[rgba(13,13,13,0.1)] hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-border-[#FFCFA5]';
 };
 
-const getAgentIconClasses = (agent) => {
-  return 'vdb-c-text-[#821F0C]';
+const getAgentIconClasses = (agent, isPill = false) => {
+  if (isPill || isAgentSelected(agent)) {
+    return 'vdb-c-text-[#821F0C]';
+  }
+  if (agent.disabled) {
+    return 'vdb-c-text-[#969696]';
+  }
+  return 'vdb-c-text-vdb-darkishgrey';
 };
 
-const getAgentTextClasses = (agent) => {
-  return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#821F0C] vdb-c-whitespace-nowrap';
+const getAgentTextClasses = (agent, isPill = false) => {
+  if (isPill || isAgentSelected(agent)) {
+    return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#821F0C] vdb-c-whitespace-nowrap';
+  }
+  if (agent.disabled) {
+    return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#969696] vdb-c-whitespace-nowrap';
+  }
+  return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-vdb-darkishgrey vdb-c-whitespace-nowrap';
 };
 
 const getSendButtonClasses = () => {
@@ -510,8 +553,8 @@ const handleAgentClick = (agent) => {
     // Remove agent from selection
     selectedAgents.value.splice(index, 1);
   } else {
-    // Add agent to selection
-    selectedAgents.value.push(agent);
+    // Add agent to selection with source: 'clicked'
+    selectedAgents.value.push({ ...agent, source: 'clicked' });
   }
 };
 
@@ -811,8 +854,21 @@ const handleInput = (event) => {
   textarea.style.height = 'auto';
   textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
 
-  // Check for @ mention
   const value = textarea.value;
+
+  // Check if any selected agent's @AgentName was removed from text
+  // Only remove agents that were added via @ mention (source: 'mention'), not clicked ones
+  selectedAgents.value = selectedAgents.value.filter((agent) => {
+    // Keep agents that were clicked (not from @ mention)
+    if (agent.source === 'clicked') {
+      return true;
+    }
+    // For mention-sourced agents, check if @AgentName is still in text
+    const pattern = `@${agent.name}`;
+    return value.includes(pattern);
+  });
+
+  // Check for @ mention
   const cursorPos = textarea.selectionStart;
 
   // Find the last @ before cursor
@@ -927,9 +983,9 @@ const selectAgentFromMention = (agent) => {
   const afterMention = value.substring(cursorPos);
   inputText.value = `${beforeMention}@${agent.name} ${afterMention}`;
 
-  // Add agent to selected agents
+  // Add agent to selected agents with source: 'mention'
   if (!selectedAgents.value.some((a) => a.name === agent.name)) {
-    selectedAgents.value.push(agent);
+    selectedAgents.value.push({ ...agent, source: 'mention' });
   }
 
   closeMentionDropdown();
