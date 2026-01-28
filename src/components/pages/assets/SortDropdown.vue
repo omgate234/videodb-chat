@@ -134,11 +134,11 @@ const hasActiveSort = computed(() => {
 });
 
 const showDurationSort = computed(() => {
-  return props.activeTab !== 'Images' && props.activeTab !== 'Voices';
+  return props.activeTab !== 'Images';
 });
 
 const showFileSizeSort = computed(() => {
-  return props.activeTab !== 'Images' && props.activeTab !== 'Voices';
+  return props.activeTab !== 'Images';
 });
 
 const updateSort = (value) => {

@@ -75,10 +75,11 @@
         :is-recording="voiceState === 'recording'"
         class="vdb-c-mb-20 vdb-c-mt-12 vdb-c-w-full"
       />
+      <!-- Top textarea (when agents selected and not recording) -->
       <textarea
-        ref="textareaRef"
+        v-show="selectedAgents.length > 0 && voiceState === 'idle'"
+        ref="textareaRefTop"
         name="chat-input"
-        v-else-if="selectedAgents.length > 0"
         v-model="inputText"
         type="text"
         class="vdb-c-chat-input vdb-c-mb-20 vdb-c-mt-12 vdb-c-max-h-[140px] vdb-c-w-full vdb-c-overflow-y-auto vdb-c-bg-transparent vdb-c-px-10 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
@@ -154,10 +155,11 @@
           :is-recording="voiceState === 'recording'"
           class="vdb-c-flex-1"
         />
+        <!-- Inline textarea (when no agents selected and not recording) -->
         <textarea
-          ref="textareaRef"
+          v-show="selectedAgents.length === 0 && voiceState === 'idle'"
+          ref="textareaRefInline"
           name="chat-input"
-          v-else-if="selectedAgents.length === 0"
           v-model="inputText"
           type="text"
           class="vdb-c-chat-input vdb-c-max-h-[140px] vdb-c-overflow-y-auto vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
@@ -469,7 +471,59 @@ const plusButtonRef = ref(null);
 const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
-const textareaRef = ref(null);
+const textareaRefTop = ref(null);
+const textareaRefInline = ref(null);
+// Computed ref that returns the currently active textarea
+const textareaRef = computed(() => {
+  if (selectedAgents.value.length > 0) {
+    return textareaRefTop.value;
+  }
+  return textareaRefInline.value;
+});
+
+// Track which textarea was focused before selectedAgents changed
+let lastFocusedTextarea = null;
+let lastSelectionStart = 0;
+let lastSelectionEnd = 0;
+// Flag to skip watcher focus transfer when selectAgentFromMention handles it
+let skipFocusTransfer = false;
+
+// Watch for selectedAgents length changes to transfer focus between textareas
+watch(
+  () => selectedAgents.value.length,
+  (newLen, oldLen) => {
+    // Skip if selectAgentFromMention is handling focus
+    if (skipFocusTransfer) {
+      skipFocusTransfer = false;
+      return;
+    }
+
+    // Only transfer focus if the visible textarea is switching
+    const wasAgentsSelected = oldLen > 0;
+    const isAgentsSelected = newLen > 0;
+    if (wasAgentsSelected === isAgentsSelected) return;
+
+    // Get the source textarea (the one that was active)
+    const sourceTextarea = wasAgentsSelected ? textareaRefTop.value : textareaRefInline.value;
+    const targetTextarea = isAgentsSelected ? textareaRefTop.value : textareaRefInline.value;
+
+    // Save cursor position from source
+    if (sourceTextarea && document.activeElement === sourceTextarea) {
+      lastSelectionStart = sourceTextarea.selectionStart;
+      lastSelectionEnd = sourceTextarea.selectionEnd;
+      lastFocusedTextarea = sourceTextarea;
+    }
+
+    // Transfer focus to target textarea in nextTick
+    nextTick(() => {
+      if (targetTextarea && lastFocusedTextarea) {
+        targetTextarea.focus();
+        targetTextarea.setSelectionRange(lastSelectionStart, lastSelectionEnd);
+        lastFocusedTextarea = null;
+      }
+    });
+  }
+);
 
 // @ mention state
 const showAgentMentionDropdown = ref(false);
@@ -545,10 +599,6 @@ const agentsList = [
   {
     name: 'Generate',
     icon: GenerateIcon,
-  },
-  {
-    name: 'Voice',
-    icon: VoiceIcon,
   },
 ];
 
@@ -781,8 +831,8 @@ const handleAgentClick = (agent) => {
     }
     wasManuallyClosed.value = false;
   } else {
-    // Add agent to selected list
-    selectedAgents.value = [...selectedAgents.value, agent];
+    // Add agent to selected list with source: 'clicked'
+    selectedAgents.value = [...selectedAgents.value, { ...agent, source: 'clicked' }];
     wasManuallyClosed.value = false;
   }
 };
@@ -811,9 +861,11 @@ const selectAgentFromMention = (agent) => {
   const afterMention = value.substring(cursorPos);
   inputText.value = `${beforeMention}@${agent.name} ${afterMention}`;
 
-  // Add agent to selected agents
+  // Add agent to selected agents with source: 'mention'
+  // Set skip flag so the watcher doesn't interfere with our focus handling
   if (!selectedAgents.value.some((a) => a.name === agent.name)) {
-    selectedAgents.value = [...selectedAgents.value, agent];
+    skipFocusTransfer = true;
+    selectedAgents.value = [...selectedAgents.value, { ...agent, source: 'mention' }];
   }
 
   // Close dropdown
@@ -823,11 +875,14 @@ const selectAgentFromMention = (agent) => {
   agentMentionHighlightedIndex.value = 0;
 
   // Focus textarea and set cursor position
+  // Use textareaRefTop directly since we just added an agent (selectedAgents.length > 0)
+  const newCursorPos = startIndex + agent.name.length + 2; // +2 for @ and space
   nextTick(() => {
-    if (textareaRef.value) {
-      const newCursorPos = startIndex + agent.name.length + 2; // +2 for @ and space
-      textareaRef.value.focus();
-      textareaRef.value.setSelectionRange(newCursorPos, newCursorPos);
+    // After adding agent, the top textarea will be visible
+    const targetTextarea = textareaRefTop.value;
+    if (targetTextarea) {
+      targetTextarea.focus();
+      targetTextarea.setSelectionRange(newCursorPos, newCursorPos);
     }
   });
 };
@@ -1242,46 +1297,46 @@ const handleInput = (event) => {
   textarea.style.height = 'auto';
   textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
 
-  // Handle @ mention detection
-  const text = inputText.value;
+  const value = textarea.value;
+
+  // Check if any selected agent's @AgentName was removed from text
+  // Only remove agents that were added via @ mention (source: 'mention'), not clicked ones
+  selectedAgents.value = selectedAgents.value.filter((agent) => {
+    // Keep agents that were clicked (not from @ mention)
+    if (agent.source === 'clicked') {
+      return true;
+    }
+    // For mention-sourced agents, check if @AgentName is still in text
+    const pattern = `@${agent.name}`;
+    return value.includes(pattern);
+  });
+
+  // Check for @ mention
   const cursorPos = textarea.selectionStart;
 
   // Find the last @ before cursor
-  let atIndex = -1;
-  for (let i = cursorPos - 1; i >= 0; i--) {
-    if (text[i] === '@') {
-      atIndex = i;
-      break;
-    }
-    // Stop if we hit a space or newline before finding @
-    if (text[i] === ' ' || text[i] === '\n') {
-      break;
-    }
-  }
+  const textBeforeCursor = value.substring(0, cursorPos);
+  const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+  const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ');
+  const lastNewlineIndex = textBeforeCursor.lastIndexOf('\n');
+  const lastBreakIndex = Math.max(lastSpaceIndex, lastNewlineIndex);
 
-  if (atIndex >= 0) {
-    // Check if @ is at start or preceded by space/newline
-    const charBefore = atIndex > 0 ? text[atIndex - 1] : ' ';
-    if (charBefore === ' ' || charBefore === '\n' || atIndex === 0) {
-      const query = text.substring(atIndex + 1, cursorPos);
-      // Only show dropdown if query doesn't contain spaces
-      if (!query.includes(' ')) {
-        agentMentionQuery.value = query;
-        agentMentionStartIndex.value = atIndex;
-        agentMentionHighlightedIndex.value = 0;
-        showAgentMentionDropdown.value = true;
-        nextTick(() => {
-          updateMentionDropdownPosition();
-        });
-        return;
-      }
-    }
-  }
+  if (lastAtIndex !== -1 && lastAtIndex > lastBreakIndex) {
+    // We're in an @ mention
+    agentMentionStartIndex.value = lastAtIndex;
+    agentMentionQuery.value = textBeforeCursor.slice(lastAtIndex + 1);
+    showAgentMentionDropdown.value = true;
+    agentMentionHighlightedIndex.value = 0;
 
-  // No valid @ mention, close dropdown
-  showAgentMentionDropdown.value = false;
-  agentMentionQuery.value = '';
-  agentMentionStartIndex.value = -1;
+    // Calculate dropdown position
+    nextTick(() => {
+      updateMentionDropdownPosition();
+    });
+  } else {
+    showAgentMentionDropdown.value = false;
+    agentMentionQuery.value = '';
+    agentMentionStartIndex.value = -1;
+  }
 };
 
 const handleStopMessage = () => {

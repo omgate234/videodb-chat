@@ -118,7 +118,7 @@
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-gap-[10px]"
         >
-          <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
+          <AssetTabs :tabs="['Video', 'Audio', 'Images']" v-model="activeTab" />
           <div class="vdb-c-flex-1"></div>
           <SearchInput
             :items="assets"
@@ -183,7 +183,7 @@
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-flex-wrap vdb-c-items-center vdb-c-justify-between vdb-c-gap-16 vdb-c-px-[40px]"
         >
-          <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
+          <AssetTabs :tabs="['Video', 'Audio', 'Images']" v-model="activeTab" />
 
           <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-12">
             <div ref="sortRef">
@@ -195,7 +195,7 @@
               />
             </div>
 
-            <div v-if="activeTab !== 'Images' && activeTab !== 'Voices'" ref="filterRef">
+            <div v-if="activeTab !== 'Images'" ref="filterRef">
               <FilterDropdown
                 :is-open="activeDropdown === 'filter'"
                 :model-value="filterState"
@@ -538,7 +538,7 @@ const handleFilterUpdate = (updatedFilterState) => {
   Object.assign(filterState, updatedFilterState);
 };
 
-const typeMap = { Video: 'video', Audio: 'audio', Images: 'image', Voices: 'voices' };
+const typeMap = { Video: 'video', Audio: 'audio', Images: 'image' };
 
 const apiParams = computed(() => {
   let sort_by = 'created_at';

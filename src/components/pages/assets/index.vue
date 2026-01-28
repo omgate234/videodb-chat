@@ -121,7 +121,7 @@
         class="vdb-c-flex vdb-c-w-full vdb-c-flex-wrap vdb-c-items-center vdb-c-justify-between vdb-c-gap-16"
       >
         <!-- Type Tabs -->
-        <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
+        <AssetTabs :tabs="['Video', 'Audio', 'Images']" v-model="activeTab" />
 
         <!-- Filters & Sorts -->
         <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-12">
@@ -134,7 +134,7 @@
             />
           </div>
 
-          <div v-if="activeTab !== 'Images' && activeTab !== 'Voices'" ref="filterRef">
+          <div v-if="activeTab !== 'Images'" ref="filterRef">
             <FilterDropdown
               :is-open="activeDropdown === 'filter'"
               :model-value="filterState"
@@ -372,7 +372,6 @@ const apiParams = computed(() => {
     Video: 'video',
     Audio: 'audio',
     Images: 'image',
-    Voices: 'voices',
   };
 
   let sort_by = 'created_at';
