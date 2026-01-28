@@ -168,35 +168,6 @@
             Customize Agents
           </span>
         </button>
-        <button
-          @click="handleCostAnalyticsClick"
-          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[6px] vdb-c-rounded-[10px] vdb-c-bg-white vdb-c-px-[10px] vdb-c-py-[8px] vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]"
-        >
-          <div
-            class="vdb-c-flex vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3.33334 16.6667V10M10 16.6667V3.33337M16.6667 16.6667V8.33337"
-                stroke="#1E1E1E"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </div>
-          <span
-            class="vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
-          >
-            Cost Analytics
-          </span>
-        </button>
       </div>
 
       <div
@@ -329,12 +300,6 @@ const handleCustomizeAgentsClick = () => {
   emit('profile-click');
 };
 
-const handleCostAnalyticsClick = () => {
-  if (chatContext?.handleOpenCostDrawer) {
-    chatContext.handleOpenCostDrawer();
-  }
-  emit('profile-click');
-};
 
 const updatePosition = () => {
   if (footerRef.value) {

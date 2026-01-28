@@ -12,33 +12,23 @@
         top: `${position.top}px`,
         left: `${position.left}px`,
       }"
-      class="vdb-c-fixed vdb-c-z-50 vdb-c-flex vdb-c-max-h-[400px] vdb-c-min-w-[280px] vdb-c-flex-col vdb-c-gap-[2px] vdb-c-overflow-y-auto vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-[0px_23px_6px_0px_rgba(0,0,0,0),0px_15px_6px_0px_rgba(0,0,0,0.01),0px_8px_5px_0px_rgba(0,0,0,0.02),0px_4px_4px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.03)]"
+      class="vdb-c-fixed vdb-c-z-50 vdb-c-flex vdb-c-max-h-[400px] vdb-c-min-w-[120px] vdb-c-flex-col vdb-c-gap-[2px] vdb-c-overflow-y-auto vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-shadow-[0px_23px_6px_0px_rgba(0,0,0,0),0px_15px_6px_0px_rgba(0,0,0,0.01),0px_8px_5px_0px_rgba(0,0,0,0.02),0px_4px_4px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.03)]"
       @click.stop
     >
       <template v-for="provider in providers" :key="provider.provider">
-        <div
-          v-if="provider.models && provider.models.length > 0"
-          class="vdb-c-mb-4 vdb-c-mt-8 vdb-c-px-10 vdb-c-text-[11px] vdb-c-font-semibold vdb-c-uppercase vdb-c-tracking-wide vdb-c-text-[#969696]"
-        >
-          {{ provider.name }}
-        </div>
         <button
           v-for="model in provider.models"
           :key="model.id"
           @click="handleModelClick(model.id, model.name)"
           :class="[
             'vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200',
-            selectedModelId === model.id
-              ? 'vdb-c-bg-[#FFE9D3]'
-              : 'hover:vdb-c-bg-roy',
+            selectedModelId === model.id ? 'vdb-c-bg-[#FFE9D3]' : 'hover:vdb-c-bg-roy',
           ]"
         >
           <span
             :class="[
               'vdb-c-flex-1 vdb-c-truncate vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5',
-              selectedModelId === model.id
-                ? 'vdb-c-text-[#821F0C]'
-                : 'vdb-c-text-vdb-darkishgrey',
+              selectedModelId === model.id ? 'vdb-c-text-[#821F0C]' : 'vdb-c-text-vdb-darkishgrey',
             ]"
           >
             {{ model.name }}
@@ -81,7 +71,7 @@ const updatePosition = () => {
     try {
       const rect = props.triggerElement.getBoundingClientRect();
       const gap = 8;
-      
+
       position.value = {
         top: rect.bottom + gap,
         left: rect.left,
@@ -139,4 +129,3 @@ const handleModelClick = (modelId, modelName) => {
   emit('close');
 };
 </script>
-

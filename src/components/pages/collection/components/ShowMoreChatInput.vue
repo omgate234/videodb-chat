@@ -68,17 +68,25 @@
           />
         </template>
       </div>
+      <!-- Waveform visualizer (when recording with agent selected) -->
+      <AudioWaveformVisualizer
+        v-if="selectedAgents.length > 0 && voiceState !== 'idle'"
+        :analyser-node="analyserNode"
+        :is-recording="voiceState === 'recording'"
+        class="vdb-c-mb-20 vdb-c-mt-12 vdb-c-w-full"
+      />
       <textarea
+        ref="textareaRef"
         name="chat-input"
-        v-if="selectedAgent !== null"
+        v-else-if="selectedAgents.length > 0"
         v-model="inputText"
         type="text"
-        class="vdb-c-chat-input vdb-c-mb-20 vdb-c-mt-12 vdb-c-max-h-[25vh] vdb-c-w-full vdb-c-bg-transparent vdb-c-px-10 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
+        class="vdb-c-chat-input vdb-c-mb-20 vdb-c-mt-12 vdb-c-max-h-[140px] vdb-c-w-full vdb-c-overflow-y-auto vdb-c-bg-transparent vdb-c-px-10 vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
         rows="1"
         :placeholder="placeholder"
         autocomplete="off"
         @input="handleInput"
-        @keydown.enter.exact.prevent="handleSend"
+        @keydown="handleTextareaKeyDown"
       ></textarea>
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-10">
         <div
@@ -139,24 +147,33 @@
             @model-select="handleModelSelect"
           />
         </div>
+        <!-- Waveform visualizer (when recording without agent) -->
+        <AudioWaveformVisualizer
+          v-if="selectedAgents.length === 0 && voiceState !== 'idle'"
+          :analyser-node="analyserNode"
+          :is-recording="voiceState === 'recording'"
+          class="vdb-c-flex-1"
+        />
         <textarea
+          ref="textareaRef"
           name="chat-input"
-          v-if="selectedAgent === null"
+          v-else-if="selectedAgents.length === 0"
           v-model="inputText"
           type="text"
-          class="vdb-c-chat-input vdb-c-max-h-[25vh] vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
+          class="vdb-c-chat-input vdb-c-max-h-[140px] vdb-c-overflow-y-auto vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none focus:vdb-c-outline-none"
           rows="1"
           :placeholder="placeholder"
           autocomplete="off"
           @input="handleInput"
-          @keydown.enter.exact.prevent="handleSend"
+          @keydown="handleTextareaKeyDown"
         ></textarea>
         <div
           class="vdb-c-flex vdb-c-flex-grow vdb-c-items-center vdb-c-justify-start vdb-c-gap-8"
-          v-if="selectedAgent !== null"
+          v-if="selectedAgents.length > 0"
         >
+          <!-- Show first 2 selected agents as pills -->
           <button
-            v-for="agent in [selectedAgent]"
+            v-for="agent in selectedAgents.slice(0, 2)"
             :key="agent.name"
             :disabled="agent.disabled"
             @click="handleAgentClick(agent)"
@@ -186,8 +203,15 @@
               class="vdb-c-ml-4 vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-flex-shrink-0"
             />
           </button>
+          <!-- Show +N badge if more than 2 agents selected -->
+          <span
+            v-if="selectedAgents.length > 2"
+            class="vdb-c-flex vdb-c-items-center vdb-c-rounded-full vdb-c-border vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3] vdb-c-px-[9px] vdb-c-py-8 vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-[#821F0C]"
+          >
+            +{{ selectedAgents.length - 2 }}
+          </span>
           <button
-            v-if="selectedAgent && selectedAgent.name?.toLowerCase() === 'search'"
+            v-if="selectedAgents.some((a) => a.name?.toLowerCase() === 'search')"
             @click.stop="handleControlsToggle"
             ref="controlsButtonRef"
             :class="[
@@ -223,45 +247,90 @@
         </div>
 
         <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[8px]">
-          <!-- Mic Button -->
-          <button
-            @click="handleMicClick"
-            :disabled="chatLoading"
-            :class="[
-              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
-              chatLoading
-                ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-[#F7F7F7]'
-                : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-[#F7F7F7]',
-            ]"
-            title="Voice input"
-          >
-            <MicrophoneIcon
-              :fill="chatLoading ? '#969696' : '#1E1E1E'"
-              class="vdb-c-h-[18px] vdb-c-w-[18px]"
-            />
-          </button>
-          <button
-            v-if="chatLoading"
-            @click="handleStopMessage"
-            :class="[
-              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[#EC5B16] vdb-c-bg-white vdb-c-text-[#EC5B16] vdb-c-transition hover:vdb-c-bg-[#FFF5EC]',
-            ]"
-            type="button"
-            title="Stop generating"
-          >
-            <StopIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="'#EC5B16'" />
-          </button>
-          <button
-            v-else
-            @click="handleSend"
-            :disabled="!canSend"
-            :class="[
-              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-text-white vdb-c-transition',
-            ]"
-            type="submit"
-          >
-            <SendIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="canSend ? '#EC5B16' : '#B9B9B9'" />
-          </button>
+          <!-- Voice recording controls (when recording/processing) -->
+          <template v-if="voiceState !== 'idle'">
+            <!-- Cancel button (disabled during transcribing) -->
+            <button
+              @click="cancelRecording"
+              :disabled="voiceState === 'transcribing'"
+              :class="[
+                'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all',
+                voiceState === 'transcribing'
+                  ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                  : 'vdb-c-text-[#969696] hover:vdb-c-text-[#1E1E1E]',
+              ]"
+              title="Cancel recording"
+            >
+              <CrossIcon fill="#969696" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
+            </button>
+
+            <!-- Confirm button (checkmark during recording, spinner during transcribing) -->
+            <button
+              @click="confirmRecording"
+              :disabled="voiceState === 'transcribing'"
+              :class="[
+                'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
+                voiceState === 'transcribing'
+                  ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-[#F7F7F7]'
+                  : 'vdb-c-border-[#EC5B16] vdb-c-bg-white hover:vdb-c-bg-[#FFF5EC]',
+              ]"
+              :title="voiceState === 'recording' ? 'Send to transcribe' : 'Processing...'"
+            >
+              <!-- Spinner during transcribing -->
+              <SpinnerIcon
+                v-if="voiceState === 'transcribing'"
+                class="vdb-c-h-[20px] vdb-c-w-[20px]"
+              />
+              <!-- Checkmark during recording -->
+              <CheckIcon v-else class="vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-text-[#EC5B16]" />
+            </button>
+          </template>
+
+          <!-- Normal controls (when idle) -->
+          <template v-else>
+            <!-- Mic Button -->
+            <button
+              @click="handleMicClick"
+              :disabled="chatLoading"
+              :class="[
+                'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
+                chatLoading
+                  ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-[#F7F7F7]'
+                  : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-[#F7F7F7]',
+              ]"
+              title="Voice input"
+            >
+              <MicrophoneIcon
+                :fill="chatLoading ? '#969696' : '#1E1E1E'"
+                class="vdb-c-h-[18px] vdb-c-w-[18px]"
+              />
+            </button>
+            <button
+              v-if="chatLoading"
+              @click="handleStopMessage"
+              :class="[
+                'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[#EC5B16] vdb-c-bg-white vdb-c-text-[#EC5B16] vdb-c-transition hover:vdb-c-bg-[#FFF5EC]',
+              ]"
+              type="button"
+              title="Stop generating"
+            >
+              <StopIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="'#EC5B16'" />
+            </button>
+            <button
+              v-else
+              @click="handleSend"
+              :disabled="!canSend"
+              :class="[
+                'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-text-white vdb-c-transition',
+              ]"
+              type="submit"
+            >
+              <SendIcon
+                class-name="vdb-c-w-20 vdb-c-h-20"
+                :fill="canSend ? '#EC5B16' : '#B9B9B9'"
+              />
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -274,11 +343,18 @@
       @select="handleCollectionAssetsSelected"
     />
 
-    <SpeechToTextModal
-      :is-open="showSpeechToTextModal"
-      :speech-to-text="context?.speechToText"
-      @close="showSpeechToTextModal = false"
-      @send="handleSpeechToTextSend"
+    <!-- @ Mention Dropdown -->
+    <AgentMentionDropdown
+      ref="agentMentionDropdownRef"
+      :is-open="showAgentMentionDropdown"
+      :position="mentionDropdownPosition"
+      :agents="allAgentsForDropdown"
+      :selected-agents="selectedAgents"
+      :query="agentMentionQuery"
+      :highlighted-index="agentMentionHighlightedIndex"
+      @select="selectAgentFromMention"
+      @close="showAgentMentionDropdown = false"
+      @highlight="agentMentionHighlightedIndex = $event"
     />
   </div>
 </template>
@@ -316,7 +392,10 @@ import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
 import StopIcon from '../../../icons/StopIcon.vue';
 import TrashIcon from '../../../chat/v2/icons/TrashIcon.vue';
 import ChevronDownIcon from '../../../chat/v2/icons/ChevronDownIcon.vue';
-import SpeechToTextModal from './SpeechToTextModal.vue';
+import AudioWaveformVisualizer from './AudioWaveformVisualizer.vue';
+import SpinnerIcon from '../../../chat/v2/icons/SpinnerIcon.vue';
+import CheckIcon from '../../../chat/v2/icons/CheckIcon.vue';
+import AgentMentionDropdown from './AgentMentionDropdown.vue';
 
 const props = defineProps({
   context: {
@@ -380,9 +459,8 @@ const showAttachDropdown = ref(false);
 const showModelDropdown = ref(false);
 const showDropUp = ref(false);
 const showUploadFromCollectionModal = ref(false);
-const showSpeechToTextModal = ref(false);
 const showCursor = ref(true);
-const selectedAgent = ref(null);
+const selectedAgents = ref([]);
 const llmProviders = ref([]);
 const threeDotsButtonRef = ref(null);
 const attachButtonRef = ref(null);
@@ -391,6 +469,24 @@ const plusButtonRef = ref(null);
 const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
+const textareaRef = ref(null);
+
+// @ mention state
+const showAgentMentionDropdown = ref(false);
+const agentMentionQuery = ref('');
+const agentMentionStartIndex = ref(-1);
+const agentMentionHighlightedIndex = ref(0);
+const mentionDropdownPosition = ref({ bottom: 0, left: 0 });
+const agentMentionDropdownRef = ref(null);
+
+// Voice recording state
+const voiceState = ref('idle'); // 'idle' | 'recording' | 'stopped' | 'transcribing'
+let mediaRecorder = null;
+let audioChunks = [];
+let mediaStream = null;
+let audioContext = null;
+const analyserNode = ref(null);
+let recordedMimeType = 'audio/webm';
 
 const chatLoading = computed(() => {
   if (!props.showLoadingState) {
@@ -479,7 +575,7 @@ const allAgentsForDropdown = computed(() => {
 
 const displayAgentsButtons = computed(() => {
   const hasVideos = collectionHasVideos.value;
-  const selectedAgentName = selectedAgent.value?.name;
+  const selectedAgentNames = selectedAgents.value.map((a) => a.name);
 
   return agentsList.map((agent) => {
     let display = false;
@@ -487,8 +583,8 @@ const displayAgentsButtons = computed(() => {
     if (hasVideos) {
       if (agent.name === 'Search') {
         display = true;
-      } else if (selectedAgentName) {
-        display = agent.name === selectedAgentName;
+      } else if (selectedAgentNames.length > 0) {
+        display = selectedAgentNames.includes(agent.name);
       } else {
         display = agent.name === 'Edit';
       }
@@ -531,7 +627,99 @@ const canSend = computed(() => {
 });
 
 const isAgentSelected = (agent) => {
-  return selectedAgent.value?.name === agent.name;
+  return selectedAgents.value.some((a) => a.name === agent.name);
+};
+
+// Computed: agents available for @ mention (not already selected)
+const filteredMentionAgents = computed(() => {
+  const selectedNames = selectedAgents.value.map((a) => a.name);
+  let available = allAgentsForDropdown.value.filter((agent) => !selectedNames.includes(agent.name));
+
+  if (agentMentionQuery.value) {
+    available = available.filter((agent) =>
+      agent.name.toLowerCase().includes(agentMentionQuery.value.toLowerCase())
+    );
+  }
+
+  return available;
+});
+
+// Get caret coordinates in textarea for @ mention positioning
+const getCaretCoordinates = (element, position) => {
+  const div = document.createElement('div');
+  const computed = window.getComputedStyle(element);
+
+  // Copy styles that affect text rendering
+  const styleProps = [
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'fontStyle',
+    'letterSpacing',
+    'textTransform',
+    'wordSpacing',
+    'textIndent',
+    'whiteSpace',
+    'lineHeight',
+    'paddingLeft',
+    'paddingRight',
+    'paddingTop',
+    'paddingBottom',
+    'borderLeftWidth',
+    'borderRightWidth',
+    'borderTopWidth',
+    'borderBottomWidth',
+    'boxSizing',
+  ];
+
+  div.style.position = 'absolute';
+  div.style.visibility = 'hidden';
+  div.style.whiteSpace = 'pre-wrap';
+  div.style.wordWrap = 'break-word';
+  div.style.width = computed.width;
+
+  styleProps.forEach((prop) => {
+    div.style[prop] = computed[prop];
+  });
+
+  div.textContent = element.value.substring(0, position);
+
+  const span = document.createElement('span');
+  span.textContent = element.value.substring(position) || '.';
+  div.appendChild(span);
+
+  document.body.appendChild(div);
+
+  const coordinates = {
+    top: span.offsetTop,
+    left: span.offsetLeft,
+    height: parseInt(computed.lineHeight) || parseInt(computed.fontSize) * 1.2,
+  };
+
+  document.body.removeChild(div);
+  return coordinates;
+};
+
+// Update @ mention dropdown position
+const updateMentionDropdownPosition = () => {
+  const textarea = textareaRef.value;
+  if (!textarea || agentMentionStartIndex.value < 0) return;
+
+  const textareaRect = textarea.getBoundingClientRect();
+  const caretCoords = getCaretCoordinates(textarea, agentMentionStartIndex.value);
+
+  // Calculate position relative to viewport
+  const viewportHeight = window.innerHeight;
+  const dropdownHeight = 220; // Approximate dropdown height
+
+  // Position dropdown above the @ character
+  const bottomFromViewport = viewportHeight - (textareaRect.top + caretCoords.top - textarea.scrollTop);
+  const leftFromViewport = textareaRect.left + caretCoords.left;
+
+  mentionDropdownPosition.value = {
+    bottom: bottomFromViewport + caretCoords.height + 4,
+    left: leftFromViewport,
+  };
 };
 
 const getAgentButtonClasses = (agent) => {
@@ -565,7 +753,7 @@ const getAgentTextClasses = (agent) => {
 };
 
 const isControlsActive = computed(() => {
-  return selectedAgent.value?.name?.toLowerCase() === 'search';
+  return selectedAgents.value.some((a) => a.name?.toLowerCase() === 'search');
 });
 
 const getSendButtonClasses = () => {
@@ -586,11 +774,15 @@ const handleAgentClick = (agent) => {
   if (agent.disabled) return;
 
   if (isAgentSelected(agent)) {
-    selectedAgent.value = null;
-    showSearchControlsPanel.value = false;
+    // Remove agent from selected list
+    selectedAgents.value = selectedAgents.value.filter((a) => a.name !== agent.name);
+    if (!selectedAgents.value.some((a) => a.name?.toLowerCase() === 'search')) {
+      showSearchControlsPanel.value = false;
+    }
     wasManuallyClosed.value = false;
   } else {
-    selectedAgent.value = agent;
+    // Add agent to selected list
+    selectedAgents.value = [...selectedAgents.value, agent];
     wasManuallyClosed.value = false;
   }
 };
@@ -601,6 +793,92 @@ const handleAgentSelect = (agent) => {
     handleAgentClick(fullAgent);
   } else {
     handleAgentClick(agent);
+  }
+};
+
+// Select agent from @ mention dropdown
+const selectAgentFromMention = (agent) => {
+  if (agent.disabled) return;
+  if (!textareaRef.value) return;
+
+  const textarea = textareaRef.value;
+  const value = inputText.value;
+  const startIndex = agentMentionStartIndex.value;
+  const cursorPos = textarea.selectionStart;
+
+  // Replace @query with @AgentName
+  const beforeMention = value.substring(0, startIndex);
+  const afterMention = value.substring(cursorPos);
+  inputText.value = `${beforeMention}@${agent.name} ${afterMention}`;
+
+  // Add agent to selected agents
+  if (!selectedAgents.value.some((a) => a.name === agent.name)) {
+    selectedAgents.value = [...selectedAgents.value, agent];
+  }
+
+  // Close dropdown
+  showAgentMentionDropdown.value = false;
+  agentMentionQuery.value = '';
+  agentMentionStartIndex.value = -1;
+  agentMentionHighlightedIndex.value = 0;
+
+  // Focus textarea and set cursor position
+  nextTick(() => {
+    if (textareaRef.value) {
+      const newCursorPos = startIndex + agent.name.length + 2; // +2 for @ and space
+      textareaRef.value.focus();
+      textareaRef.value.setSelectionRange(newCursorPos, newCursorPos);
+    }
+  });
+};
+
+// Handle keyboard navigation in @ mention dropdown
+const handleTextareaKeyDown = (event) => {
+  // Handle @ mention dropdown navigation
+  if (showAgentMentionDropdown.value && filteredMentionAgents.value.length > 0) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      agentMentionHighlightedIndex.value =
+        (agentMentionHighlightedIndex.value + 1) % filteredMentionAgents.value.length;
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      agentMentionHighlightedIndex.value =
+        (agentMentionHighlightedIndex.value - 1 + filteredMentionAgents.value.length) %
+        filteredMentionAgents.value.length;
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+      const agent = filteredMentionAgents.value[agentMentionHighlightedIndex.value];
+      if (agent) {
+        selectAgentFromMention(agent);
+      }
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      showAgentMentionDropdown.value = false;
+      agentMentionQuery.value = '';
+      agentMentionStartIndex.value = -1;
+      return;
+    }
+  }
+
+  // Handle Escape to close search controls panel
+  if (event.key === 'Escape' && showSearchControlsPanel.value) {
+    event.preventDefault();
+    showSearchControlsPanel.value = false;
+    wasManuallyClosed.value = true;
+    return;
+  }
+
+  // Handle send on Enter (without shift)
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    handleSend();
   }
 };
 
@@ -736,7 +1014,7 @@ const handleClickOutside = (event) => {
 };
 
 watch(
-  () => selectedAgent.value?.name?.toLowerCase() === 'search',
+  () => selectedAgents.value.some((a) => a.name?.toLowerCase() === 'search'),
   (isSearchSelected) => {
     if (isSearchSelected && !wasManuallyClosed.value) {
       showSearchControlsPanel.value = true;
@@ -775,6 +1053,8 @@ onUnmounted(() => {
     }
   });
   window.removeEventListener('click', handleClickOutside);
+  // Cleanup voice recording
+  cleanupRecording();
 });
 
 const handleUploadFromDevice = () => {};
@@ -785,28 +1065,137 @@ const handleUploadFromCollection = () => {
   showDropUp.value = false;
 };
 
-const handleMicClick = () => {
+// Voice recording functions
+const getSupportedMimeType = () => {
+  const mimeTypes = [
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+    'audio/webm;codecs=opus',
+    'audio/webm',
+  ];
+  for (const mimeType of mimeTypes) {
+    if (MediaRecorder.isTypeSupported(mimeType)) {
+      return mimeType;
+    }
+  }
+  return 'audio/webm';
+};
+
+const setupAudioAnalyser = (stream) => {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const analyser = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.7;
+
+  const source = audioContext.createMediaStreamSource(stream);
+  source.connect(analyser);
+  analyserNode.value = analyser;
+};
+
+const startRecording = async () => {
   if (chatLoading.value) return;
-  showSpeechToTextModal.value = true;
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+
+    setupAudioAnalyser(mediaStream);
+
+    recordedMimeType = getSupportedMimeType();
+    mediaRecorder = new MediaRecorder(mediaStream, { mimeType: recordedMimeType });
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.start(100);
+    voiceState.value = 'recording';
+  } catch (err) {
+    console.error('Failed to start recording:', err);
+    voiceState.value = 'idle';
+  }
 };
 
-const handleSpeechToTextSend = (text) => {
-  if (!text || text.trim().length === 0) return;
+const cancelRecording = () => {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  cleanupRecording();
+  voiceState.value = 'idle';
+};
 
-  const payload = {
-    text: text.trim(),
-    agents: [],
-  };
+const cleanupRecording = () => {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((track) => track.stop());
+    mediaStream = null;
+  }
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+  analyserNode.value = null;
+  audioChunks = [];
+  mediaRecorder = null;
+};
 
-  const modelId = selectedModel?.value?.id || selectedModel?.id;
-  if (modelId) {
-    payload.model_name = modelId;
+const confirmRecording = async () => {
+  // Stop recording first if still recording
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    // Create a promise that resolves when recording stops
+    await new Promise((resolve) => {
+      mediaRecorder.onstop = resolve;
+      mediaRecorder.stop();
+    });
   }
 
-  if (context?.handleAddMessage) {
-    context.handleAddMessage(payload);
+  voiceState.value = 'transcribing';
+
+  try {
+    if (audioChunks.length === 0) {
+      throw new Error('No audio recorded');
+    }
+
+    const audioBlob = new Blob(audioChunks, { type: recordedMimeType });
+
+    if (context?.speechToText) {
+      const response = await context.speechToText(audioBlob);
+
+      if (response.status === 'success' && response.text) {
+        inputText.value = response.text;
+      } else {
+        throw new Error(response.error || 'Transcription failed');
+      }
+    } else {
+      throw new Error('Speech to text not available');
+    }
+  } catch (err) {
+    console.error('Transcription error:', err);
+    // Show error to user (could be enhanced with notification system)
+    alert(err.message || 'Failed to transcribe audio');
+  } finally {
+    cleanupRecording();
+    voiceState.value = 'idle';
   }
 };
+
+const handleMicClick = () => {
+  startRecording();
+};
+
+// Auto-resize textarea when inputText changes programmatically (e.g., after transcription)
+watch(inputText, () => {
+  nextTick(() => {
+    if (textareaRef.value) {
+      textareaRef.value.style.height = 'auto';
+      textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 140)}px`;
+    }
+  });
+});
 
 const handleCollectionAssetsSelected = async (selectedAssets) => {
   const { activeCollectionData, collectionId: collectionIdRef } = context || {};
@@ -851,7 +1240,48 @@ const handleCollectionAssetsSelected = async (selectedAssets) => {
 const handleInput = (event) => {
   const textarea = event.target;
   textarea.style.height = 'auto';
-  textarea.style.height = `${Math.min(textarea.scrollHeight, 72)}px`;
+  textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
+
+  // Handle @ mention detection
+  const text = inputText.value;
+  const cursorPos = textarea.selectionStart;
+
+  // Find the last @ before cursor
+  let atIndex = -1;
+  for (let i = cursorPos - 1; i >= 0; i--) {
+    if (text[i] === '@') {
+      atIndex = i;
+      break;
+    }
+    // Stop if we hit a space or newline before finding @
+    if (text[i] === ' ' || text[i] === '\n') {
+      break;
+    }
+  }
+
+  if (atIndex >= 0) {
+    // Check if @ is at start or preceded by space/newline
+    const charBefore = atIndex > 0 ? text[atIndex - 1] : ' ';
+    if (charBefore === ' ' || charBefore === '\n' || atIndex === 0) {
+      const query = text.substring(atIndex + 1, cursorPos);
+      // Only show dropdown if query doesn't contain spaces
+      if (!query.includes(' ')) {
+        agentMentionQuery.value = query;
+        agentMentionStartIndex.value = atIndex;
+        agentMentionHighlightedIndex.value = 0;
+        showAgentMentionDropdown.value = true;
+        nextTick(() => {
+          updateMentionDropdownPosition();
+        });
+        return;
+      }
+    }
+  }
+
+  // No valid @ mention, close dropdown
+  showAgentMentionDropdown.value = false;
+  agentMentionQuery.value = '';
+  agentMentionStartIndex.value = -1;
 };
 
 const handleStopMessage = () => {
@@ -897,17 +1327,17 @@ const handleSend = () => {
     }
   });
 
-  const additionalInfo =
-    selectedAgent.value?.name === 'Search'
-      ? {
-          precision: additionalData.value.precision,
-          searchFor: additionalData.value.searchFor,
-        }
-      : null;
+  const hasSearchAgent = selectedAgents.value.some((a) => a.name?.toLowerCase() === 'search');
+  const additionalInfo = hasSearchAgent
+    ? {
+        precision: additionalData.value.precision,
+        searchFor: additionalData.value.searchFor,
+      }
+    : null;
 
   const payload = {
     text: textClean,
-    agents: selectedAgent.value ? [selectedAgent.value.name] : [],
+    agents: selectedAgents.value.map((a) => a.name),
     files: filesToSend,
     uploaded_files: uploadedFilesFromCollection,
     additionalInfo: additionalInfo,
@@ -949,7 +1379,7 @@ const handleSend = () => {
   });
 
   inputText.value = '';
-  selectedAgent.value = null;
+  selectedAgents.value = [];
   uploadedFiles.value = [];
   collectionAssets.value = [];
   displayFiles.value = [];

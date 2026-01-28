@@ -12,13 +12,16 @@
       @click.stop
     >
       <button
-        v-for="agent in hiddenAgents"
+        v-for="agent in agents"
         :key="agent.name"
         :disabled="agent.disabled"
         @click="handleAgentClick(agent)"
         :class="[
-          'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]',
+          'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200',
           agent.disabled && 'vdb-c-cursor-not-allowed',
+          isAgentSelected(agent)
+            ? 'vdb-c-bg-[#FFE9D3]'
+            : 'hover:vdb-c-bg-[#EFEFEF]',
         ]"
       >
         <Tooltip
@@ -30,17 +33,38 @@
           :is="agent.icon"
           :class="[
             'vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0',
-            agent.disabled ? 'vdb-c-text-[#969696]' : 'vdb-c-text-vdb-darkishgrey',
+            agent.disabled
+              ? 'vdb-c-text-[#969696]'
+              : isAgentSelected(agent)
+                ? 'vdb-c-text-[#821F0C]'
+                : 'vdb-c-text-vdb-darkishgrey',
           ]"
         />
         <span
           :class="[
-            'vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5',
-            agent.disabled ? 'vdb-c-text-[#969696]' : 'vdb-c-text-vdb-darkishgrey',
+            'vdb-c-flex-1 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5',
+            agent.disabled
+              ? 'vdb-c-text-[#969696]'
+              : isAgentSelected(agent)
+                ? 'vdb-c-text-[#821F0C]'
+                : 'vdb-c-text-vdb-darkishgrey',
           ]"
         >
           {{ agent.name }}
         </span>
+        <!-- Checkmark for selected agents -->
+        <svg
+          v-if="isAgentSelected(agent)"
+          class="vdb-c-h-16 vdb-c-w-16 vdb-c-flex-shrink-0 vdb-c-text-[#821F0C]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
       </button>
     </div>
   </Teleport>
@@ -63,6 +87,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  selectedAgents: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['close', 'agent-select']);
@@ -70,9 +98,9 @@ const emit = defineEmits(['close', 'agent-select']);
 const position = ref({ top: 0, left: 0 });
 const dropdownRef = ref(null);
 
-const hiddenAgents = computed(() => {
-  return props.agents.filter((agent) => !agent.display);
-});
+const isAgentSelected = (agent) => {
+  return props.selectedAgents.some((a) => a.name === agent.name);
+};
 
 const updatePosition = () => {
   if (props.triggerElement) {
@@ -140,7 +168,7 @@ onUnmounted(() => {
 const handleAgentClick = (agent) => {
   if (!agent.disabled) {
     emit('agent-select', agent);
-    emit('close');
+    // Don't close dropdown to allow multiple selection
   }
 };
 </script>

@@ -33,17 +33,44 @@
     <!-- Input Area -->
     <div
       class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-gap-px vdb-c-pl-[4px]"
-      :class="displayFiles.length > 0 ? 'vdb-c-min-h-[40px]' : 'vdb-c-min-h-[72px]'"
+      :class="
+        voiceState !== 'idle'
+          ? 'vdb-c-h-[48px]'
+          : 'vdb-c-min-h-[48px] vdb-c-max-h-[150px]'
+      "
     >
+      <!-- Normal textarea (when idle) -->
       <textarea
+        v-if="voiceState === 'idle'"
+        ref="textareaRef"
         name="chat-input"
         v-model="inputText"
         :placeholder="placeholder"
-        class="vdb-c-leading-24 vdb-c-min-h-0 vdb-c-flex-1 vdb-c-resize-none vdb-c-border-0 vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none"
+        class="vdb-c-leading-24 vdb-c-min-h-[24px] vdb-c-max-h-[140px] vdb-c-flex-1 vdb-c-resize-none vdb-c-overflow-y-auto vdb-c-border-0 vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none"
         rows="1"
         @input="handleInput"
-        @keydown.enter.exact.prevent="handleSend"
+        @keydown="handleTextareaKeyDown"
+        @blur="handleTextareaBlur"
       ></textarea>
+      <!-- Waveform visualizer (when recording/processing) -->
+      <AudioWaveformVisualizer
+        v-else
+        :analyser-node="analyserNode"
+        :is-recording="voiceState === 'recording'"
+        class="vdb-c-flex-1"
+      />
+
+      <!-- Agent Mention Dropdown (teleported to body) -->
+      <AgentMentionDropdown
+        :is-open="showAgentMentionDropdown"
+        :position="mentionDropdownPosition"
+        :agents="displayAgentsButtons"
+        :selected-agents="selectedAgents"
+        :query="agentMentionQuery"
+        :highlighted-index="agentMentionHighlightedIndex"
+        @select="selectAgentFromMention"
+        @close="closeMentionDropdown"
+      />
     </div>
 
     <!-- Actions Row -->
@@ -115,22 +142,16 @@
           />
         </div>
 
-        <!-- Agent Buttons -->
+        <!-- Selected Agent Pills (max 2) -->
         <button
-          v-for="agent in visibleAgents.sort((a, b) => Number(a.disabled) - Number(b.disabled))"
+          v-for="agent in visibleAgentPills"
           :key="agent.name"
-          :disabled="agent.disabled"
-          @click="handleAgentClick(agent)"
+          @click="removeSelectedAgent(agent)"
           :class="[
             'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
             getAgentButtonClasses(agent),
           ]"
         >
-          <Tooltip
-            v-if="agent.disabled && !collectionHasVideos"
-            text="Add or generate videos in your collection to enable this"
-            class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-[calc(100%+15px)] vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
-          />
           <component
             :is="agent.icon"
             :class="[
@@ -142,13 +163,20 @@
             {{ agent.name }}
           </span>
           <CrossIcon
-            v-if="isAgentSelected(agent)"
             :fill="'#821F0C'"
             class="vdb-c-ml-4 vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-flex-shrink-0"
           />
         </button>
 
-        <!-- Three Dots Button -->
+        <!-- Additional selected count badge -->
+        <span
+          v-if="additionalSelectedCount > 0"
+          class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#FFE9D3] vdb-c-px-8 vdb-c-py-4 vdb-c-text-[12px] vdb-c-font-medium vdb-c-text-[#821F0C]"
+        >
+          +{{ additionalSelectedCount }}
+        </span>
+
+        <!-- Three Dots Button (Agent Selector) -->
         <div class="vdb-c-relative">
           <button
             ref="threeDotsButtonRef"
@@ -160,7 +188,8 @@
           <AgentDropdown
             :is-open="showAgentsDropdown"
             :trigger-element="threeDotsButtonRef"
-            :agents="displayAgentsButtons"
+            :agents="agentsForDropdown"
+            :selected-agents="selectedAgents"
             @close="showAgentsDropdown = false"
             @agent-select="handleAgentSelect"
           />
@@ -170,30 +199,69 @@
       <!-- Spacer -->
       <div class="vdb-c-flex-1"></div>
 
-      <!-- Mic Button -->
-      <button
-        @click="handleMicClick"
-        class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-transition-all hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-[#F7F7F7]"
-        title="Voice input"
-      >
-        <MicrophoneIcon fill="#1E1E1E" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
-      </button>
+      <!-- Voice recording controls (when recording/processing) -->
+      <template v-if="voiceState !== 'idle'">
+        <!-- Cancel button (disabled during transcribing) -->
+        <button
+          @click="cancelRecording"
+          :disabled="voiceState === 'transcribing'"
+          :class="[
+            'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all',
+            voiceState === 'transcribing'
+              ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+              : 'vdb-c-text-[#969696] hover:vdb-c-text-[#1E1E1E]',
+          ]"
+          title="Cancel recording"
+        >
+          <CrossIcon fill="#969696" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
+        </button>
 
-      <!-- Send Button -->
-      <button
-        @click="handleSend"
-        :disabled="!canSend"
-        :class="[
-          'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[50px] vdb-c-transition-all',
-          getSendButtonClasses(),
-        ]"
-      >
-        <SendButtonIcon :fill="getSendButtonFill()" />
-      </button>
+        <!-- Confirm button (checkmark during recording, spinner during transcribing) -->
+        <button
+          @click="confirmRecording"
+          :disabled="voiceState === 'transcribing'"
+          :class="[
+            'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
+            voiceState === 'transcribing'
+              ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-[#F7F7F7]'
+              : 'vdb-c-border-[#EC5B16] vdb-c-bg-white hover:vdb-c-bg-[#FFF5EC]',
+          ]"
+          :title="voiceState === 'recording' ? 'Send to transcribe' : 'Processing...'"
+        >
+          <!-- Spinner during transcribing -->
+          <SpinnerIcon v-if="voiceState === 'transcribing'" class="vdb-c-h-[20px] vdb-c-w-[20px]" />
+          <!-- Checkmark during recording -->
+          <CheckIcon v-else class="vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-text-[#EC5B16]" />
+        </button>
+      </template>
+
+      <!-- Normal controls (when idle) -->
+      <template v-else>
+        <!-- Mic Button -->
+        <button
+          @click="handleMicClick"
+          class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-transition-all hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-[#F7F7F7]"
+          title="Voice input"
+        >
+          <MicrophoneIcon fill="#1E1E1E" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
+        </button>
+
+        <!-- Send Button -->
+        <button
+          @click="handleSend"
+          :disabled="!canSend"
+          :class="[
+            'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[50px] vdb-c-transition-all',
+            getSendButtonClasses(),
+          ]"
+        >
+          <SendButtonIcon :fill="getSendButtonFill()" />
+        </button>
+      </template>
     </div>
 
     <SearchOptions
-      v-if="selectedAgent?.name === 'Search'"
+      v-if="hasSearchAgentSelected"
       :precision="additionalData.precision"
       :search-for="additionalData.searchFor"
       @update:precision="additionalData.precision = $event"
@@ -207,17 +275,10 @@
       @close="showUploadFromCollectionModal = false"
       @select="handleCollectionAssetsSelected"
     />
-
-    <SpeechToTextModal
-      :is-open="showSpeechToTextModal"
-      :speech-to-text="context?.speechToText"
-      @close="showSpeechToTextModal = false"
-      @send="handleSpeechToTextSend"
-    />
   </div>
 </template>
 <script setup>
-import { ref, computed, inject, onUnmounted, onMounted } from 'vue';
+import { ref, computed, inject, onUnmounted, onMounted, watch, nextTick } from 'vue';
 import AttachIcon from '../../../chat/v2/icons/AttachIcon.vue';
 import ModelIcon from '../../../chat/v2/icons/ModelIcon.vue';
 import SearchIcon from '../../../chat/v2/icons/agents/SearchIcon.vue';
@@ -240,8 +301,11 @@ import AudioFileDisplay from './AudioFileDisplay.vue';
 import SearchOptions from './SearchOptions.vue';
 import Tooltip from '../../../chat/v2/elements/Tooltip.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
-import SpeechToTextModal from './SpeechToTextModal.vue';
 import MicrophoneIcon from '../../../chat/v2/icons/MicrophoneIcon.vue';
+import AudioWaveformVisualizer from './AudioWaveformVisualizer.vue';
+import SpinnerIcon from '../../../chat/v2/icons/SpinnerIcon.vue';
+import CheckIcon from '../../../chat/v2/icons/CheckIcon.vue';
+import AgentMentionDropdown from './AgentMentionDropdown.vue';
 
 const props = defineProps({
   context: {
@@ -268,13 +332,30 @@ const showAgentsDropdown = ref(false);
 const showAttachDropdown = ref(false);
 const showModelDropdown = ref(false);
 const showUploadFromCollectionModal = ref(false);
-const showSpeechToTextModal = ref(false);
 const showCursor = ref(true);
-const selectedAgent = ref(null);
+const selectedAgents = ref([]); // Changed to array for multiple selection
 const llmProviders = ref([]);
 const threeDotsButtonRef = ref(null);
 const attachButtonRef = ref(null);
 const modelButtonRef = ref(null);
+const textareaRef = ref(null);
+
+// @ mention state
+const showAgentMentionDropdown = ref(false);
+const agentMentionQuery = ref('');
+const agentMentionStartIndex = ref(-1);
+const agentMentionHighlightedIndex = ref(0);
+const agentMentionDropdownRef = ref(null);
+const mentionDropdownPosition = ref({ top: 0, left: 0 });
+
+// Voice recording state
+const voiceState = ref('idle'); // 'idle' | 'recording' | 'stopped' | 'transcribing'
+let mediaRecorder = null;
+let audioChunks = [];
+let mediaStream = null;
+let audioContext = null;
+const analyserNode = ref(null);
+let recordedMimeType = 'audio/webm';
 
 const selectedModel = computed(() => context?.selectedModel?.value || context?.selectedModel);
 
@@ -322,31 +403,9 @@ const agentsList = [
 
 const displayAgentsButtons = computed(() => {
   const hasVideos = collectionHasVideos.value;
-  const selectedAgentName = selectedAgent.value?.name;
+  const selectedAgentNames = selectedAgents.value.map((a) => a.name);
 
   return agentsList.map((agent) => {
-    // Determine display state based on collection state and selection
-    let display = false;
-
-    if (hasVideos) {
-      // When there are videos:
-      // - Search is always visible
-      // - If an agent is selected, it replaces Edit (selected agent is visible, Edit is not)
-      // - If no agent is selected, Edit is visible
-      if (agent.name === 'Search') {
-        display = true;
-      } else if (selectedAgentName) {
-        // An agent is selected: show selected agent, hide Edit
-        display = agent.name === selectedAgentName;
-      } else {
-        // No agent selected: show Edit
-        display = agent.name === 'Edit';
-      }
-    } else {
-      // When there are no videos: only Generate and Search are visible
-      display = agent.name === 'Generate' || agent.name === 'Search';
-    }
-
     // Determine disabled state
     let disabled = false;
     if (agent.name === 'Generate') {
@@ -357,27 +416,55 @@ const displayAgentsButtons = computed(() => {
       disabled = false; // All agents are enabled when there are videos
     }
 
+    // Check if this agent is selected
+    const isSelected = selectedAgentNames.includes(agent.name);
+
     return {
       ...agent,
-      display,
       disabled,
+      isSelected,
     };
   });
 });
 
-const visibleAgents = computed(() => {
-  // Simply return agents that should be displayed, maintaining order
-  const agents = displayAgentsButtons.value.filter((agent) => agent.display);
+// Agents to show as pills (max 2 selected agents)
+const visibleAgentPills = computed(() => {
+  return selectedAgents.value.slice(0, 2).map((agent) => {
+    const fullAgent = displayAgentsButtons.value.find((a) => a.name === agent.name);
+    return fullAgent || agent;
+  });
+});
 
-  // Ensure Search comes first, then selected agent (if any)
-  const searchAgent = agents.find((agent) => agent.name === 'Search');
-  const otherAgents = agents.filter((agent) => agent.name !== 'Search');
+// Count of additional selected agents (beyond the 2 shown as pills)
+const additionalSelectedCount = computed(() => {
+  return Math.max(0, selectedAgents.value.length - 2);
+});
 
-  if (searchAgent) {
-    return [searchAgent, ...otherAgents];
+// For the AgentDropdown - show all agents with their selected state
+const agentsForDropdown = computed(() => {
+  return displayAgentsButtons.value;
+});
+
+// Agents available for @ mention (not yet selected)
+const availableAgentsForMention = computed(() => {
+  const selectedNames = selectedAgents.value.map((a) => a.name);
+  return displayAgentsButtons.value.filter((agent) => !selectedNames.includes(agent.name));
+});
+
+// Filtered agents for @ mention dropdown based on query
+const filteredMentionAgents = computed(() => {
+  let agents = availableAgentsForMention.value;
+  if (agentMentionQuery.value) {
+    agents = agents.filter((agent) =>
+      agent.name.toLowerCase().includes(agentMentionQuery.value.toLowerCase())
+    );
   }
-
   return agents;
+});
+
+// Watch for filtered agents change to reset highlighted index
+watch(filteredMentionAgents, () => {
+  agentMentionHighlightedIndex.value = 0;
 });
 
 const canSend = computed(() => {
@@ -385,37 +472,20 @@ const canSend = computed(() => {
 });
 
 const isAgentSelected = (agent) => {
-  return selectedAgent.value?.name === agent.name;
+  return selectedAgents.value.some((a) => a.name === agent.name);
 };
 
 const getAgentButtonClasses = (agent) => {
-  if (isAgentSelected(agent)) {
-    return 'vdb-c-bg-[#FFE9D3] vdb-c-border-[#FFCFA5]';
-  }
-  if (agent.disabled) {
-    return 'vdb-c-bg-roy vdb-c-border-[#DBDBDB] vdb-c-cursor-not-allowed';
-  }
-  return 'vdb-c-bg-white vdb-c-border-[rgba(13,13,13,0.1)] hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-border-[#FFCFA5]';
+  // For pills, they are always selected (highlighted style)
+  return 'vdb-c-bg-[#FFE9D3] vdb-c-border-[#FFCFA5]';
 };
 
 const getAgentIconClasses = (agent) => {
-  if (isAgentSelected(agent)) {
-    return 'vdb-c-text-[#821F0C]';
-  }
-  if (agent.disabled) {
-    return 'vdb-c-text-[#969696]';
-  }
-  return 'vdb-c-text-vdb-darkishgrey';
+  return 'vdb-c-text-[#821F0C]';
 };
 
 const getAgentTextClasses = (agent) => {
-  if (isAgentSelected(agent)) {
-    return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#821F0C] vdb-c-whitespace-nowrap';
-  }
-  if (agent.disabled) {
-    return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#969696] vdb-c-whitespace-nowrap';
-  }
-  return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-vdb-darkishgrey vdb-c-whitespace-nowrap';
+  return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#821F0C] vdb-c-whitespace-nowrap';
 };
 
 const getSendButtonClasses = () => {
@@ -435,10 +505,13 @@ const getSendButtonFill = () => {
 const handleAgentClick = (agent) => {
   if (agent.disabled) return;
 
-  if (isAgentSelected(agent)) {
-    selectedAgent.value = null;
+  const index = selectedAgents.value.findIndex((a) => a.name === agent.name);
+  if (index !== -1) {
+    // Remove agent from selection
+    selectedAgents.value.splice(index, 1);
   } else {
-    selectedAgent.value = agent;
+    // Add agent to selection
+    selectedAgents.value.push(agent);
   }
 };
 
@@ -448,6 +521,13 @@ const handleAgentSelect = (agent) => {
     handleAgentClick(fullAgent);
   } else {
     handleAgentClick(agent);
+  }
+};
+
+const removeSelectedAgent = (agent) => {
+  const index = selectedAgents.value.findIndex((a) => a.name === agent.name);
+  if (index !== -1) {
+    selectedAgents.value.splice(index, 1);
   }
 };
 
@@ -584,6 +664,8 @@ onUnmounted(() => {
       URL.revokeObjectURL(file.url);
     }
   });
+  // Cleanup voice recording
+  cleanupRecording();
 });
 
 const handleUploadFromDevice = () => {
@@ -594,32 +676,322 @@ const handleUploadFromCollection = () => {
   showUploadFromCollectionModal.value = true;
 };
 
+// Voice recording functions
+const getSupportedMimeType = () => {
+  const mimeTypes = [
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+    'audio/webm;codecs=opus',
+    'audio/webm',
+  ];
+  for (const mimeType of mimeTypes) {
+    if (MediaRecorder.isTypeSupported(mimeType)) {
+      return mimeType;
+    }
+  }
+  return 'audio/webm';
+};
+
+const setupAudioAnalyser = (stream) => {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const analyser = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.7;
+
+  const source = audioContext.createMediaStreamSource(stream);
+  source.connect(analyser);
+  analyserNode.value = analyser;
+};
+
+const startRecording = async () => {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+
+    setupAudioAnalyser(mediaStream);
+
+    recordedMimeType = getSupportedMimeType();
+    mediaRecorder = new MediaRecorder(mediaStream, { mimeType: recordedMimeType });
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.start(100);
+    voiceState.value = 'recording';
+  } catch (err) {
+    console.error('Failed to start recording:', err);
+    voiceState.value = 'idle';
+  }
+};
+
+const cancelRecording = () => {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  cleanupRecording();
+  voiceState.value = 'idle';
+};
+
+const cleanupRecording = () => {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((track) => track.stop());
+    mediaStream = null;
+  }
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+  analyserNode.value = null;
+  audioChunks = [];
+  mediaRecorder = null;
+};
+
+const confirmRecording = async () => {
+  // Stop recording first if still recording
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    // Create a promise that resolves when recording stops
+    await new Promise((resolve) => {
+      mediaRecorder.onstop = resolve;
+      mediaRecorder.stop();
+    });
+  }
+
+  voiceState.value = 'transcribing';
+
+  try {
+    if (audioChunks.length === 0) {
+      throw new Error('No audio recorded');
+    }
+
+    const audioBlob = new Blob(audioChunks, { type: recordedMimeType });
+
+    if (context?.speechToText) {
+      const response = await context.speechToText(audioBlob);
+
+      if (response.status === 'success' && response.text) {
+        inputText.value = response.text;
+      } else {
+        throw new Error(response.error || 'Transcription failed');
+      }
+    } else {
+      throw new Error('Speech to text not available');
+    }
+  } catch (err) {
+    console.error('Transcription error:', err);
+    // Show error to user (could be enhanced with notification system)
+    alert(err.message || 'Failed to transcribe audio');
+  } finally {
+    cleanupRecording();
+    voiceState.value = 'idle';
+  }
+};
+
 const handleMicClick = () => {
-  showSpeechToTextModal.value = true;
+  startRecording();
 };
 
-const handleSpeechToTextSend = (text) => {
-  if (!text || text.trim().length === 0) return;
-
-  const payload = {
-    text: text.trim(),
-    agents: [],
-  };
-
-  const modelId = selectedModel?.value?.id || selectedModel?.id;
-  if (modelId) {
-    payload.model_name = modelId;
-  }
-
-  if (context?.handleAddMessage) {
-    context.handleAddMessage(payload);
-  }
-};
+// Auto-resize textarea when inputText changes programmatically (e.g., after transcription)
+watch(inputText, () => {
+  nextTick(() => {
+    if (textareaRef.value) {
+      textareaRef.value.style.height = 'auto';
+      textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 140)}px`;
+    }
+  });
+});
 
 const handleInput = (event) => {
   const textarea = event.target;
   textarea.style.height = 'auto';
-  textarea.style.height = `${Math.min(textarea.scrollHeight, 72)}px`;
+  textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
+
+  // Check for @ mention
+  const value = textarea.value;
+  const cursorPos = textarea.selectionStart;
+
+  // Find the last @ before cursor
+  const textBeforeCursor = value.substring(0, cursorPos);
+  const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+  const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ');
+  const lastNewlineIndex = textBeforeCursor.lastIndexOf('\n');
+  const lastBreakIndex = Math.max(lastSpaceIndex, lastNewlineIndex);
+
+  if (lastAtIndex !== -1 && lastAtIndex > lastBreakIndex) {
+    // We're in an @ mention
+    agentMentionStartIndex.value = lastAtIndex;
+    agentMentionQuery.value = textBeforeCursor.slice(lastAtIndex + 1);
+    showAgentMentionDropdown.value = true;
+    agentMentionHighlightedIndex.value = 0;
+
+    // Calculate dropdown position
+    updateMentionDropdownPosition();
+  } else {
+    closeMentionDropdown();
+  }
+};
+
+const getCaretCoordinates = (element, position) => {
+  // Create a mirror div to calculate caret position
+  const div = document.createElement('div');
+  const style = div.style;
+  const computed = window.getComputedStyle(element);
+
+  // Copy textarea styles to the mirror div
+  style.whiteSpace = 'pre-wrap';
+  style.wordWrap = 'break-word';
+  style.position = 'absolute';
+  style.visibility = 'hidden';
+  style.overflow = 'hidden';
+
+  // Copy relevant styles
+  const properties = [
+    'fontFamily', 'fontSize', 'fontWeight', 'fontStyle',
+    'letterSpacing', 'textTransform', 'wordSpacing', 'textIndent',
+    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+    'boxSizing', 'lineHeight'
+  ];
+
+  properties.forEach(prop => {
+    style[prop] = computed[prop];
+  });
+
+  style.width = `${element.offsetWidth}px`;
+  style.height = 'auto';
+
+  div.textContent = element.value.substring(0, position);
+
+  // Add a span at the caret position
+  const span = document.createElement('span');
+  span.textContent = element.value.substring(position) || '.';
+  div.appendChild(span);
+
+  document.body.appendChild(div);
+
+  const coordinates = {
+    top: span.offsetTop,
+    left: span.offsetLeft,
+    height: parseInt(computed.lineHeight) || parseInt(computed.fontSize) * 1.2
+  };
+
+  document.body.removeChild(div);
+
+  return coordinates;
+};
+
+const updateMentionDropdownPosition = () => {
+  if (!textareaRef.value) return;
+
+  const textarea = textareaRef.value;
+  const rect = textarea.getBoundingClientRect();
+
+  // Get the caret position at the @ symbol
+  const caretPos = getCaretCoordinates(textarea, agentMentionStartIndex.value);
+
+  // Calculate position relative to viewport
+  // Account for textarea scroll
+  const scrollTop = textarea.scrollTop;
+  const caretTop = rect.top + caretPos.top - scrollTop;
+  const caretLeft = rect.left + caretPos.left;
+
+  // Position above the @ symbol using bottom positioning
+  mentionDropdownPosition.value = {
+    bottom: window.innerHeight - caretTop + 4,
+    left: caretLeft,
+  };
+};
+
+const closeMentionDropdown = () => {
+  showAgentMentionDropdown.value = false;
+  agentMentionQuery.value = '';
+  agentMentionStartIndex.value = -1;
+  agentMentionHighlightedIndex.value = 0;
+};
+
+const selectAgentFromMention = (agent) => {
+  if (!textareaRef.value) return;
+
+  const textarea = textareaRef.value;
+  const value = inputText.value;
+  const startIndex = agentMentionStartIndex.value;
+  const cursorPos = textarea.selectionStart;
+
+  // Replace @query with @AgentName
+  const beforeMention = value.substring(0, startIndex);
+  const afterMention = value.substring(cursorPos);
+  inputText.value = `${beforeMention}@${agent.name} ${afterMention}`;
+
+  // Add agent to selected agents
+  if (!selectedAgents.value.some((a) => a.name === agent.name)) {
+    selectedAgents.value.push(agent);
+  }
+
+  closeMentionDropdown();
+
+  // Focus textarea and set cursor position
+  nextTick(() => {
+    if (textareaRef.value) {
+      const newCursorPos = startIndex + agent.name.length + 2; // +2 for @ and space
+      textareaRef.value.focus();
+      textareaRef.value.setSelectionRange(newCursorPos, newCursorPos);
+    }
+  });
+};
+
+const handleTextareaKeyDown = (event) => {
+  // Handle @ mention navigation first
+  if (showAgentMentionDropdown.value && filteredMentionAgents.value.length > 0) {
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      agentMentionHighlightedIndex.value = Math.max(0, agentMentionHighlightedIndex.value - 1);
+      return; // Stop processing
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      agentMentionHighlightedIndex.value = Math.min(
+        filteredMentionAgents.value.length - 1,
+        agentMentionHighlightedIndex.value + 1
+      );
+      return; // Stop processing
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+      const selectedAgent = filteredMentionAgents.value[agentMentionHighlightedIndex.value];
+      if (selectedAgent && !selectedAgent.disabled) {
+        selectAgentFromMention(selectedAgent);
+      }
+      return; // Stop processing - don't send message
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      closeMentionDropdown();
+      return; // Stop processing
+    } else if (event.key === 'Tab') {
+      event.preventDefault();
+      const selectedAgent = filteredMentionAgents.value[agentMentionHighlightedIndex.value];
+      if (selectedAgent && !selectedAgent.disabled) {
+        selectAgentFromMention(selectedAgent);
+      }
+      return; // Stop processing
+    }
+  }
+
+  // Handle Enter for send (only if mention dropdown is not open)
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    handleSend();
+  }
+};
+
+const handleTextareaBlur = () => {
+  // Delay closing to allow click on dropdown items
+  setTimeout(() => {
+    closeMentionDropdown();
+  }, 200);
 };
 
 const handleCollectionAssetsSelected = async (selectedAssets) => {
@@ -661,6 +1033,11 @@ const handleCollectionAssetsSelected = async (selectedAssets) => {
   }
 };
 
+// Check if Search agent is selected (for showing SearchOptions)
+const hasSearchAgentSelected = computed(() => {
+  return selectedAgents.value.some((a) => a.name === 'Search');
+});
+
 const handleSend = () => {
   if (!canSend.value) return;
 
@@ -686,18 +1063,17 @@ const handleSend = () => {
     }
   });
 
-  const additionalInfo =
-    selectedAgent.value?.name === 'Search'
-      ? {
-          precision: additionalData.value.precision,
-          searchFor: additionalData.value.searchFor,
-        }
-      : null;
+  const additionalInfo = hasSearchAgentSelected.value
+    ? {
+        precision: additionalData.value.precision,
+        searchFor: additionalData.value.searchFor,
+      }
+    : null;
 
   if (context?.handleAddMessage) {
     const messageData = {
       text: inputText.value,
-      agents: selectedAgent.value ? [selectedAgent.value.name] : [],
+      agents: selectedAgents.value.map((a) => a.name),
       files: filesToSend,
       uploaded_files: uploadedFilesFromCollection,
       additionalInfo: additionalInfo,
@@ -729,7 +1105,7 @@ const handleSend = () => {
 
   // Clear state
   inputText.value = '';
-  selectedAgent.value = null;
+  selectedAgents.value = [];
   uploadedFiles.value = [];
   collectionAssets.value = [];
   displayFiles.value = [];
@@ -737,5 +1113,6 @@ const handleSend = () => {
     precision: 'exact',
     searchFor: 'scenes',
   };
+  closeMentionDropdown();
 };
 </script>

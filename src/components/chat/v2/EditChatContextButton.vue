@@ -7,7 +7,7 @@
     <span
       class="vdb-c-whitespace-nowrap vdb-c-text-[14px] vdb-c-font-semibold vdb-c-leading-[22px] vdb-c-text-[#EC5B16]"
     >
-      Edit Chat Context
+      Dev Zone
     </span>
     <EditIcon class="vdb-c-h-24 vdb-c-w-24 vdb-c-text-[#EC5B16]" />
   </button>
