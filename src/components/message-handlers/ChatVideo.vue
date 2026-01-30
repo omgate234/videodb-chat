@@ -15,7 +15,7 @@
       >
         <div
           :class="videoContainerClasses"
-          :style="!isFullScreen ? { border: '2px solid var(--Light-Grey-VDB, #F7F7F7)' } : {}"
+          :style="!isFullScreen && !isMp4Url ? { border: '2px solid var(--Light-Grey-VDB, #F7F7F7)' } : {}"
         >
           <!-- Vertical 9:16 wrapper when not fullscreen -->
           <div
@@ -59,7 +59,26 @@
               </VideoDBPlayer>
             </div>
           </div>
-          <!-- Default (horizontal or fullscreen) -->
+          <div
+            v-else-if="isMp4Url"
+            class="vdb-c-relative"
+            :class="isFullScreen ? 'vdb-c-h-screen vdb-c-w-screen' : ''"
+          >
+            <div v-if="mp4Error" class="vdb-c-flex vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-16 vdb-c-bg-gray-100 vdb-c-p-8">
+              <p class="vdb-c-text-gray-600">Video link has expired</p>
+            </div>
+            <video
+              v-else
+              ref="mp4PlayerRef"
+              class="vdb-c-rounded-16"
+              :style="mp4VideoStyle"
+              :src="content.video.stream_url"
+              controls
+              playsinline
+              @loadedmetadata="handleMp4Metadata"
+              @error="handleMp4Error"
+            />
+          </div>
           <VideoDBPlayer
             v-else
             ref="playerRef"
@@ -142,14 +161,45 @@ const props = defineProps({
 });
 
 const playerRef = ref(null);
+const mp4PlayerRef = ref(null);
 const isFullScreen = ref(false);
 const isHovered = ref(false);
+const mp4Error = ref(false);
+const mp4IsVertical = ref(false);
+
+const handleMp4Error = () => {
+  mp4Error.value = true;
+};
+
+const handleMp4Metadata = (event) => {
+  const video = event.target;
+  mp4IsVertical.value = video.videoHeight > video.videoWidth;
+};
+
+const mp4VideoStyle = computed(() => {
+  if (mp4IsVertical.value) {
+    return {
+      maxHeight: '40vh',
+      width: 'auto',
+      maxWidth: '100%',
+    };
+  }
+  return {
+    maxHeight: '40vh',
+    width: '100%',
+  };
+});
 
 const isVertical = computed(() => {
   return (
     !!(props?.content && props.content.video && props.content.video.style) &&
     String(props.content.video.style).toLowerCase() === 'vertical'
   );
+});
+
+const isMp4Url = computed(() => {
+  const url = props?.content?.video?.stream_url || '';
+  return url.includes('.mp4');
 });
 
 const verticalPadding = computed(() => (isVertical.value ? '177.78%' : '56.25%'));
