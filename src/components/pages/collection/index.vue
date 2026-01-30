@@ -111,10 +111,7 @@
         <ChatInput :context="context" />
       </div>
 
-      <div
-        v-if="hasAssets || isLoadingAssets"
-        class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[30px]"
-      >
+      <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[30px]">
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-gap-[10px]"
         >
