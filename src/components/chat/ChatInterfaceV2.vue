@@ -1095,6 +1095,7 @@ const chatContext = {
   selectedSessionId,
   selectedCollectionId,
   sidebarConfig: props.sidebarConfig,
+  showHeader: props.showHeader,
   showChatInput: props.showChatInput,
   chatInputPlaceholder: props.chatInputPlaceholder,
   handleAddMessage,
