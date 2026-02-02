@@ -105,6 +105,33 @@
             />
           </div>
         </div>
+
+        <!-- Date added -->
+        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-4 vdb-c-bg-white">
+          <div
+            class="vdb-c-flex vdb-c-items-center vdb-c-rounded-8 vdb-c-bg-vdb-lightgrey vdb-c-px-8 vdb-c-py-6"
+          >
+            <p
+              class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+            >
+              Date added
+            </p>
+          </div>
+          <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-2 vdb-c-pl-12">
+            <RadioOption
+              label="Newest first"
+              value="newest"
+              :model-value="modelValue"
+              @change="updateSort"
+            />
+            <RadioOption
+              label="Oldest first"
+              value="oldest"
+              :model-value="modelValue"
+              @change="updateSort"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>
