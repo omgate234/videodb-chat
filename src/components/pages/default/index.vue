@@ -260,18 +260,19 @@
 
               <!-- Collection Content -->
               <div
-                class="vdb-c-min-w-0 vdb-c-max-w-[50%] vdb-c-grow vdb-c-gap-[8px] vdb-c-overflow-hidden"
+                class="vdb-c-grow vdb-c-gap-[8px] vdb-c-overflow-hidden vdb-c-text-left"
+                :class="isEditing(collection.id) ? 'vdb-c-max-w-[80%]' : 'vdb-c-max-w-[50%]'"
               >
                 <template v-if="isEditing(collection.id)">
                   <input
                     :id="`edit-input-${collection.id}`"
                     v-model="editingName"
                     type="text"
-                    class="vdb-selection-orange vdb-c-w-full vdb-c-truncate vdb-c-bg-[#F7F7F7] vdb-c-px-1 vdb-c-text-left vdb-c-text-[13px] vdb-c-font-medium vdb-c-outline-none"
+                    class="vdb-selection-orange vdb-c-w-full vdb-c-truncate vdb-c-bg-[#FFE9D3] vdb-c-px-6 vdb-c-py-2 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey vdb-c-outline-none"
                     @click.stop
                     @keydown.enter.prevent="handleSaveEdit"
                     @keydown.esc.stop="handleCancelEdit"
-                    @blur="handleSaveEdit"
+                    @blur="handleCancelEdit"
                   />
                 </template>
                 <template v-else>
