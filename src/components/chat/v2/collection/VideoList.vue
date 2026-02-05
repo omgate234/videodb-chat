@@ -2,7 +2,7 @@
   <div class="vdb-c-relative">
     <div
       v-if="isLoading"
-      class="vdb-c-pointer-events-none vdb-c-absolute vdb-c-inset-0 vdb-c-z-10 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-lg vdb-c-bg-white/60 vdb-c-backdrop-blur-[2px]"
+      class="vdb-c-pointer-events-none vdb-c-absolute vdb-c-inset-0 vdb-c-z-50 vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-lg vdb-c-bg-white/60 vdb-c-backdrop-blur-[2px]"
     >
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
         <div class="vdb-c-h-[24px] vdb-c-w-[24px]">
