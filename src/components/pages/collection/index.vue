@@ -258,6 +258,7 @@
     />
 
     <RecordAudioModal
+      v-if="showRecordAudioModal"
       :isOpen="showRecordAudioModal"
       :collectionId="currentCollection?.id || ''"
       :uploadMedia="context?.uploadMedia"
