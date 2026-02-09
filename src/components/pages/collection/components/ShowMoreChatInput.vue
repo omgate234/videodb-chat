@@ -20,6 +20,28 @@
         @keydown.enter.exact.prevent="handleSend"
       ></textarea>
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-10">
+        <div
+          :class="[
+            'vdb-c-chat-input-upload-icon vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-text-[#1E1E1E]',
+          ]"
+        >
+          <button
+            ref="plusButtonRef"
+            @click="toggleDropUp"
+            class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-roy focus:vdb-c-border-orange-200 focus:vdb-c-bg-orange-100"
+          >
+            <PlusIcon />
+          </button>
+          <AddDropUp
+            :is-open="showDropUp"
+            :trigger-element="plusButtonRef"
+            :agents="agentsForDropdown"
+            :hide-upload-section="true"
+            :selected-agent="selectedAgent"
+            @close="showDropUp = false"
+            @agent-select="handleAgentSelect"
+          />
+        </div>
         <textarea
           name="chat-input"
           v-if="selectedAgent === null"
@@ -103,32 +125,6 @@
           </button>
         </div>
 
-        <!-- Search Agent Button (shown when no agent selected) -->
-        <button
-          v-if="selectedAgent === null"
-          :disabled="searchAgent.disabled"
-          @click="handleAgentClick(searchAgent)"
-          :class="[
-            'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
-            getAgentButtonClasses(searchAgent),
-          ]"
-        >
-          <Tooltip
-            v-if="searchAgent.disabled && !collectionHasVideos"
-            text="Add or generate videos in your collection to enable this"
-            class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-[calc(100%+15px)] vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
-          />
-          <SearchIcon
-            :class="[
-              'vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-flex-shrink-0',
-              getAgentIconClasses(searchAgent),
-            ]"
-          />
-          <span :class="getAgentTextClasses(searchAgent)">
-            Search
-          </span>
-        </button>
-
         <div class="vdb-c-flex vdb-c-items-center">
           <button
             @click="handleSend"
@@ -161,6 +157,8 @@ import SendIcon from '../../../chat/v2/icons/SendIcon.vue';
 import AnimatedEllipsisIcon from '../../../chat/v2/icons/AnimatedEllipsisIcon.vue';
 import ChevronDown from '../../../icons/ChevronDown.vue';
 import SearchControlsPanel from './SearchControlsPanel.vue';
+import PlusIcon from '../../../chat/v2/icons/PlusIcon.vue';
+import AddDropUp from './AddDropUp.vue';
 
 const props = defineProps({
   context: {
@@ -196,6 +194,8 @@ const chatLoading = computed(() => {
 
 const inputText = ref('');
 const selectedAgent = ref(null);
+const showDropUp = ref(false);
+const plusButtonRef = ref(null);
 const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
@@ -210,14 +210,19 @@ const placeholder = computed(() => {
   return 'Chat with Collection';
 });
 
-const searchAgent = computed(() => ({
-  name: 'Search',
-  icon: SearchIcon,
-  disabled: !collectionHasVideos.value,
-}));
-
 const hasVideoId = computed(() => {
   return !!(context?.videoId?.value || context?.videoId);
+});
+
+// Only Search agent
+const agentsForDropdown = computed(() => {
+  return [
+    {
+      name: 'Search',
+      icon: SearchIcon,
+      disabled: !collectionHasVideos.value,
+    },
+  ];
 });
 
 const canSend = computed(() => {
@@ -269,6 +274,20 @@ const handleAgentClick = (agent) => {
     selectedAgent.value = agent;
     wasManuallyClosed.value = false;
   }
+};
+
+const handleAgentSelect = (agent) => {
+  const fullAgent = agentsForDropdown.value.find((a) => a.name === agent.name);
+  if (fullAgent) {
+    handleAgentClick(fullAgent);
+  } else {
+    handleAgentClick(agent);
+  }
+  showDropUp.value = false;
+};
+
+const toggleDropUp = () => {
+  showDropUp.value = !showDropUp.value;
 };
 
 const handleControlsToggle = () => {

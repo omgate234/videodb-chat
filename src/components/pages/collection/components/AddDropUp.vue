@@ -19,8 +19,9 @@
           :disabled="agent.disabled"
           @click="handleAgentClick(agent)"
           :class="[
-            'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]',
+            'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200',
             agent.disabled && 'vdb-c-cursor-not-allowed',
+            selectedAgent?.name === agent.name ? 'vdb-c-bg-[#FFE9D3]' : 'hover:vdb-c-bg-[#EFEFEF]',
           ]"
         >
           <Tooltip
@@ -32,13 +33,13 @@
             :is="agent.icon"
             :class="[
               'vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0',
-              agent.disabled ? 'vdb-c-text-[#969696]' : 'vdb-c-text-vdb-darkishgrey',
+              agent.disabled ? 'vdb-c-text-[#969696]' : selectedAgent?.name === agent.name ? 'vdb-c-text-[#821F0C]' : 'vdb-c-text-vdb-darkishgrey',
             ]"
           />
           <span
             :class="[
               'vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5',
-              agent.disabled ? 'vdb-c-text-[#969696]' : 'vdb-c-text-vdb-darkishgrey',
+              agent.disabled ? 'vdb-c-text-[#969696]' : selectedAgent?.name === agent.name ? 'vdb-c-text-[#821F0C]' : 'vdb-c-text-vdb-darkishgrey',
             ]"
           >
             {{ agent.name }}
@@ -47,10 +48,10 @@
       </div>
 
       <!-- Divider -->
-      <div class="vdb-c-my-[2px] vdb-c-h-px vdb-c-w-full vdb-c-bg-[#EFEFEF]"></div>
+      <div v-if="!hideUploadSection" class="vdb-c-my-[2px] vdb-c-h-px vdb-c-w-full vdb-c-bg-[#EFEFEF]"></div>
 
       <!-- Upload Section -->
-      <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[2px]">
+      <div v-if="!hideUploadSection" class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[2px]">
         <label
           class="vdb-c-flex vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]"
         >
@@ -105,6 +106,14 @@ const props = defineProps({
   agents: {
     type: Array,
     default: () => [],
+  },
+  hideUploadSection: {
+    type: Boolean,
+    default: false,
+  },
+  selectedAgent: {
+    type: Object,
+    default: null,
   },
 });
 
