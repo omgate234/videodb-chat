@@ -7,29 +7,6 @@
         'vdb-c-relative vdb-c-w-full vdb-c-rounded-[26px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-[#F7F7F7] vdb-c-px-10 vdb-c-py-[7px]',
       ]"
     >
-      <div
-        v-if="displayFiles.length > 0"
-        class="vdb-c-flex vdb-c-w-full vdb-c-gap-12 vdb-c-overflow-x-auto vdb-c-pb-4 vdb-c-pt-4"
-      >
-        <template v-for="(file, index) in displayFiles" :key="file.id">
-          <ImageFileDisplay
-            v-if="file.type === 'image'"
-            :file="file"
-            :context="context"
-            @remove="removeFile(index)"
-          />
-          <VideoFileDisplay
-            v-else-if="file.type === 'video'"
-            :file="file"
-            @remove="removeFile(index)"
-          />
-          <AudioFileDisplay
-            v-else-if="file.type === 'audio' || file.type === 'voices'"
-            :file="file"
-            @remove="removeFile(index)"
-          />
-        </template>
-      </div>
       <textarea
         name="chat-input"
         v-if="selectedAgent !== null"
@@ -43,28 +20,6 @@
         @keydown.enter.exact.prevent="handleSend"
       ></textarea>
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-10">
-        <div
-          :class="[
-            'vdb-c-chat-input-upload-icon vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-text-[#1E1E1E]',
-          ]"
-        >
-          <button
-            ref="plusButtonRef"
-            @click="toggleDropUp"
-            class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-roy focus:vdb-c-border-orange-200 focus:vdb-c-bg-orange-100"
-          >
-            <PlusIcon />
-          </button>
-          <AddDropUp
-            :is-open="showDropUp"
-            :trigger-element="plusButtonRef"
-            :agents="allAgentsForDropdown"
-            @close="showDropUp = false"
-            @agent-select="handleAgentSelect"
-            @files-selected="handleFilesSelected"
-            @upload-from-collection="handleUploadFromCollection"
-          />
-        </div>
         <textarea
           name="chat-input"
           v-if="selectedAgent === null"
@@ -148,6 +103,32 @@
           </button>
         </div>
 
+        <!-- Search Agent Button (shown when no agent selected) -->
+        <button
+          v-if="selectedAgent === null"
+          :disabled="searchAgent.disabled"
+          @click="handleAgentClick(searchAgent)"
+          :class="[
+            'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
+            getAgentButtonClasses(searchAgent),
+          ]"
+        >
+          <Tooltip
+            v-if="searchAgent.disabled && !collectionHasVideos"
+            text="Add or generate videos in your collection to enable this"
+            class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-[calc(100%+15px)] vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
+          />
+          <SearchIcon
+            :class="[
+              'vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-flex-shrink-0',
+              getAgentIconClasses(searchAgent),
+            ]"
+          />
+          <span :class="getAgentTextClasses(searchAgent)">
+            Search
+          </span>
+        </button>
+
         <div class="vdb-c-flex vdb-c-items-center">
           <button
             @click="handleSend"
@@ -168,45 +149,18 @@
         </div>
       </div>
     </div>
-
-    <UploadFromCollectionModal
-      :is-open="showUploadFromCollectionModal"
-      :context="context"
-      :pre-selected-assets="collectionAssets.map((a) => a.asset)"
-      @close="showUploadFromCollectionModal = false"
-      @select="handleCollectionAssetsSelected"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, inject, onUnmounted, watch, nextTick, onMounted } from 'vue';
-import AttachIcon from '../../../chat/v2/icons/AttachIcon.vue';
+import { ref, computed, inject, watch, onMounted, onUnmounted } from 'vue';
 import SearchIcon from '../../../chat/v2/icons/agents/SearchIcon.vue';
-import VoiceIcon from '../../../chat/v2/icons/agents/VoiceIcon.vue';
-import CensorIcon from '../../../chat/v2/icons/agents/CensorIcon.vue';
-import ClipIcon from '../../../chat/v2/icons/agents/ClipIcon.vue';
-import SubtitleIcon from '../../../chat/v2/icons/agents/SubtitleIcon.vue';
-import DubbingIcon from '../../../chat/v2/icons/agents/DubbingIcon.vue';
-import GenerateIcon from '../../../chat/v2/icons/agents/GenerateIcon.vue';
-import EditIcon from '../../../chat/v2/icons/agents/EditIcon.vue';
-import ThreeDotsIcon from '../../../chat/v2/icons/ThreeDotsIcon.vue';
-import SendButtonIcon from '../../../chat/v2/icons/agents/SendButtonIcon.vue';
 import CrossIcon from '../../../chat/v2/icons/CrossIcon.vue';
-import AgentDropdown from './AgentDropdown.vue';
-import AttachDropdown from './AttachDropdown.vue';
-import ImageFileDisplay from './ImageFileDisplay.vue';
-import VideoFileDisplay from './VideoFileDisplay.vue';
-import AudioFileDisplay from './AudioFileDisplay.vue';
-import SearchOptions from './SearchOptions.vue';
 import Tooltip from '../../../chat/v2/elements/Tooltip.vue';
-import PlusIcon from '../../../chat/v2/icons/PlusIcon.vue';
 import SendIcon from '../../../chat/v2/icons/SendIcon.vue';
-import AddDropUp from './AddDropUp.vue';
+import AnimatedEllipsisIcon from '../../../chat/v2/icons/AnimatedEllipsisIcon.vue';
 import ChevronDown from '../../../icons/ChevronDown.vue';
 import SearchControlsPanel from './SearchControlsPanel.vue';
-import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
-import AnimatedEllipsisIcon from '../../../chat/v2/icons/AnimatedEllipsisIcon.vue';
 
 const props = defineProps({
   context: {
@@ -241,18 +195,14 @@ const chatLoading = computed(() => {
 });
 
 const inputText = ref('');
-const showAgentsDropdown = ref(false);
-const showAttachDropdown = ref(false);
-const showDropUp = ref(false);
-const showUploadFromCollectionModal = ref(false);
-const showCursor = ref(true);
 const selectedAgent = ref(null);
-const threeDotsButtonRef = ref(null);
-const attachButtonRef = ref(null);
-const plusButtonRef = ref(null);
 const controlsButtonRef = ref(null);
 const showSearchControlsPanel = ref(false);
 const wasManuallyClosed = ref(false);
+const additionalData = ref({
+  precision: 'exact',
+  searchFor: 'scenes',
+});
 const placeholder = computed(() => {
   if (context?.activeCollectionData?.value?.name) {
     return `Chat with "${context.activeCollectionData.value.name}"`;
@@ -260,113 +210,14 @@ const placeholder = computed(() => {
   return 'Chat with Collection';
 });
 
+const searchAgent = computed(() => ({
+  name: 'Search',
+  icon: SearchIcon,
+  disabled: !collectionHasVideos.value,
+}));
+
 const hasVideoId = computed(() => {
   return !!(context?.videoId?.value || context?.videoId);
-});
-
-const agentsList = [
-  {
-    name: 'Search',
-    icon: SearchIcon,
-  },
-  {
-    name: 'Edit',
-    icon: EditIcon,
-  },
-  {
-    name: 'Dubbing',
-    icon: DubbingIcon,
-  },
-  {
-    name: 'Subtitle',
-    icon: SubtitleIcon,
-  },
-  {
-    name: 'Clip',
-    icon: ClipIcon,
-  },
-  {
-    name: 'Censor',
-    icon: CensorIcon,
-  },
-  {
-    name: 'Generate',
-    icon: GenerateIcon,
-  },
-  {
-    name: 'Voice',
-    icon: VoiceIcon,
-  },
-];
-
-const allAgentsForDropdown = computed(() => {
-  const hasVideos = collectionHasVideos.value;
-
-  return agentsList.map((agent) => {
-    let disabled = false;
-    if (agent.name === 'Generate') {
-      disabled = false;
-    } else if (!hasVideos) {
-      disabled = true;
-    } else {
-      disabled = false;
-    }
-
-    return {
-      ...agent,
-      display: true,
-      disabled,
-    };
-  });
-});
-
-const displayAgentsButtons = computed(() => {
-  const hasVideos = collectionHasVideos.value;
-  const selectedAgentName = selectedAgent.value?.name;
-
-  return agentsList.map((agent) => {
-    let display = false;
-
-    if (hasVideos) {
-      if (agent.name === 'Search') {
-        display = true;
-      } else if (selectedAgentName) {
-        display = agent.name === selectedAgentName;
-      } else {
-        display = agent.name === 'Edit';
-      }
-    } else {
-      display = agent.name === 'Generate' || agent.name === 'Search';
-    }
-
-    let disabled = false;
-    if (agent.name === 'Generate') {
-      disabled = false;
-    } else if (!hasVideos) {
-      disabled = true;
-    } else {
-      disabled = false;
-    }
-
-    return {
-      ...agent,
-      display,
-      disabled,
-    };
-  });
-});
-
-const visibleAgents = computed(() => {
-  const agents = displayAgentsButtons.value.filter((agent) => agent.display);
-
-  const searchAgent = agents.find((agent) => agent.name === 'Search');
-  const otherAgents = agents.filter((agent) => agent.name !== 'Search');
-
-  if (searchAgent) {
-    return [searchAgent, ...otherAgents];
-  }
-
-  return agents;
 });
 
 const canSend = computed(() => {
@@ -407,24 +258,6 @@ const getAgentTextClasses = (agent) => {
   return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-vdb-darkishgrey vdb-c-whitespace-nowrap';
 };
 
-const isControlsActive = computed(() => {
-  return selectedAgent.value?.name?.toLowerCase() === 'search';
-});
-
-const getSendButtonClasses = () => {
-  if (!canSend.value) {
-    return 'vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-cursor-not-allowed';
-  }
-  return 'vdb-c-h-[36px] vdb-c-w-[36px]';
-};
-
-const getSendButtonFill = () => {
-  if (!canSend.value) {
-    return '#B9B9B9';
-  }
-  return '#EC5B16';
-};
-
 const handleAgentClick = (agent) => {
   if (agent.disabled) return;
 
@@ -435,108 +268,6 @@ const handleAgentClick = (agent) => {
   } else {
     selectedAgent.value = agent;
     wasManuallyClosed.value = false;
-  }
-};
-
-const handleAgentSelect = (agent) => {
-  const fullAgent = displayAgentsButtons.value.find((a) => a.name === agent.name);
-  if (fullAgent) {
-    handleAgentClick(fullAgent);
-  } else {
-    handleAgentClick(agent);
-  }
-};
-
-const toggleDropUp = () => {
-  showDropUp.value = !showDropUp.value;
-};
-
-const toggleAgentsDropdown = () => {
-  showAgentsDropdown.value = !showAgentsDropdown.value;
-  if (showAgentsDropdown.value) {
-    showAttachDropdown.value = false;
-    showDropUp.value = false;
-  }
-};
-
-const toggleAttachDropdown = () => {
-  showAttachDropdown.value = !showAttachDropdown.value;
-  if (showAttachDropdown.value) {
-    showAgentsDropdown.value = false;
-    showDropUp.value = false;
-  }
-};
-
-const uploadedFiles = ref([]);
-const collectionAssets = ref([]);
-const displayFiles = ref([]);
-
-const additionalData = ref({
-  precision: 'exact',
-  searchFor: 'scenes',
-});
-
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(0)) + ' ' + sizes[i];
-};
-
-const handleFilesSelected = (files) => {
-  files.forEach((file) => {
-    let fileType = 'file';
-    if (file.type.startsWith('image/')) {
-      fileType = 'image';
-    } else if (file.type.startsWith('video/')) {
-      fileType = 'video';
-    } else if (file.type.startsWith('audio/')) {
-      fileType = 'audio';
-    }
-
-    const fileId = Date.now() + Math.random();
-
-    uploadedFiles.value.push({
-      id: fileId,
-      file: file,
-    });
-
-    const displayFile = {
-      id: fileId,
-      type: fileType,
-      name: file.name,
-      size: formatFileSize(file.size),
-      isFromDevice: true,
-    };
-
-    if (fileType === 'image') {
-      displayFile.url = URL.createObjectURL(file);
-    }
-
-    displayFiles.value.push(displayFile);
-  });
-};
-
-const removeFile = (index) => {
-  const displayFile = displayFiles.value[index];
-
-  if (displayFile.type === 'image' && displayFile.url && displayFile.isFromDevice) {
-    URL.revokeObjectURL(displayFile.url);
-  }
-
-  displayFiles.value.splice(index, 1);
-
-  if (displayFile.isFromDevice) {
-    const uploadedIndex = uploadedFiles.value.findIndex((f) => f.id === displayFile.id);
-    if (uploadedIndex !== -1) {
-      uploadedFiles.value.splice(uploadedIndex, 1);
-    }
-  } else {
-    const assetIndex = collectionAssets.value.findIndex((a) => a.id === displayFile.id);
-    if (assetIndex !== -1) {
-      collectionAssets.value.splice(assetIndex, 1);
-    }
   }
 };
 
@@ -581,60 +312,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  displayFiles.value.forEach((file) => {
-    if (file.type === 'image' && file.url && file.isFromDevice) {
-      URL.revokeObjectURL(file.url);
-    }
-  });
   window.removeEventListener('click', handleClickOutside);
 });
-
-const handleUploadFromDevice = () => {};
-
-const handleUploadFromCollection = () => {
-  showUploadFromCollectionModal.value = true;
-  showDropUp.value = false;
-};
-
-const handleCollectionAssetsSelected = async (selectedAssets) => {
-  const { activeCollectionData, collectionId: collectionIdRef } = context || {};
-
-  // Get current collection ID from context
-  const currentCollectionId =
-    activeCollectionData?.value?.id || activeCollectionData?.id || collectionIdRef?.value;
-
-  for (const asset of selectedAssets) {
-    if (!asset || !asset.type) {
-      console.warn('Invalid asset skipped:', asset);
-      continue;
-    }
-
-    const fileId = Date.now() + Math.random() + (asset.id || Math.random());
-
-    // Store collection asset
-    collectionAssets.value.push({
-      id: fileId,
-      asset: asset,
-    });
-
-    // Create display file with fallback for name
-    // Normalize type: voices -> voices (keep as is), others -> lowercase
-    const normalizedType = asset.type === 'voices' ? 'voices' : asset.type.toLowerCase();
-
-    const displayFile = {
-      id: fileId,
-      type: normalizedType,
-      name: asset.name || asset.title || `Untitled ${asset.type}`,
-      url: null,
-      isFromDevice: false,
-      collectionId: currentCollectionId || asset.collectionId || asset.collection_id,
-      assetId: asset.id,
-    };
-
-    // Add to displayFiles - component validators will handle missing properties
-    displayFiles.value.push(displayFile);
-  }
-};
 
 const handleInput = (event) => {
   const textarea = event.target;
@@ -644,28 +323,6 @@ const handleInput = (event) => {
 
 const handleSend = () => {
   if (!canSend.value) return;
-
-  // Prepare files for sending (raw File objects from device uploads)
-  const filesToSend = uploadedFiles.value.map((f) => f.file);
-
-  // Prepare collection assets - separate by type
-  const videos = [];
-  const audios = [];
-  const voices = [];
-  const uploadedFilesFromCollection = [];
-
-  collectionAssets.value.forEach((a) => {
-    const asset = a.asset;
-    uploadedFilesFromCollection.push(asset);
-
-    if (asset.type === 'video') {
-      videos.push(asset);
-    } else if (asset.type === 'audio') {
-      audios.push(asset);
-    } else if (asset.type === 'voices') {
-      voices.push(asset);
-    }
-  });
 
   const additionalInfo =
     selectedAgent.value?.name === 'Search'
@@ -679,35 +336,16 @@ const handleSend = () => {
     const messageData = {
       text: inputText.value,
       agents: selectedAgent.value ? [selectedAgent.value.name] : [],
-      files: filesToSend,
-      uploaded_files: uploadedFilesFromCollection,
+      files: [],
+      uploaded_files: [],
       additionalInfo: additionalInfo,
     };
-
-    if (videos.length > 0) {
-      messageData.videos = videos;
-    }
-    if (audios.length > 0) {
-      messageData.audios = audios;
-    }
-    if (voices.length > 0) {
-      messageData.voices = voices;
-    }
 
     context.handleAddMessage(messageData);
   }
 
-  displayFiles.value.forEach((file) => {
-    if (file.type === 'image' && file.url && file.isFromDevice) {
-      URL.revokeObjectURL(file.url);
-    }
-  });
-
   inputText.value = '';
   selectedAgent.value = null;
-  uploadedFiles.value = [];
-  collectionAssets.value = [];
-  displayFiles.value = [];
   additionalData.value = {
     precision: 'exact',
     searchFor: 'scenes',

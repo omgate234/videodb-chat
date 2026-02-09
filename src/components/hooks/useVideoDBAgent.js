@@ -1,7 +1,7 @@
 import io from "socket.io-client";
 import { computed, onBeforeMount, reactive, ref, toRefs, watch } from "vue";
 
-const fetchData = async (rootUrl, endpoint) => {
+export const fetchData = async (rootUrl, endpoint) => {
   const res = {};
   try {
     const response = await fetch(`${rootUrl}${endpoint}`);
@@ -70,9 +70,6 @@ export function useVideoDBAgent(config) {
   if (debug) console.log("debug :videodb-chat config", config);
   const socket = io(socketUrl);
 
-  const callApi = (endpoint, options = {}) =>
-    apiRequest(httpUrl, endpoint, options);
-
   const session = reactive({
     isConnected: false,
     sessionId: null,
@@ -84,12 +81,25 @@ export function useVideoDBAgent(config) {
 
   const collections = ref(null);
   const sessions = ref([]);
+  const sessionsPagination = ref({
+    page: 0,
+    per_page: 20,
+    total: 0,
+    total_pages: 0,
+    has_more: true,
+  });
+  const isLoadingMoreSessions = ref(false);
   const sessionsSorted = computed(() => {
     return [...sessions.value].sort((a, b) => b.created_at - a.created_at);
   });
   const agents = ref([]);
+  const liveSessions = ref([]);
+
+  const defaultPrompts = ref(null);
+  const userPrompts = ref(null);
 
   const conversations = reactive({});
+  const messageQueues = reactive({});
   const activeCollectionData = ref(null);
 
   const activeCollectionVideos = ref(null);
@@ -103,7 +113,44 @@ export function useVideoDBAgent(config) {
 
   const fetchSession = async (sessionId) =>
     fetchData(httpUrl, `/session/${sessionId}`);
-  const fetchSessions = async () => fetchData(httpUrl, "/session");
+  const fetchSessions = async (page = 1, perPage = 20) =>
+    fetchData(httpUrl, `/session?page=${page}&per_page=${perPage}`);
+  const fetchSessionContext = async (sessionId) =>
+    fetchData(httpUrl, `/session/${sessionId}/context`);
+
+  const fetchMoreSessions = async () => {
+    if (isLoadingMoreSessions.value || !sessionsPagination.value.has_more) {
+      return;
+    }
+    isLoadingMoreSessions.value = true;
+    const nextPage = sessionsPagination.value.page + 1;
+    try {
+      const res = await fetchSessions(nextPage, sessionsPagination.value.per_page);
+      if (res.status === "success" && res.data) {
+        // Handle both new paginated format and legacy array format
+        if (Array.isArray(res.data)) {
+          // Legacy format - no more pages available
+          const newSessions = res.data;
+          sessions.value = [...sessions.value, ...newSessions];
+          sessionsPagination.value = {
+            ...sessionsPagination.value,
+            page: nextPage,
+            has_more: false,
+          };
+        } else {
+          // New paginated format
+          const newSessions = res.data.sessions || [];
+          sessions.value = [...sessions.value, ...newSessions];
+          sessionsPagination.value = res.data.pagination || sessionsPagination.value;
+        }
+      }
+    } catch (error) {
+      if (debug) console.error("debug :videodb-chat error fetching more sessions", error);
+    } finally {
+      isLoadingMoreSessions.value = false;
+    }
+  };
+
   const fetchCollections = async () =>
     fetchData(httpUrl, "/videodb/collection");
   const fetchCollection = async (collectionId) =>
@@ -113,6 +160,131 @@ export function useVideoDBAgent(config) {
     fetchData(httpUrl, `/videodb/collection/${collectionId}/video/${videoId}`);
   const fetchCollectionVideos = async (collectionId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/video`);
+
+  const fetchCollectionAudio = async (collectionId, audioId) =>
+    fetchData(httpUrl, `/videodb/collection/${collectionId}/audio/${audioId}`);
+  const fetchCollectionAudios = async (collectionId) =>
+    fetchData(httpUrl, `/videodb/collection/${collectionId}/audio`);
+
+  const fetchCollectionImage = async (collectionId, imageId) =>
+    fetchData(httpUrl, `/videodb/collection/${collectionId}/image/${imageId}`);
+  const fetchCollectionImages = async (collectionId) =>
+    fetchData(httpUrl, `/videodb/collection/${collectionId}/image`);
+
+  const fetchAssets = async (params = {}) => {
+    const {
+      collection_id,
+      asset_type,
+      name_pattern,
+      sort_by = 'created_at',
+      sort_order = 'desc',
+      min_duration,
+      max_duration,
+      min_size,
+      max_size,
+      page = 1,
+      page_size = 50,
+    } = params;
+
+    const queryParams = new URLSearchParams();
+
+    if (collection_id) queryParams.append('collection_id', collection_id);
+    if (asset_type) queryParams.append('asset_type', asset_type);
+    if (name_pattern) queryParams.append('name_pattern', name_pattern);
+    if (sort_by) queryParams.append('sort_by', sort_by);
+    if (sort_order) queryParams.append('sort_order', sort_order);
+    if (min_duration !== undefined && min_duration !== null) queryParams.append('min_duration', min_duration);
+    if (max_duration !== undefined && max_duration !== null) queryParams.append('max_duration', max_duration);
+    if (min_size !== undefined && min_size !== null) queryParams.append('min_size', min_size);
+    if (max_size !== undefined && max_size !== null) queryParams.append('max_size', max_size);
+    if (page) queryParams.append('page', page);
+    if (page_size) queryParams.append('page_size', page_size);
+
+    return fetchData(httpUrl, `/videodb/assets?${queryParams.toString()}`);
+  };
+
+  const fetchAllAgents = async () => fetchData(httpUrl, "/agent");
+  const fetchLiveSessions = async () => fetchData(httpUrl, "/live_session");
+  const fetchConfigStatus = async () => fetchData(httpUrl, "/config/check");
+  const fetchLLMModels = async () => fetchData(httpUrl, "/llm/models");
+
+  const fetchPromptSchema = async () =>
+    fetchData(httpUrl, "/prompt/schema");
+  const fetchDefaultPrompts = async () =>
+    fetchData(httpUrl, "/prompt/defaults");
+  const fetchUserPrompts = async () =>
+    fetchData(httpUrl, "/prompt/");
+  const fetchSpecificPrompt = async (agent, promptName) =>
+    fetchData(httpUrl, `/prompt/${agent}/${promptName}`);
+
+  const fetchAllCostingsPerUser = async () =>
+    fetchData(httpUrl, "/cost/");
+  const fetchTotalCostPerProvider = async (providerName) =>
+    fetchData(httpUrl, `/cost/provider/${providerName}`);
+
+  const initializePrompts = async () => {
+    try {
+      const [defaultRes, userRes] = await Promise.all([
+        fetchDefaultPrompts(),
+        fetchUserPrompts()
+      ]);
+
+      if (defaultRes.status === 'success') {
+        defaultPrompts.value = defaultRes.data?.data?.prompts || defaultRes.data?.prompts || {};
+      }
+
+      if (userRes.status === 'success') {
+        userPrompts.value = userRes.data?.data?.prompts || userRes.data?.prompts || {};
+      }
+    } catch (error) {
+      console.error('Error initializing prompts:', error);
+    }
+  };
+
+  const refreshUserPrompts = async () => {
+    try {
+      const userRes = await fetchUserPrompts();
+      if (userRes.status === 'success') {
+        userPrompts.value = userRes.data?.data?.prompts || userRes.data?.prompts || {};
+      }
+    } catch (error) {
+      console.error('Error refreshing user prompts:', error);
+    }
+  };
+
+  const createOrUpdatePrompt = async (agent, promptName, prompt, modelName = null) => {
+    const payload = {
+      agent,
+      prompt_name: promptName,
+      prompt,
+    };
+    if (modelName !== null) {
+      payload.model_name = modelName;
+    }
+    const result = await apiRequest(httpUrl, "/prompt/", {
+      method: "POST",
+      payload,
+    });
+
+    if (result.status === 'success') {
+      await refreshUserPrompts();
+    }
+
+    return result;
+  };
+
+  const deletePrompt = async (agent, promptName) => {
+    const result = await apiRequest(httpUrl, `/prompt/${agent}/${promptName}`, {
+      method: "DELETE",
+    });
+
+    // Refresh user prompts after successful delete
+    if (result.status === 'success') {
+      await refreshUserPrompts();
+    }
+
+    return result;
+  };
 
   const getVideoDownloadUrl = async (collectionId, videoId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/video/${videoId}/download`);
@@ -148,49 +320,6 @@ export function useVideoDBAgent(config) {
     return res;
   };
 
-  const fetchCollectionAudio = async (collectionId, audioId) =>
-    fetchData(httpUrl, `/videodb/collection/${collectionId}/audio/${audioId}`);
-  const fetchCollectionAudios = async (collectionId) =>
-    fetchData(httpUrl, `/videodb/collection/${collectionId}/audio`);
-
-  const fetchCollectionImage = async (collectionId, imageId) =>
-    fetchData(httpUrl, `/videodb/collection/${collectionId}/image/${imageId}`);
-  const fetchCollectionImages = async (collectionId) =>
-    fetchData(httpUrl, `/videodb/collection/${collectionId}/image`);
-
-  const fetchAssets = async (params = {}) => {
-    const {
-      collection_id,
-      asset_type,
-      sort_by = 'created_at',
-      sort_order = 'desc',
-      min_duration,
-      max_duration,
-      min_size,
-      max_size,
-      page = 1,
-      page_size = 50,
-    } = params;
-
-    const queryParams = new URLSearchParams();
-    
-    if (collection_id) queryParams.append('collection_id', collection_id);
-    if (asset_type) queryParams.append('asset_type', asset_type);
-    if (sort_by) queryParams.append('sort_by', sort_by);
-    if (sort_order) queryParams.append('sort_order', sort_order);
-    if (min_duration !== undefined && min_duration !== null) queryParams.append('min_duration', min_duration);
-    if (max_duration !== undefined && max_duration !== null) queryParams.append('max_duration', max_duration);
-    if (min_size !== undefined && min_size !== null) queryParams.append('min_size', min_size);
-    if (max_size !== undefined && max_size !== null) queryParams.append('max_size', max_size);
-    if (page) queryParams.append('page', page);
-    if (page_size) queryParams.append('page_size', page_size);
-
-    return fetchData(httpUrl, `/videodb/assets?${queryParams.toString()}`);
-  };
-
-  const fetchAllAgents = async () => fetchData(httpUrl, "/agent");
-  const fetchConfigStatus = async () => fetchData(httpUrl, "/config/check");
-
   const getFileType = (file) => {
     if (!file || !file.type) {
       return null;
@@ -210,88 +339,109 @@ export function useVideoDBAgent(config) {
   };
 
   const getMediaTypeFromUrl = async (url) => {
-  const res = await fetch(url, { method: "HEAD" });
-  const contentType = res.headers.get("content-type");
+    if (url.includes("youtube.com")) return "video";
 
-  if (!contentType) return "unknown";
+    try {
+      const res = await fetch(url, { method: "HEAD" });
+      const contentType = res.headers.get("content-type");
+      if (!contentType) return "unknown";
+      if (contentType.startsWith("image/")) return "image";
+      if (contentType.startsWith("video/")) return "video";
+      if (contentType.startsWith("audio/")) return "audio";
+      return "video";
+    } catch {
+      return "video";
+    }
+  };
 
-  if (contentType.startsWith("image/")) return "image";
-  if (contentType.startsWith("video/")) return "video";
-  if (contentType.startsWith("audio/")) return "audio";
+  const callApi = (endpoint, options = {}) =>
+    apiRequest(httpUrl, endpoint, options);
 
-  return "video";
-};
+  const getAudioFileExtension = (mimeType) => {
+    if (!mimeType) return "webm";
+    if (mimeType.startsWith("audio/mpeg") || mimeType.startsWith("audio/mp3")) return "mp3";
+    if (mimeType.startsWith("audio/mp4")) return "m4a";
+    if (mimeType.startsWith("audio/ogg")) return "ogg";
+    return "webm";
+  };
 
+  const speechToText = async (audioBlob) => {
+    const res = {};
+    try {
+      const extension = getAudioFileExtension(audioBlob.type);
+      const formData = new FormData();
+      formData.append("file", audioBlob, `audio.${extension}`);
 
+      const response = await fetch(`${httpUrl}/speech/transcribe`, {
+        method: "POST",
+        body: formData,
+      });
 
-
-
-const uploadMedia = async (uploadData) => {
-  const { source, sourceType, collectionId, mediaType: providedMediaType } = uploadData;
-  if (sourceType === "file") {
-    const formData = new FormData();
-    formData.append("file", source);
-
-    const file = source;
-    const mediaType = providedMediaType || file.type.split("/")[0];
-    const name = file.name.split(".")[0];
-    const res = await fetch(
-      `${dbUrl}/collection/${collectionId}/upload_url/`,
-      {
-        method: "GET",
-        headers: new Headers({
-          "x-access-token": apiKey,
-        }),
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Transcription failed");
       }
-    );
-    const json = await res.json();
-    const presignedUrl = json.data?.upload_url;
-    if (!presignedUrl) throw new Error("Failed to get upload URL");
 
-    await fetch(presignedUrl, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (mediaType === "video") {
-      return uploadVideo(presignedUrl);
+      const data = await response.json();
+      res.status = "success";
+      res.text = data.text;
+    } catch (error) {
+      res.status = "error";
+      res.error = error.message || error;
     }
+    return res;
+  };
 
-    return fetch(`${httpUrl}/videodb/collection/${collectionId}/upload`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        source: presignedUrl,
-        source_type: "url",
-        media_type: mediaType,
-        name: name,
-      }),
-    });
-  } else if (sourceType === "url") {
-    const mediaType = providedMediaType || await getMediaTypeFromUrl(source.url);
-    if (mediaType === "video") {
-      return uploadVideo(source.url);
+  const uploadMedia = async (uploadData, onProgress = null) => {
+    const { source, sourceType, collectionId, mediaType: providedMediaType } = uploadData;
+    if (sourceType === "file") {
+      const formData = new FormData();
+      formData.append("file", source);
+
+      const file = source;
+      const mediaType = providedMediaType || file.type.split("/")[0];
+      const name = file.name.split(".")[0];
+      const res = await fetch(
+        `${dbUrl}/collection/${collectionId}/upload_url/`,
+        {
+          method: "GET",
+          headers: new Headers({
+            "x-access-token": apiKey,
+          }),
+        }
+      );
+      const json = await res.json();
+      const presignedUrl = json.data?.upload_url;
+      if (!presignedUrl) throw new Error("Failed to get upload URL");
+
+      await fetch(presignedUrl, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (mediaType === "video") {
+        return uploadVideo(presignedUrl, collectionId, name, onProgress);
+      }
+
+      return fetch(`${httpUrl}/videodb/collection/${collectionId}/upload`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source: presignedUrl,
+          source_type: "url",
+          media_type: mediaType,
+          name: name,
+        }),
+      });
+    } else if (sourceType === "url") {
+      return uploadVideo(source.url, collectionId, null, onProgress);
     }
+  };
 
-    return fetch(`${httpUrl}/videodb/collection/${collectionId}/upload`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        source: source.url,
-        source_type: sourceType,
-        media_type: mediaType,
-      }),
-    });
-  }
-};
-
-  const uploadVideo = async (videoUrl) => {
+  const uploadVideo = async (videoUrl, collectionId, name = null, onProgress = null) => {
     try {
       const ingestResponse = await fetch(`${httpUrl}/auto_indexer/ingest`, {
         method: "POST",
@@ -301,6 +451,8 @@ const uploadMedia = async (uploadData) => {
         },
         body: JSON.stringify({
           video_url: videoUrl,
+          collection_id: collectionId,
+          name: name,
         }),
       });
 
@@ -316,7 +468,7 @@ const uploadMedia = async (uploadData) => {
         throw new Error("No request_id received from ingest endpoint");
       }
 
-      const result = await pollVideoUpload(requestId);
+      const result = await pollVideoUpload(requestId, onProgress);
       return { ok: true, status: result.status, data: result };
     } catch (error) {
       if (debug) console.error("debug :videodb-chat error uploading video", error);
@@ -324,9 +476,10 @@ const uploadMedia = async (uploadData) => {
     }
   };
 
-  const pollVideoUpload = async (requestId, maxAttempts = 450, pollInterval = 2000) => {
+  const pollVideoUpload = async (requestId, onProgress = null, maxAttempts = 450, pollInterval = 2000) => {
     let attempts = 0;
     let lastStatusData = null;
+    let hasNotifiedUploadComplete = false;
 
     while (attempts < maxAttempts) {
       try {
@@ -346,6 +499,11 @@ const uploadMedia = async (uploadData) => {
 
         const statusData = await statusResponse.json();
         lastStatusData = statusData;
+
+        if (statusData.media_id && !hasNotifiedUploadComplete && onProgress) {
+          hasNotifiedUploadComplete = true;
+          onProgress({ phase: 'indexing', media_id: statusData.media_id });
+        }
 
         if (statusData.status === "READY") {
           return {
@@ -455,6 +613,94 @@ const uploadMedia = async (uploadData) => {
     return res;
   };
 
+  const saveMeetingContext = async (msgId, context) => {
+    const res = {};
+    try {
+      const response = await fetch(
+        `${httpUrl}/session/message/${msgId}/meeting_context`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(context),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      res.status = "success";
+      res.data = data;
+    } catch (error) {
+      res.status = "error";
+      res.error = error;
+    }
+    return res;
+  };
+
+  const fetchMeetingContext = async (uiId) => {
+    const res = {};
+    try {
+      const response = await fetch(
+        `${httpUrl}/session/meeting_context/${uiId}`,
+      );
+      if (response.status === 404) {
+        res.status = "not_found";
+        return res;
+      }
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      res.status = "success";
+      res.data = data;
+    } catch (error) {
+      res.status = "error";
+      res.error = error;
+    }
+    return res;
+  };
+
+  const makeSessionPublic = async (sessionId, isPublic = true) => {
+    const res = {};
+    try {
+      const response = await fetch(`${httpUrl}/session/${sessionId}/public`, {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ is_public: isPublic }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      res.status = "success";
+      res.success = true;
+      res.data = data;
+
+      const idx = sessions.value.findIndex((s) => s.session_id === sessionId);
+      if (idx !== -1) {
+        sessions.value[idx] = {
+          ...sessions.value[idx],
+          is_public: isPublic,
+        };
+      }
+    } catch (error) {
+      res.status = "error";
+      res.success = false;
+      res.error = error.message;
+    }
+    return res;
+  };
+
   const refetchCollectionVideos = async () => {
     fetchCollectionVideos(session.collectionId).then((res) => {
       activeCollectionVideos.value = res.data;
@@ -478,6 +724,8 @@ const uploadMedia = async (uploadData) => {
       if (debug) console.log("debug :videodb-chat config status", res);
       configStatus.value = res.data;
     });
+
+    initializePrompts();
   });
 
   watch(configStatus, (val) => {
@@ -499,8 +747,25 @@ const uploadMedia = async (uploadData) => {
         if (debug) console.error("debug :videodb-chat error fetching collections", error);
         collections.value = [];
       });
-      fetchSessions().then((res) => {
-        sessions.value = res.data;
+      fetchSessions(1, 20).then((res) => {
+        if (res.status === "success" && res.data) {
+          // Handle both new paginated format and legacy array format
+          if (Array.isArray(res.data)) {
+            // Legacy format: API returns array directly
+            sessions.value = res.data;
+            sessionsPagination.value = {
+              page: 1,
+              per_page: res.data.length,
+              total: res.data.length,
+              total_pages: 1,
+              has_more: false,
+            };
+          } else {
+            // New paginated format: { sessions: [], pagination: {} }
+            sessions.value = res.data.sessions || [];
+            sessionsPagination.value = res.data.pagination || sessionsPagination.value;
+          }
+        }
       });
       fetchAllAgents().then((res) => {
         agents.value = res.data;
@@ -518,11 +783,7 @@ const uploadMedia = async (uploadData) => {
   watch(
     () => conversations,
     (val) => {
-      if (debug)
-        console.log(
-          "debug :videodb-chat conversations updated:",
-          JSON.parse(JSON.stringify(val)),
-        );
+      if (debug) console.log("debug :videodb-chat conversations updated:", val);
     },
     { deep: true },
   );
@@ -624,7 +885,6 @@ const uploadMedia = async (uploadData) => {
         }
         session.isLoadingSession = false;
       }).catch((error) => {
-        // --- OPTIONAL FIX IN CATCH BLOCK ---
         if (session.sessionId === fetchedForSessionId) {
           console.error("Error loading session:", error);
           session.isLoadingSession = false;
@@ -684,55 +944,47 @@ const uploadMedia = async (uploadData) => {
     }
   };
 
-  const makeSessionPublic = async (sessionId, isPublic = true) => {
-    const res = {};
+  const updateMessageReaction = async (msgId, reaction) => {
+    if (!session.sessionId) {
+      throw new Error("No active session.");
+    }
+    if (!msgId) {
+      throw new Error("Message ID is required.");
+    }
+
     try {
-      const response = await fetch(`${httpUrl}/session/${sessionId}/public`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${httpUrl}/session/${session.sessionId}/message/${msgId}/reaction`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reaction }),
         },
-        body: JSON.stringify({ is_public: isPublic }),
-      });
+      );
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (e) {
+        // Some servers may return empty body on success
+      }
 
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        const message = (data && data.message) || "Failed to update reaction.";
+        throw new Error(message);
       }
 
-      const data = await response.json();
-      res.status = "success";
-      res.success = true;
-      res.data = data;
-
-      const idx = sessions.value.findIndex((s) => s.session_id === sessionId);
-      if (idx !== -1) {
-        sessions.value[idx] = {
-          ...sessions.value[idx],
-          is_public: isPublic,
-        };
-      }
+      return data || { success: true };
     } catch (error) {
-      res.status = "error";
-      res.success = false;
-      res.error = error.message;
-    }
-    return res;
-  };
-
-  const updateCollection = async () => {
-    try {
-      const res = await fetchCollections();
-      if (res.status === "success") {
-        const defaultCollection = res.data[0];
-        collections.value = [defaultCollection, ...res.data.slice(1)];
-
-        if (!collections.value.find((c) => c.id === session.collectionId)) {
-          session.collectionId = defaultCollection.id;
-        }
-      }
-    } catch (error) {
-      console.error("Error updating collections:", error);
+      if (debug)
+        console.error(
+          "debug :videodb-chat error updating message reaction",
+          error,
+        );
+      throw error;
     }
   };
 
@@ -757,13 +1009,32 @@ const uploadMedia = async (uploadData) => {
         throw new Error("Failed to parse server response.");
       }
 
-      await updateCollection();
+      if (Array.isArray(collections.value)) {
+        collections.value.push(res.data.collection);
+      }
+
       return res.data.collection;
     } catch (error) {
       console.error("Error creating collection:", error);
       throw new Error(
         "An unexpected error occurred while creating the collection.",
       );
+    }
+  };
+
+  const updateCollection = async () => {
+    try {
+      const res = await fetchCollections();
+      if (res.status === "success") {
+        const defaultCollection = res.data[0];
+        collections.value = [defaultCollection, ...res.data.slice(1)];
+
+        if (!collections.value.find((c) => c.id === session.collectionId)) {
+          session.collectionId = defaultCollection.id;
+        }
+      }
+    } catch (error) {
+      console.error("Error updating collections:", error);
     }
   };
 
@@ -793,7 +1064,11 @@ const uploadMedia = async (uploadData) => {
         );
       }
 
-      await updateCollection();
+      if (session.collectionId === collectionId) {
+        session.collectionId =
+          collections.value.length > 0 ? collections.value[0].id : null;
+      }
+
       return data;
     } catch (error) {
       if (
@@ -940,50 +1215,6 @@ const uploadMedia = async (uploadData) => {
     }
   };
 
-  const updateMessageReaction = async (msgId, reaction) => {
-    if (!session.sessionId) {
-      throw new Error("No active session.");
-    }
-    if (!msgId) {
-      throw new Error("Message ID is required.");
-    }
-
-    try {
-      const response = await fetch(
-        `${httpUrl}/session/${session.sessionId}/message/${msgId}/reaction`,
-        {
-          method: "PUT",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ reaction }),
-        },
-      );
-
-      let data = null;
-      try {
-        data = await response.json();
-      } catch (e) {
-        // Some servers may return empty body on success
-      }
-
-      if (!response.ok) {
-        const message = (data && data.message) || "Failed to update reaction.";
-        throw new Error(message);
-      }
-
-      return data || { success: true };
-    } catch (error) {
-      if (debug)
-        console.error(
-          "debug :videodb-chat error updating message reaction",
-          error,
-        );
-      throw error;
-    }
-  };
-
   const addClientLoadingMessage = (convId) => {
     const messages = Object.values(conversations[convId]);
     const lastMessage = messages[messages.length - 1];
@@ -1052,7 +1283,11 @@ const uploadMedia = async (uploadData) => {
             sessions.value = sessions.value.sort(
               (a, b) => b.created_at - a.created_at,
             );
-            
+
+            if (session.sessionId === null) {
+              session.sessionId = data.session_id;
+              session.isLoadingSession = false;
+            }
           });
       }
 
@@ -1060,6 +1295,91 @@ const uploadMedia = async (uploadData) => {
       socket.emit("chat", _message);
       addClientLoadingMessage(convId);
     }
+  };
+
+  const stopMessage = (msgId) => {
+    if (debug) console.log("debug :videodb-chat stopMessage", msgId);
+    if (session.isConnected && msgId) {
+      socket.emit("stop_message", { msg_id: String(msgId) });
+    }
+  };
+
+  const isSessionBusy = (sid) => {
+    if (!sid) return false;
+    return Object.values(conversations).some(conv =>
+      Object.values(conv).some(msg =>
+        msg.session_id === String(sid) &&
+        (msg.status === 'progress' || msg.clientLoading || msg.is_mock)
+      )
+    );
+  };
+
+  const findPendingMessageId = (sid) => {
+    for (const conv of Object.values(conversations)) {
+      for (const msg of Object.values(conv)) {
+        if (msg.session_id === String(sid) && (msg.status === 'progress' || msg.clientLoading)) {
+          return msg.msg_id;
+        }
+      }
+    }
+    return null;
+  };
+
+  const releaseQueue = (sid) => {
+    const sessionKey = String(sid);
+    if (!sessionKey || !messageQueues[sessionKey]?.length) return;
+
+    const items = [...messageQueues[sessionKey]];
+    messageQueues[sessionKey] = [];
+
+    const primaryMessage = items[0];
+
+    if (items.length > 1) {
+      const combinedText = items.map(i => i.text).filter(t => !!t).join('\n\n');
+
+      const content = [];
+      if (combinedText) {
+        content.push({ type: 'text', text: combinedText });
+      }
+
+      const messageToEmit = {
+        ...primaryMessage,
+        text: combinedText,
+        content: content
+      };
+
+      if (debug) console.log("debug :videodb-chat releaseQueue - emitting merged message", {
+        sessionId: sessionKey,
+        queueLength: items.length,
+        mergedTexts: items.map(i => i.text),
+        finalMessage: messageToEmit
+      });
+      addMessage(messageToEmit);
+    } else {
+      const content = [];
+      if (primaryMessage.text) {
+        content.push({ type: 'text', text: primaryMessage.text });
+      }
+
+      const messageToEmit = {
+        ...primaryMessage,
+        content: content
+      };
+
+      if (debug) console.log("debug :videodb-chat releaseQueue - emitting single message", {
+        sessionId: sessionKey,
+        message: messageToEmit
+      });
+      addMessage(messageToEmit);
+    }
+  };
+
+  const enqueueMessage = (sid, messageData) => {
+    const targetSid = String(sid || session.sessionId);
+    if (!targetSid) return;
+
+    if (!messageQueues[targetSid]) messageQueues[targetSid] = [];
+    messageQueues[targetSid].push({ ...messageData, id: Date.now(), session_id: targetSid });
   };
 
   socket.on("connect", () => {
@@ -1071,15 +1391,28 @@ const uploadMedia = async (uploadData) => {
     if (debug) console.log("debug :videodb-chat socket emmited chat", event);
     if (session.isConnected) {
       const { conv_id: convId, msg_id: msgId, session_id: sessionId } = event;
+
+      if (event.status && event.status !== 'progress') {
+        releaseQueue(event.session_id);
+      }
+
       if (session.sessionId !== sessionId) return;
 
-      
       if (!conversations[convId]) {
         return;
       }
       conversations[convId][msgId] = { sender: "assistant", ...event };
       removeClientLoadingMessage(convId);
     }
+  });
+
+  socket.on("error", (error) => {
+    if (debug) console.error("debug :videodb-chat socket error", error);
+  });
+
+  socket.on("disconnect", () => {
+    if (debug) console.log("debug :videodb-chat socket disconnected");
+    console.log("trying to reconnect");
   });
 
   socket.on("event", (event) => {
@@ -1099,6 +1432,9 @@ const uploadMedia = async (uploadData) => {
         updateCollection();
       }
     }
+    if (event.event_type === 'message_stopped') {
+      releaseQueue(event.session_id);
+    }
   });
 
   return {
@@ -1106,6 +1442,9 @@ const uploadMedia = async (uploadData) => {
     configStatus,
     collections,
     sessions: sessionsSorted,
+    sessionsPagination,
+    isLoadingMoreSessions,
+    fetchMoreSessions,
     agents,
     activeCollectionData,
     activeCollectionVideos,
@@ -1121,8 +1460,26 @@ const uploadMedia = async (uploadData) => {
     fetchCollectionImages,
     refetchCollectionImages,
     fetchAssets,
+    fetchLLMModels,
+    fetchSessionContext,
+    fetchPromptSchema,
+    fetchDefaultPrompts,
+    fetchUserPrompts,
+    fetchSpecificPrompt,
+    createOrUpdatePrompt,
+    deletePrompt,
+    defaultPrompts,
+    userPrompts,
+    initializePrompts,
+    refreshUserPrompts,
+    fetchAllCostingsPerUser,
+    fetchTotalCostPerProvider,
     conversations,
+    messageQueues,
+    enqueueMessage,
+    isSessionBusy,
     addMessage,
+    stopMessage,
     loadSession,
     deleteSession,
     renameSession,
@@ -1142,9 +1499,11 @@ const uploadMedia = async (uploadData) => {
     generateImageUrl,
     generateAudioUrl,
     makeSessionPublic,
-    renameSession,
     callApi,
+    speechToText,
     generateVideoStream,
     updateMessageReaction,
+    saveMeetingContext,
+    fetchMeetingContext,
   };
 }

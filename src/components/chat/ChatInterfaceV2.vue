@@ -1,6 +1,5 @@
 <template>
   <div class="vdb-c-relative vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-overflow-hidden">
-    <Sidebar v-if="sidebarConfig.enabled" ref="sidebarRef" class="vdb-c-flex-shrink-0" />
     <PageDisplay class="vdb-c-flex-1 vdb-c-overflow-auto" />
     <UploadNotifications ref="uploadNotificationsRef" />
   </div>
@@ -12,7 +11,6 @@ import { useChatInterface } from '../hooks/useChatInterface';
 import { useVideoDBAgent } from '../hooks/useVideoDBAgent';
 import { useUploadChatSimulator } from '../hooks/useUploadChatSimulator';
 
-import Sidebar from './v2/Sidebar.vue';
 import PageDisplay from './PageDisplay.vue';
 import UploadNotifications from './elements/UploadNotifications.vue';
 
@@ -1035,6 +1033,7 @@ const chatContext = {
   selectedSessionId,
   selectedCollectionId,
   sidebarConfig: props.sidebarConfig,
+  showHeader: props.showHeader,
   showChatInput: props.showChatInput,
   chatInputPlaceholder: props.chatInputPlaceholder,
   handleAddMessage,

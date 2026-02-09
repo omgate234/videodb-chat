@@ -1,34 +1,5 @@
 <template>
   <div class="collection-page vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col">
-    <header
-      class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-end vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
-    >
-      <div
-        v-if="showMore"
-        class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-gap-[6px] vdb-c-pl-[10px]"
-      >
-        <HeavyFolderIcon
-          :stroke-color="'#1E1E1E'"
-          class="vdb-c-h-[24px] vdb-c-w-[24px] vdb-c-shrink-0"
-        />
-        <h1
-          class="vdb-c-whitespace-nowrap vdb-c-text-[16px] vdb-c-font-semibold vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey"
-        >
-          {{ collectionName || 'Collection' }}
-        </h1>
-      </div>
-      <SearchInput
-        v-if="showMore"
-        :items="combinedAssets"
-        @select-item="handleSelectItem"
-        @update:query="handleSearchQueryUpdate"
-        :placeholder="collectionName ? `Search files in '${collectionName}'` : 'Search files'"
-      />
-      <PrimaryButton :disabled="uploadDisabled" @click="handleUploadClick">
-        <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
-        <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">Upload file</span>
-      </PrimaryButton>
-    </header>
     <div
       v-if="!showMore"
       :class="[!hasAssets && !isLoadingAssets ? 'vdb-c-mb-[60px]' : '']"
@@ -70,27 +41,6 @@
               </template>
             </div>
           </div>
-          <div
-            class="vdb-c-relative vdb-c-flex vdb-c-h-[30px] vdb-c-w-[30px] vdb-c-shrink-0 vdb-c-items-center vdb-c-justify-center"
-          >
-            <button
-              ref="optionsButtonRef"
-              @click.stop="handleOptionsClick"
-              class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-items-center vdb-c-justify-center"
-            >
-              <ThreeDotsIcon class="vdb-c-h-[30px] vdb-c-w-[30px] vdb-c-rotate-90" />
-            </button>
-            <CollectionOptionsMenu
-              v-if="optionsButtonRef && currentCollection"
-              :is-open="showCollectionOptions"
-              :collection="currentCollection"
-              :trigger-element="optionsButtonRef"
-              :on-left="true"
-              @close="showCollectionOptions = false"
-              @rename="handleRenameCollection"
-              @delete="handleDeleteCollection"
-            />
-          </div>
         </div>
         <ChatInput :context="context" />
       </div>
@@ -103,7 +53,7 @@
         <div
           class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-between vdb-c-gap-[10px]"
         >
-          <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
+          <AssetTabs :tabs="['Videos']" v-model="activeTab" />
           <div class="vdb-c-flex-1"></div>
           <SearchInput
             :items="combinedAssets.filter((asset) => asset.type === activeTab.toLowerCase())"
@@ -170,7 +120,7 @@
           class="vdb-c-flex vdb-c-w-full vdb-c-flex-wrap vdb-c-items-center vdb-c-justify-between vdb-c-gap-16 vdb-c-px-[40px]"
         >
           <!-- Type Tabs -->
-          <AssetTabs :tabs="['Video', 'Audio', 'Images', 'Voices']" v-model="activeTab" />
+          <AssetTabs :tabs="['Videos']" v-model="activeTab" />
 
           <!-- Filters & Sorts -->
           <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-12">
@@ -302,6 +252,7 @@ const {
   activeCollectionImages,
   handleAddMessage,
   handleTagAgent,
+  showHeader = true,
   showChatInput = true,
   configStatus = null,
   isSetupComplete = false,
@@ -534,7 +485,7 @@ watch(
   },
   { immediate: true, deep: true }
 );
-const activeTab = ref('Video');
+const activeTab = ref('Videos');
 const editingAssetId = ref(null);
 const sortState = ref('');
 const filterState = reactive({

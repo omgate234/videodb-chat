@@ -34,35 +34,13 @@
             </svg>
           </button>
 
-          <!-- Title (editable) -->
+          <!-- Title -->
           <div class="vdb-c-flex vdb-c-items-center">
-            <template v-if="isEditingTitle">
-              <input
-                :id="`edit-title-input-${item.id}`"
-                v-model="editingTitle"
-                type="text"
-                class="vdb-selection-orange vdb-c-max-w-[50vw] vdb-c-rounded-6 vdb-c-bg-transparent vdb-c-px-8 vdb-c-py-4 vdb-c-text-[16px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-white vdb-c-outline-none focus:vdb-c-bg-white/10"
-                @click.stop
-                @keydown.enter.prevent="handleSaveTitle"
-                @keydown.esc.stop="handleCancelTitle"
-                @blur="handleSaveTitle"
-              />
-            </template>
-            <template v-else>
-              <h2
-                class="vdb-c-cursor-pointer vdb-c-text-[16px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-white"
-                @dblclick.stop="handleStartEditingTitle"
-                title="Double-click to rename"
-              >
-                {{ item.name }}
-              </h2>
-              <button
-                @click="handleStartEditingTitle"
-                class="vdb-c-ml-8 vdb-c-flex vdb-c-h-20 vdb-c-w-20 vdb-c-items-center vdb-c-justify-center vdb-c-transition-opacity hover:vdb-c-opacity-70"
-              >
-                <EditIcon :stroke-color="'#FFFFFF'" />
-              </button>
-            </template>
+            <h2
+              class="vdb-c-text-[16px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-white"
+            >
+              {{ item.name }}
+            </h2>
           </div>
         </div>
 
@@ -86,24 +64,6 @@
             title="Copy ID"
           >
             <CopyIcon fill="#1E1E1E" />
-          </button>
-
-          <!-- Download button -->
-          <button
-            @click="handleDownload"
-            class="vdb-c-flex vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-white/20 vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-white/90"
-            title="Download"
-          >
-            <DownloadIcon />
-          </button>
-
-          <!-- Delete button -->
-          <button
-            @click="handleDelete"
-            class="vdb-c-flex vdb-c-h-[36px] vdb-c-w-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-white/20 vdb-c-bg-white vdb-c-transition-colors hover:vdb-c-bg-red-100"
-            title="Delete"
-          >
-            <TrashIcon :stroke-color="'#E2462C'" />
           </button>
         </div>
       </div>
@@ -172,17 +132,6 @@
 
   <!-- Notification Center -->
   <NotificationCenter ref="notificationCenterRef" />
-
-  <!-- Delete Modal -->
-  <DeleteModal
-    :is-open="showDeleteModal"
-    heading="Delete asset"
-    text="Are you sure you want to delete this asset? This action cannot be undone."
-    delete-button-text="Yes, I'm sure"
-    cancel-button-text="Cancel"
-    @close="showDeleteModal = false"
-    @confirm="handleConfirmDelete"
-  />
 </template>
 
 <script setup>

@@ -103,26 +103,6 @@
     v-else-if="!isLoadingCollections"
     class="vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-bg-white"
   >
-    <!-- Header -->
-    <div
-      class="vdb-c-sticky vdb-c-top-0 vdb-c-flex vdb-c-h-[62px] vdb-c-w-full vdb-c-items-center vdb-c-justify-end vdb-c-border-0 vdb-c-border-b vdb-c-border-solid vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-[10px]"
-    >
-      <div
-        class="vdb-c-flex vdb-c-grow vdb-c-items-center vdb-c-gap-[6px] vdb-c-py-0 vdb-c-pl-[10px] vdb-c-pr-0"
-      >
-        <div
-          class="vdb-c-flex vdb-c-h-[24px] vdb-c-w-[24px] vdb-c-items-center vdb-c-justify-center vdb-c-text-vdb-darkishgrey"
-        >
-          <HomeIcon :strokeColor="'#1E1E1E'" />
-        </div>
-        <p
-          class="vdb-c-whitespace-nowrap vdb-c-text-[16px] vdb-c-font-semibold vdb-c-leading-[24px] vdb-c-text-[#1E1E1E]"
-        >
-          Home | All Collections
-        </p>
-      </div>
-    </div>
-
     <!-- Main Container -->
     <div
       class="vdb-c-flex vdb-c-w-full vdb-c-grow vdb-c-flex-col vdb-c-items-center vdb-c-gap-[30px] vdb-c-overflow-y-auto vdb-c-p-[40px]"

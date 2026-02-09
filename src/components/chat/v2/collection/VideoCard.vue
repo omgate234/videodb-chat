@@ -106,115 +106,27 @@
       </div>
     </div>
 
-    <!-- Text and Three Dots Container -->
+    <!-- Text Container -->
     <div
       class="info-container vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-gap-8 vdb-c-self-stretch"
-      @mouseleave="
-        () => {
-          showMenu = false;
-        }
-      "
     >
       <div
         class="vdb-c-m-0 vdb-c-line-clamp-2 vdb-c-flex-1 vdb-c-overflow-hidden vdb-c-text-[13px] vdb-c-font-normal vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
       >
-        <template v-if="isEditing">
-          <input
-            :id="`edit-input-${item.id}`"
-            v-model="editingName"
-            type="text"
-            class="vdb-selection-orange vdb-c-w-full vdb-c-truncate vdb-c-bg-[#FFE9D3] vdb-c-px-6 vdb-c-py-2 vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey vdb-c-outline-none focus:vdb-c-border-vdb-darkorange"
-            @click.stop
-            @keydown.enter.prevent="handleSave"
-            @keydown.esc.stop="handleCancel"
-            @blur="handleSave"
-          />
-        </template>
-        <template v-else>
-          <span
-            class="vdb-c-inline-block vdb-c-w-full vdb-c-cursor-pointer vdb-c-truncate"
-            @dblclick.stop="handleStartEditing"
-            title="Double-click to rename"
-          >
-            {{ item.name }}
-          </span>
-        </template>
-      </div>
-      <div
-        v-if="!disableOptions"
-        ref="menuButtonRef"
-        class="vdb-c-relative vdb-c-z-[1000] vdb-c-flex-shrink-0 vdb-c-cursor-pointer vdb-c-p-4 vdb-c-transition-opacity vdb-c-duration-300"
-        :class="[isHovered || isActive ? 'vdb-c-opacity-100' : 'vdb-c-opacity-0']"
-        @mouseenter="
-          () => {
-            showMenu = true;
-          }
-        "
-      >
-        <ThreeDotsIcon class="three-dots-button" />
-        <!-- Dropdown Menu -->
-        <ul
-          v-if="showMenu"
-          :class="
-            (index + 1) % 4 === 0 ? 'vdb-c-left-full vdb-c-translate-x-[-100%]' : 'vdb-c-left-0'
-          "
-          class="menu-dropdown vdb-c-absolute vdb-c-left-[calc(100%)] vdb-c-top-[-8px] vdb-c-z-[1000] vdb-c-w-full vdb-c-min-w-[180px] vdb-c-cursor-pointer vdb-c-rounded-12 vdb-c-border vdb-c-border-roy vdb-c-bg-white vdb-c-p-8 vdb-c-text-sm"
-        >
-          <li
-            class="menu-item vdb-c-flex vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
-            @click.stop="handleChatWithVideo"
-          >
-            <ChatWithVideo class="flex-shrink-0 vdb-c-h-20 vdb-c-w-20" fill="#1E1E1E" />
-            <span class="vdb-c-flex-shrink-0">Chat with video</span>
-          </li>
-          <li
-            class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
-            @click.stop="handleRename"
-          >
-            <EditIcon :stroke-color="'#1E1E1E'" />
-            <span>Rename</span>
-          </li>
-          <li
-            class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
-            @click.stop="handleDownload"
-          >
-            <UploadIcon :stroke-color="'#1E1E1E'" />
-            <span>Download</span>
-          </li>
-          <li
-            class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-[#E2462C] hover:vdb-c-bg-roy"
-            @click.stop="handleDelete"
-          >
-            <TrashIcon :stroke-color="'#E2462C'" />
-            <span>Delete</span>
-          </li>
-        </ul>
+        <span class="vdb-c-inline-block vdb-c-w-full vdb-c-truncate">
+          {{ item.name }}
+        </span>
       </div>
     </div>
   </div>
 
   <NotificationCenter ref="notificationCenterRef" />
 
-  <DeleteModal
-    :is-open="showDeleteModal"
-    heading="Delete asset"
-    text="Are you sure you want to delete this asset? This action cannot be undone."
-    delete-button-text="Yes, I'm sure"
-    cancel-button-text="Cancel"
-    @close="showDeleteModal = false"
-    @confirm="handleConfirmDelete"
-  />
-
   <VideoModal
     :is-open="showVideoModal"
     :item="item"
     :handle-add-message="handleAddMessage"
-    :editing-asset-id="editingAssetId"
     @close="showVideoModal = false"
-    @delete-video="$emit('delete-video', $event)"
-    @start-editing="$emit('start-editing', $event)"
-    @save-editing="$emit('save-editing', $event)"
-    @cancel-editing="$emit('cancel-editing')"
   />
 </template>
 

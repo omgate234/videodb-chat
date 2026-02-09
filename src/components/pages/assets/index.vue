@@ -85,34 +85,6 @@
     v-else
     class="vdb-c-flex vdb-c-h-screen vdb-c-w-full vdb-c-flex-col vdb-c-overflow-hidden vdb-c-bg-white"
   >
-    <!-- TOP HEADER -->
-    <header
-      class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-between vdb-c-gap-16 vdb-c-border-b vdb-c-border-roy vdb-c-bg-white vdb-c-px-24 vdb-c-text-vdb-darkishgrey"
-    >
-      <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
-        <LibraryIcon class="vdb-c-h-24 vdb-c-w-24" />
-        <p class="vdb-c-text-subheader2 vdb-c-font-semibold">Asset Library</p>
-      </div>
-
-      <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-16">
-        <SearchInput
-          :items="assets"
-          @select-item="handleSelectItem"
-          @update:query="(value) => (searchQuery = value)"
-        />
-        <PrimaryButton
-          class="vdb-c-flex-shrink-0"
-          :disabled="uploadDisabled"
-          @click="handleUploadClick"
-        >
-          <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
-          <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">
-            Upload file
-          </span>
-        </PrimaryButton>
-      </div>
-    </header>
-
     <div
       class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-start vdb-c-gap-[40px] vdb-c-px-[40px] vdb-c-py-[30px]"
     >

@@ -79,6 +79,7 @@ export function useAssetFilters(assets, selectedCollection, activeTab, sortState
         // Type Check
         const typeMap = {
           Video: 'video',
+          Videos: 'video',
           Audio: 'audio',
           Images: 'image',
           Voices: 'voices',
