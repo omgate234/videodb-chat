@@ -336,6 +336,9 @@
           :original-end="internalVideos[editingIndex].original_end"
           :max-extension="20"
           :thumbnails="internalVideos[editingIndex].thumbnail_data"
+          :call-api="callApi"
+          :video-id="internalVideos[editingIndex].video_id || internalVideos[editingIndex].id"
+          :collection-id="internalVideos[editingIndex].collection_id"
           v-model:start="videoStates[editingIndex].start"
           v-model:end="videoStates[editingIndex].end"
         />

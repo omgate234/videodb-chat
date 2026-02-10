@@ -82,6 +82,7 @@
         class="disabled-zone vdb-c-h-full vdb-c-flex-shrink-0 vdb-c-rounded-8 vdb-c-rounded-l-[0px] vdb-c-border-2 vdb-c-border-l-[0px] vdb-c-border-r-[0px] vdb-c-border-white"
       ></div>
       <div
+        :key="'thumb-container-' + thumbnailKey"
         class="vdb-c-relative vdb-c-h-full vdb-c-flex-1 vdb-c-overflow-hidden vdb-c-rounded-8 vdb-c-border-2 vdb-c-border-white vdb-c-bg-black"
       >
         <!-- Thumbnails in bottom black section -->
@@ -203,7 +204,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import ChevronIcon from '../../chat/v2/icons/deep-search/ChevronIcon.vue';
 import DoubleChevronIcon from '../../chat/v2/icons/deep-search/DoubleChevronIcon.vue';
 
@@ -217,6 +218,47 @@ const props = defineProps({
   originalEnd: { type: Number, required: true },
   maxExtension: { type: Number, default: 20 },
   thumbnails: { type: Array, default: () => [] },
+  callApi: { type: Function, default: null },
+  videoId: { type: String, default: null },
+  collectionId: { type: String, default: null },
+});
+
+const localThumbnails = ref([]);
+const thumbnailKey = ref(0);
+
+const activeThumbnails = computed(() => {
+  return localThumbnails.value.length > 0 ? localThumbnails.value : props.thumbnails;
+});
+
+const fetchThumbnails = async () => {
+  if (!props.callApi || !props.videoId || !props.collectionId) {
+    return;
+  }
+
+  try {
+    const response = await props.callApi(
+      `/videodb/collection/${props.collectionId}/video/${props.videoId}/thumbnails`,
+      {
+        method: 'POST',
+        payload: {
+          start: props.start,
+          end: props.end,
+        },
+      }
+    );
+
+    if (response.data?.thumbnail_data) {
+      localThumbnails.value = response.data.thumbnail_data;
+      thumbnailKey.value++;
+    }
+  } catch (error) {
+    console.error('Failed to fetch thumbnails:', error);
+  }
+};
+
+// Fetch thumbnails on mount
+onMounted(() => {
+  fetchThumbnails();
 });
 
 const emit = defineEmits(['update:start', 'update:end']);
@@ -326,14 +368,15 @@ const visibleRightTicks = computed(() => {
 // --- THUMBNAIL POSITIONING FOR TOP SCALES ---
 
 const visibleLeftThumbnails = computed(() => {
-  if (!props.thumbnails || props.thumbnails.length === 0) return [];
+  const thumbs = activeThumbnails.value;
+  if (!thumbs || thumbs.length === 0) return [];
 
   const secondsInView = scaleWidth / pixelsPerSecond; // 30 seconds
   const startTimeWindow = Math.max(0, props.start - secondsInView);
   const endTimeWindow = props.start;
 
   // Filter thumbnails that fall within the visible time range
-  const visibleThumbs = props.thumbnails.filter(
+  const visibleThumbs = thumbs.filter(
     (thumb) => thumb.timestamp >= startTimeWindow && thumb.timestamp <= endTimeWindow
   );
 
@@ -368,14 +411,15 @@ const visibleLeftThumbnails = computed(() => {
 });
 
 const visibleRightThumbnails = computed(() => {
-  if (!props.thumbnails || props.thumbnails.length === 0) return [];
+  const thumbs = activeThumbnails.value;
+  if (!thumbs || thumbs.length === 0) return [];
 
   const secondsInView = scaleWidth / pixelsPerSecond; // 30 seconds
   const startTimeWindow = props.end;
   const endTimeWindow = Math.min(props.totalDuration, props.end + secondsInView);
 
   // Filter thumbnails that fall within the visible time range
-  const visibleThumbs = props.thumbnails.filter(
+  const visibleThumbs = thumbs.filter(
     (thumb) => thumb.timestamp >= startTimeWindow && thumb.timestamp <= endTimeWindow
   );
 
@@ -409,25 +453,16 @@ const visibleRightThumbnails = computed(() => {
   });
 });
 
-// --- THUMBNAIL POSITIONING FOR BOTTOM BLACK SECTION ---
-
 const bottomThumbnails = computed(() => {
-  if (!props.thumbnails || props.thumbnails.length === 0) return [];
+  const thumbs = activeThumbnails.value;
+  if (!thumbs || thumbs.length === 0) return [];
 
-  const secondsInView = scaleWidth / pixelsPerSecond; // 30 seconds
+  const secondsInView = scaleWidth / pixelsPerSecond;
   const startTimeWindow = Math.max(0, props.start - secondsInView);
   const endTimeWindow = Math.min(props.totalDuration, props.end + secondsInView);
   const totalVisibleTime = endTimeWindow - startTimeWindow;
 
-  // Calculate the actual pixel width of the black section
-  // Total width (1000px) - left scale (300px) - center (400px) - right scale (300px) = flexible
-  // But the black section is flex-1, so it takes: 1000px - leftDisabled - rightDisabled
-  const totalContainerWidth = 1000; // max-w-[1000px]
-  const blackSectionWidth =
-    totalContainerWidth - leftDisabledZoneWidth.value - rightDisabledZoneWidth.value;
-
-  // Filter thumbnails that fall within the visible range
-  const visibleThumbs = props.thumbnails.filter(
+  const visibleThumbs = thumbs.filter(
     (thumb) => thumb.timestamp >= startTimeWindow && thumb.timestamp <= endTimeWindow
   );
 
