@@ -1,5 +1,31 @@
 <template>
   <div class="collection-page vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col">
+    <header
+      class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-end vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
+    >
+      <div
+        v-if="showMore"
+        @click="showMore = false"
+        class="vdb-c-flex vdb-c-flex-1 vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-[6px] vdb-c-pl-[10px]"
+      >
+        <HeavyFolderIcon
+          :stroke-color="'#1E1E1E'"
+          class="vdb-c-h-[24px] vdb-c-w-[24px] vdb-c-shrink-0"
+        />
+        <h1
+          class="vdb-c-whitespace-nowrap vdb-c-text-[16px] vdb-c-font-semibold vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey"
+        >
+          {{ collectionName || 'Collection' }}
+        </h1>
+      </div>
+      <SearchInput
+        v-if="showMore"
+        :items="combinedAssets"
+        @select-item="handleSelectItem"
+        @update:query="handleSearchQueryUpdate"
+        :placeholder="collectionName ? `Search files in '${collectionName}'` : 'Search files'"
+      />
+    </header>
     <div
       v-if="!showMore"
       :class="[!hasAssets && !isLoadingAssets ? 'vdb-c-mb-[60px]' : '']"
@@ -232,7 +258,6 @@ import ErrorIcon from '../../chat/v2/icons/ErrorIcon.vue';
 import UploadModal from '../../chat/v2/UploadModal.vue';
 import AddIcon from '../../chat/v2/icons/AddIcon.vue';
 import HeavyFolderIcon from '../../chat/v2/icons/HeavyFolderIcon.vue';
-
 const props = defineProps({
   context: {
     type: Object,

@@ -2,6 +2,38 @@
   <div
     class="vdb-c-flex vdb-c-h-screen vdb-c-w-full vdb-c-flex-col vdb-c-overflow-hidden vdb-c-bg-white"
   >
+    <header
+      v-if="showHeader"
+      class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-between vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
+    >
+      <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
+        <button
+          v-if="!onSharePage"
+          type="button"
+          class="vdb-c-flex vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-8 vdb-c-px-8 vdb-c-py-4 vdb-c-text-[15px] vdb-c-font-semibold vdb-c-leading-6 vdb-c-text-[#1E1E1E] vdb-c-transition-colors vdb-c-duration-200 hover:vdb-c-text-pam"
+          :class="{
+            'vdb-c-cursor-not-allowed vdb-c-opacity-50': !breadcrumbCollectionId,
+          }"
+          :disabled="!breadcrumbCollectionId"
+          @click="handleCollectionCrumbClick"
+        >
+          <folder-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]" />
+          <span class="vdb-c-truncate">{{ breadcrumbCollectionName || 'Collection' }}</span>
+        </button>
+        <span
+          v-if="breadcrumbSessionName && !onSharePage"
+          class="vdb-c-text-[15px] vdb-c-text-[#1E1E1E]"
+          ><chevron-right-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]"
+        /></span>
+        <span
+          v-if="breadcrumbSessionName"
+          class="vdb-c-truncate vdb-c-text-[15px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-[#1E1E1E]"
+          :title="breadcrumbSessionName"
+        >
+          {{ breadcrumbSessionName }}
+        </span>
+      </div>
+    </header>
     <!-- Main content area - Scrollable messages -->
     <section
       class="vdb-c-flex vdb-c-min-h-0 vdb-c-flex-1 vdb-c-flex-col vdb-c-overflow-hidden vdb-c-bg-white"
