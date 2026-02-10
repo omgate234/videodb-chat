@@ -41,10 +41,31 @@
           <VideoDBPlayer
             ref="playerRef"
             :stream-url="item.stream_url"
-            :default-controls="true"
+            :default-controls="false"
             :default-overlay="false"
             class="vdb-c-absolute vdb-c-left-0 vdb-c-top-0 vdb-c-h-full vdb-c-w-full vdb-c-rounded-12"
-          />
+          >
+            <template #overlay>
+              <BigCenterButton
+                class="play-button vdb-c-absolute vdb-c-left-1/2 vdb-c-top-1/2 vdb-c-flex vdb-c-h-48 vdb-c-w-48 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all vdb-c-duration-300"
+              />
+
+              <!-- Copy Icon - Top Right -->
+              <div
+                class="copy-button vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-10 vdb-c-cursor-pointer vdb-c-rounded-full vdb-c-border vdb-c-p-6 vdb-c-transition-all vdb-c-duration-300"
+                @click.stop="copyId(item.id)"
+              >
+                <CopyIcon />
+              </div>
+
+              <!-- Duration Pill - Bottom Right -->
+              <div
+                class="vdb-c-absolute vdb-c-bottom-8 vdb-c-right-8 vdb-c-z-10 vdb-c-inline-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-[13.281px] vdb-c-rounded-20 vdb-c-bg-black/50 vdb-c-px-6 vdb-c-py-4 vdb-c-text-right vdb-c-text-xs vdb-c-font-medium vdb-c-leading-normal vdb-c-text-white"
+              >
+                {{ formatDuration(item.length || item.duration) }}
+              </div>
+            </template>
+          </VideoDBPlayer>
         </div>
 
         <!-- Thumbnail (shown when not playing) -->
