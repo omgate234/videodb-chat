@@ -164,24 +164,6 @@
         <span class="vdb-c-flex-shrink-0">Copy link</span>
       </li>
 
-      <!-- Add to Collection -->
-      <li
-        class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
-        @click.stop="handleAddToCollection"
-      >
-        <FolderIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" stroke-color="#1E1E1E" />
-        <span class="vdb-c-flex-shrink-0">Add to collection</span>
-      </li>
-
-      <!-- Convert to Reel -->
-      <li
-        class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
-        @click.stop="handleConvertToReel"
-      >
-        <RotateIcon class="vdb-c-h-20 vdb-c-w-20 vdb-c-flex-shrink-0" fill="#1e1e1e" />
-        <span class="vdb-c-flex-shrink-0">Convert to reel</span>
-      </li>
-
       <!-- Download -->
       <li
         class="menu-item vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-8 vdb-c-bg-white vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-[500] vdb-c-text-black hover:vdb-c-bg-roy"
@@ -216,8 +198,6 @@ import '@videodb/player-vue/dist/style.css';
 import EditIcon from '../../chat/v2/icons/deep-search/EditIcon.vue';
 import ThreeDotsIcon from '../../chat/v2/icons/ThreeDotsIcon.vue';
 import LinkIcon from '../../chat/v2/icons/deep-search/LinkIcon.vue';
-import FolderIcon from '../../chat/v2/icons/FolderIcon.vue';
-import RotateIcon from '../../chat/v2/icons/deep-search/RotateIcon.vue';
 import DownloadIcon from '../../chat/v2/icons/deep-search/DownloadIcon.vue';
 import PlayIcon from '../../icons/play.vue';
 import CheckIcon from '../../chat/v2/icons/CheckIcon.vue';
@@ -234,10 +214,6 @@ const props = defineProps({
     type: Function,
     default: null,
   },
-  onConvertToReel: {
-    type: Function,
-    default: null,
-  },
   onVideoPlay: {
     type: Function,
     default: null,
@@ -251,8 +227,6 @@ const props = defineProps({
 const emit = defineEmits(['edit']);
 
 const context = inject('videodb-chat-context');
-const handleUpload = context?.handleUpload;
-const activeCollectionData = context?.activeCollectionData;
 const callApi = props.callApi || context?.callApi;
 const onSharePage = context?.onSharePage || false;
 
@@ -316,42 +290,6 @@ const handleCopyLink = async () => {
   } catch (error) {
     console.error('Error copying link:', error);
     notificationCenterRef.value?.addNotification('Failed to copy link', { type: 'error' });
-  }
-  showMenu.value = false;
-};
-
-const handleAddToCollection = async () => {
-  if (onSharePage) return;
-  if (!handleUpload || !props.video.stream_url) {
-    console.error('Add to collection not available');
-    showMenu.value = false;
-    return;
-  }
-
-  try {
-    const targetCollectionId = activeCollectionData?.value?.id;
-    if (!targetCollectionId) {
-      console.error('No active collection');
-      showMenu.value = false;
-      return;
-    }
-
-    await handleUpload({
-      source: { url: props.video.stream_url },
-      sourceType: 'url',
-      collectionId: targetCollectionId,
-      mediaType: 'video',
-    });
-  } catch (error) {
-    console.error('Error adding to collection:', error);
-  }
-  showMenu.value = false;
-};
-
-const handleConvertToReel = () => {
-  if (onSharePage) return;
-  if (props.onConvertToReel) {
-    props.onConvertToReel(props.video);
   }
   showMenu.value = false;
 };
