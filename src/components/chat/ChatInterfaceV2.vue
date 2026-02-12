@@ -152,6 +152,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  suggestedQuestions: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits([]);
@@ -1041,6 +1045,7 @@ const chatContext = {
   uploadSimulator,
   isLoadingSession,
   onSharePage: props.onSharePage,
+  suggestedQuestions: props.suggestedQuestions,
 };
 
 provide('videodb-chat', chatContext);

@@ -29,7 +29,7 @@
     <div
       v-if="!showMore"
       :class="[!hasAssets && !isLoadingAssets ? 'vdb-c-mb-[60px]' : '']"
-      class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[60px] vdb-c-p-[40px]"
+      class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[12px] vdb-c-p-[40px]"
     >
       <!-- Chat Input Section -->
       <div
@@ -69,6 +69,26 @@
           </div>
         </div>
         <ChatInput :context="context" />
+
+        <!-- Suggested Questions -->
+        <div
+          v-if="suggestedQuestions && suggestedQuestions.length > 0"
+          class="vdb-c-mt-16 vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-8"
+        >
+          <div class="vdb-c-flex vdb-c-flex-col vdb-c-rounded">
+            <button
+              v-for="(question, index) in suggestedQuestions"
+              :key="index"
+              @click="handleSuggestedQuestionClick(question)"
+              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-10 vdb-c-border-t vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24 vdb-c-py-16 vdb-c-text-left vdb-c-text-[#1E1E1E] vdb-c-transition-colors last:vdb-c-border-b-0 hover:vdb-c-text-vdb-darkorange active:vdb-c-bg-gray-100"
+            >
+              <SuggestionIcon />
+              <span class="vdb-c-flex-1 vdb-c-text-sm vdb-c-font-normal vdb-c-leading-5">
+                {{ question.text }}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
       <!-- Assets Section -->
       <div
@@ -258,6 +278,8 @@ import ErrorIcon from '../../chat/v2/icons/ErrorIcon.vue';
 import UploadModal from '../../chat/v2/UploadModal.vue';
 import AddIcon from '../../chat/v2/icons/AddIcon.vue';
 import HeavyFolderIcon from '../../chat/v2/icons/HeavyFolderIcon.vue';
+import SuggestionIcon from '../../chat/v2/icons/SuggestionIcon.vue';
+
 const props = defineProps({
   context: {
     type: Object,
@@ -295,6 +317,7 @@ const {
   deleteAudio,
   deleteImage,
   deleteVoice,
+  suggestedQuestions = [],
 } = context || {};
 
 const showMore = ref(false);
@@ -816,6 +839,28 @@ const handleCancelEditing = () => {
 
 const handleShowMore = () => {
   showMore.value = true;
+};
+
+const handleCollapse = () => {
+  showMore.value = false;
+  currentPage.value = 1;
+  assets.value = [];
+  loadCollectionAssets();
+};
+
+const handleSuggestedQuestionClick = (question) => {
+  if (!question || !question.text) return;
+
+  if (handleAddMessage) {
+    handleAddMessage({
+      text: question.text,
+      additionalInfo: question.additionalData || null,
+    });
+  }
+};
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
 };
 
 onMounted(() => {
