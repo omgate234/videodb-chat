@@ -12,7 +12,7 @@
         <p
           class="vdb-c-mt-[20px] vdb-c-text-center vdb-c-text-[18px] vdb-c-font-semibold vdb-c-text-[#000228]"
         >
-          Loading collection
+          Loading Movies
         </p>
         <p class="vdb-c-text-center vdb-c-text-[14px] vdb-c-text-[#949ba8]">
           We should be ready in a few seconds!
