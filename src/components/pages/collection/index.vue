@@ -2,7 +2,7 @@
   <div class="collection-page vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-pb-16">
     <!-- Loading Overlay -->
     <div
-      v-if="isLoadingAssets"
+      v-if="!activeCollectionData || isLoadingAssets"
       class="vdb-c-absolute vdb-c-inset-0 vdb-c-z-[9999] vdb-c-h-full vdb-c-w-full vdb-c-bg-white"
     >
       <div
@@ -475,7 +475,7 @@ const cancelDeleteCollection = () => {
 };
 
 // Assets section state
-const isLoadingAssets = ref(false);
+const isLoadingAssets = ref(true);
 const activeCollectionVoices = ref(null);
 
 const fetchCollectionAssets = async (collectionId) => {
