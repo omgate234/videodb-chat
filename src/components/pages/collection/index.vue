@@ -46,9 +46,9 @@
     >
       <!-- Chat Input Section -->
       <div
-        class="vdb-c-flex vdb-c-w-full vdb-c-max-w-[680px] vdb-c-flex-shrink-0 vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[30px]"
+        class="vdb-c-flex vdb-c-w-full vdb-c-max-w-[680px] vdb-c-flex-shrink-0 vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[0px]"
       >
-        <div class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-16">
+        <div class="vdb-c-mb-[30px] vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-16">
           <div
             id="header-component"
             class="vdb-c-flex vdb-c-grow vdb-c-flex-row vdb-c-items-center vdb-c-gap-8"
@@ -86,14 +86,15 @@
         <!-- Suggested Questions -->
         <div
           v-if="suggestedQuestions && suggestedQuestions.length > 0"
-          class="vdb-c-mt-16 vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-8"
+          class="vdb-c-mt-8 vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-8"
         >
           <div class="vdb-c-flex vdb-c-flex-col vdb-c-rounded">
             <button
               v-for="(question, index) in suggestedQuestions"
               :key="index"
               @click="handleSuggestedQuestionClick(question)"
-              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-10 vdb-c-border-t vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24 vdb-c-py-16 vdb-c-text-left vdb-c-text-[#1E1E1E] vdb-c-transition-colors last:vdb-c-border-b-0 hover:vdb-c-text-vdb-darkorange active:vdb-c-bg-gray-100"
+              :class="index !== 0 ? 'vdb-c-border-t vdb-c-border-[#EFEFEF]' : ''"
+              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-10 vdb-c-bg-white vdb-c-px-24 vdb-c-py-16 vdb-c-text-left vdb-c-text-[#1E1E1E] vdb-c-transition-colors last:vdb-c-border-b-0 hover:vdb-c-text-vdb-darkorange active:vdb-c-bg-gray-100"
             >
               <SuggestionIcon />
               <span class="vdb-c-flex-1 vdb-c-text-sm vdb-c-font-normal vdb-c-leading-5">
