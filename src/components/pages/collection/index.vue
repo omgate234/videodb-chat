@@ -1,5 +1,25 @@
 <template>
   <div class="collection-page vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-pb-16">
+    <!-- Loading Overlay -->
+    <div
+      v-if="isLoadingAssets"
+      class="vdb-c-absolute vdb-c-inset-0 vdb-c-z-[9999] vdb-c-h-full vdb-c-w-full vdb-c-bg-white"
+    >
+      <div
+        class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-1/2 vdb-c-flex vdb-c-translate-x-[-50%] vdb-c-translate-y-[-50%] vdb-c-flex-col vdb-c-items-center vdb-c-justify-center"
+      >
+        <SpinnerIcon class="vdb-c-h-[40px] vdb-c-w-[40px]" />
+        <p
+          class="vdb-c-mt-[20px] vdb-c-text-center vdb-c-text-[18px] vdb-c-font-semibold vdb-c-text-[#000228]"
+        >
+          Loading collection
+        </p>
+        <p class="vdb-c-text-center vdb-c-text-[14px] vdb-c-text-[#949ba8]">
+          We should be ready in a few seconds!
+        </p>
+      </div>
+    </div>
+
     <header
       class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-end vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
     >
@@ -265,6 +285,7 @@ import UploadModal from '../../chat/v2/UploadModal.vue';
 import AddIcon from '../../chat/v2/icons/AddIcon.vue';
 import HeavyFolderIcon from '../../chat/v2/icons/HeavyFolderIcon.vue';
 import SuggestionIcon from '../../chat/v2/icons/SuggestionIcon.vue';
+import SpinnerIcon from '../../chat/v2/icons/SpinnerIcon.vue';
 
 const props = defineProps({
   context: {
