@@ -1,11 +1,13 @@
 <template>
-  <div class="vdb-c-flex vdb-c-gap-[2px] vdb-c-rounded-[38px] vdb-c-bg-[#EFEFEF] vdb-c-p-[2px]">
+  <div
+    class="vdb-c-flex vdb-c-w-full vdb-c-gap-[2px] vdb-c-rounded-[38px] vdb-c-bg-[#EFEFEF] vdb-c-p-[2px]"
+  >
     <button
       v-for="option in options"
       :key="option.value"
       @click="$emit('update:modelValue', option.value)"
       :class="[
-        'vdb-c-flex vdb-c-h-[30px] vdb-c-w-[150.5px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[57px] vdb-c-transition-all',
+        'vdb-c-flex vdb-c-h-[30px] vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[57px] vdb-c-transition-all md:vdb-c-w-[150.5px]',
         modelValue === option.value
           ? 'vdb-c-border-[0.5px] vdb-c-border-[#C14103] vdb-c-bg-[#EC5B16]'
           : 'vdb-c-bg-transparent',

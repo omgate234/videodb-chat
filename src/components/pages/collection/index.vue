@@ -1,5 +1,5 @@
 <template>
-  <div class="collection-page vdb-c-flex vdb-c-h-full vdb-c-w-full vdb-c-flex-col">
+  <div class="collection-page vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-pb-16">
     <header
       class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-end vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
     >
@@ -10,26 +10,19 @@
       >
         <HeavyFolderIcon
           :stroke-color="'#1E1E1E'"
-          class="vdb-c-h-[24px] vdb-c-w-[24px] vdb-c-shrink-0"
+          class="vdb-c-size-[20px] vdb-c-shrink-0 md:vdb-c-size-[24px]"
         />
         <h1
-          class="vdb-c-whitespace-nowrap vdb-c-text-[16px] vdb-c-font-semibold vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey"
+          class="vdb-c-whitespace-nowrap vdb-c-text-[14px] vdb-c-font-semibold vdb-c-leading-[20px] vdb-c-text-vdb-darkishgrey md:vdb-c-text-[16px] md:vdb-c-leading-[24px]"
         >
           {{ collectionName || 'Collection' }}
         </h1>
       </div>
-      <SearchInput
-        v-if="showMore"
-        :items="combinedAssets"
-        @select-item="handleSelectItem"
-        @update:query="handleSearchQueryUpdate"
-        :placeholder="collectionName ? `Search files in '${collectionName}'` : 'Search files'"
-      />
     </header>
     <div
       v-if="!showMore"
       :class="[!hasAssets && !isLoadingAssets ? 'vdb-c-mb-[60px]' : '']"
-      class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[12px] vdb-c-p-[40px]"
+      class="vdb-c-flex vdb-c-h-full vdb-c-flex-col vdb-c-items-center vdb-c-gap-[12px] vdb-c-p-24 md:vdb-c-p-[40px]"
     >
       <!-- Chat Input Section -->
       <div
@@ -101,13 +94,6 @@
         >
           <AssetTabs :tabs="['Videos']" v-model="activeTab" />
           <div class="vdb-c-flex-1"></div>
-          <SearchInput
-            :items="combinedAssets.filter((asset) => asset.type === activeTab.toLowerCase())"
-            @select-item="handleSelectItem"
-            @update:query="handleSearchQueryUpdate"
-            :placeholder="`Search files in &quot;${collectionName}&quot;`"
-            :disabled="isLoadingAssets"
-          />
         </div>
         <!-- Asset Grid -->
         <div class="vdb-c-w-full">
@@ -140,7 +126,7 @@
           <!-- Show More Button -->
           <div
             v-if="filteredAssets.length > 4 && !isLoadingAssets"
-            class="vdb-c-mt-20 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center"
+            class="vdb-c-my-20 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center"
           >
             <button
               @click="handleShowMore"

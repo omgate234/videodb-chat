@@ -1,9 +1,9 @@
 <template>
   <div
-    class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-justify-center vdb-c-gap-[20px] vdb-c-rounded-[17px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-[20px]"
+    class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-justify-center vdb-c-gap-[20px] vdb-c-rounded-[17px] vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-p-[20px] md:vdb-c-flex-row"
   >
     <!-- Precision Section -->
-    <div class="vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[8px]">
+    <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[8px]">
       <div
         class="vdb-c-flex vdb-c-items-center vdb-c-gap-[4px]"
         @mouseenter="hoveredIcon = 'precision'"
@@ -15,7 +15,9 @@
           Precision
         </span>
 
-        <div class="group vdb-c-group vdb-c-relative vdb-c-h-16 vdb-c-w-16">
+        <div
+          class="group vdb-c-group vdb-c-relative vdb-c-hidden vdb-c-h-16 vdb-c-w-16 md:vdb-c-block"
+        >
           <Tooltip
             class="vdb-c-absolute vdb-c-bottom-full vdb-c-left-1/2 vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
             text="Exact prioritizes accuracy; Wide prioritizes finding more results."
@@ -34,7 +36,7 @@
     </div>
 
     <!-- Search For Section -->
-    <div class="vdb-c-flex vdb-c-flex-col vdb-c-items-start vdb-c-gap-[8px]">
+    <div class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-start vdb-c-gap-[8px]">
       <div
         class="vdb-c-flex vdb-c-items-center vdb-c-gap-[4px]"
         @mouseenter="hoveredIcon = 'searchFor'"
@@ -46,9 +48,11 @@
           Search for
         </span>
 
-        <div class="group vdb-c-group vdb-c-relative vdb-c-h-16 vdb-c-w-16">
+        <div
+          class="group vdb-c-group vdb-c-relative vdb-c-hidden vdb-c-h-16 vdb-c-w-16 md:vdb-c-block"
+        >
           <Tooltip
-            class="vdb-c-absolute vdb-c-bottom-full vdb-c-left-1/2 vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
+            class="vdb-c-absolute vdb-c-bottom-full vdb-c-left-1/2 vdb-c-hidden vdb-c-w-[80vw] vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
             text="Scenes returns specific moments; Videos returns full matching videos."
           />
           <InfoIcon

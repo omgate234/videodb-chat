@@ -105,7 +105,7 @@
 
       <!-- Orange frame with all buttons -->
       <div
-        class="vdb-c-pointer-events-none vdb-c-absolute vdb-c-left-[50%] vdb-c-top-0 vdb-c-h-full vdb-c-w-[400px] vdb-c-translate-x-[-50%] vdb-c-rounded-8 vdb-c-border-[4px] vdb-c-border-vdb-orange"
+        class="vdb-c-pointer-events-none vdb-c-absolute vdb-c-left-[50%] vdb-c-top-0 vdb-c-h-full vdb-c-w-[180px] vdb-c-translate-x-[-50%] vdb-c-rounded-8 vdb-c-border-[4px] vdb-c-border-vdb-orange md:vdb-c-w-[400px]"
       >
         <!-- LEFT EXPAND CONTROLS (outside orange frame, to the left) -->
         <div

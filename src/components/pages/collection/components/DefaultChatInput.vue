@@ -1,10 +1,10 @@
 <template>
   <div
-    class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-10 vdb-c-rounded-20 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-vdb-lightgrey vdb-c-px-10 vdb-c-pb-10 vdb-c-pt-10 vdb-c-shadow-[0px_0px_4px_0px_rgba(0,0,0,0.04),0px_0px_1px_0px_rgba(0,0,0,0.6)]"
+    class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-10 vdb-c-rounded-20 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-vdb-lightgrey vdb-c-p-6 vdb-c-shadow-[0px_0px_4px_0px_rgba(0,0,0,0.04),0px_0px_1px_0px_rgba(0,0,0,0.6)] md:vdb-c-p-10"
   >
     <!-- Input Area -->
     <div
-      class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-gap-px vdb-c-pl-[4px] vdb-c-min-h-[72px]"
+      class="vdb-c-flex vdb-c-min-h-[72px] vdb-c-w-full vdb-c-items-start vdb-c-gap-px vdb-c-pl-[4px]"
     >
       <textarea
         name="chat-input"
@@ -41,9 +41,7 @@
               getAgentIconClasses(searchAgent),
             ]"
           />
-          <span :class="getAgentTextClasses(searchAgent)">
-            Search
-          </span>
+          <span :class="getAgentTextClasses(searchAgent)"> Search </span>
           <CrossIcon
             v-if="isAgentSelected(searchAgent)"
             :fill="'#821F0C'"

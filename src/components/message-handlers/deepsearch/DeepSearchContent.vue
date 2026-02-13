@@ -31,7 +31,7 @@
 
       <!-- Video Grid -->
       <div
-        class="vdb-c-grid vdb-c-w-full vdb-c-grid-cols-4 vdb-c-flex-wrap vdb-c-items-start vdb-c-justify-center vdb-c-gap-16"
+        class="vdb-c-grid vdb-c-w-full vdb-c-grid-cols-1 vdb-c-flex-wrap vdb-c-items-start vdb-c-justify-center vdb-c-gap-16 sm:vdb-c-grid-cols-2 md:vdb-c-grid-cols-4"
       >
         <VideoCard
           v-for="(video, index) in paginatedVideos"
@@ -92,12 +92,12 @@
     <template v-else>
       <!-- Editor Header -->
       <div
-        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-[100px] vdb-c-rounded-[12px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-p-6"
+        class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-gap-12 vdb-c-rounded-[12px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-p-6 md:vdb-c-flex-row md:vdb-c-gap-[100px]"
       >
         <!-- Back Button -->
         <button
           @click="exitEditing"
-          class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[6px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7]"
+          class="vdb-c-flex vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[6px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] md:vdb-c-w-auto"
         >
           <ArrowLeftIcon />
           <span
@@ -109,23 +109,29 @@
 
         <!-- Center Info -->
         <div
-          class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-justify-center vdb-c-gap-[8px]"
+          class="vdb-c-flex vdb-c-flex-1 vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] md:vdb-c-flex-row md:vdb-c-gap-[8px]"
         >
-          <p class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-[#c14103]">
+          <p
+            class="vdb-c-line-clamp-1 vdb-c-max-w-full vdb-c-text-center vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-[#c14103] md:vdb-c-max-w-[200px] md:vdb-c-text-left"
+          >
             {{ internalVideos[editingIndex].name || 'Untitled' }}
           </p>
-          <div class="vdb-c-h-[16px] vdb-c-w-0 vdb-c-border-l vdb-c-border-[#1e1e1e]"></div>
+          <div
+            class="vdb-c-hidden vdb-c-h-[16px] vdb-c-w-0 vdb-c-border-l vdb-c-border-[#1e1e1e] md:vdb-c-block"
+          ></div>
           <p class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-[#464646]">
             Showing {{ editingIndex + 1 }} of {{ internalVideos.length }} results
           </p>
         </div>
 
         <!-- Navigation Buttons -->
-        <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[12px]">
+        <div
+          class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-center vdb-c-gap-[12px] md:vdb-c-w-auto"
+        >
           <button
             @click="previousVideo"
             :disabled="editingIndex === 0"
-            class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[5px] vdb-c-pr-[17px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50"
+            class="vdb-c-flex vdb-c-flex-1 vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[5px] vdb-c-pr-[17px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50 md:vdb-c-flex-none"
           >
             <ChevronIcon fill="#1e1e1e" />
             <span
@@ -138,7 +144,7 @@
           <button
             @click="nextVideo"
             :disabled="editingIndex === internalVideos.length - 1"
-            class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[17px] vdb-c-pr-[5px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50"
+            class="vdb-c-flex vdb-c-flex-1 vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[17px] vdb-c-pr-[5px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#f7f7f7] disabled:vdb-c-cursor-not-allowed disabled:vdb-c-opacity-50 md:vdb-c-flex-none"
           >
             <span
               class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px] vdb-c-text-[#1e1e1e]"
@@ -151,10 +157,16 @@
       </div>
 
       <!-- Video Preview Section -->
-      <div class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-justify-center vdb-c-gap-[10px]">
+      <div
+        class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-[10px] md:vdb-c-flex-row md:vdb-c-items-start"
+      >
         <!-- Video Container -->
-        <div class="vdb-c-flex vdb-c-w-fit vdb-c-flex-col vdb-c-items-center vdb-c-gap-[10px]">
-          <div class="vdb-c-relative vdb-c-h-full vdb-c-w-[480px]">
+        <div
+          class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-gap-[10px] md:vdb-c-w-fit"
+        >
+          <div
+            class="vdb-c-relative vdb-c-h-full vdb-c-w-full vdb-c-max-w-[480px] md:vdb-c-w-[480px]"
+          >
             <ChatVideo
               :key="`${internalVideos[editingIndex]?.video_id || internalVideos[editingIndex]?.id}-${internalVideos[editingIndex].stream_url}`"
               :show-loading="false"
@@ -197,11 +209,13 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[8px]">
+          <div
+            class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-items-center vdb-c-gap-[8px] sm:vdb-c-w-auto sm:vdb-c-flex-row"
+          >
             <!-- Reset Button -->
             <button
               @click="resetToDefault"
-              class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#ec5b16] hover:vdb-c-bg-[#ffe9d3]"
+              class="vdb-c-flex vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#ec5b16] hover:vdb-c-bg-[#ffe9d3] sm:vdb-c-w-auto"
             >
               <ResetIcon fill="#2d2d2d" />
               <span
@@ -214,7 +228,7 @@
             <!-- Download Clip Button -->
             <button
               @click="downloadClip"
-              class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#ec5b16] hover:vdb-c-bg-[#ffe9d3]"
+              class="vdb-c-flex vdb-c-w-full vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-rounded-[8px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white vdb-c-py-[9px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#ec5b16] hover:vdb-c-bg-[#ffe9d3] sm:vdb-c-w-auto"
             >
               <DownloadIcon fill="#1E1E1E" />
               <span
@@ -226,15 +240,15 @@
           </div>
         </div>
 
-        <!-- Toolbar (Right Side) -->
+        <!-- Toolbar (Right Side on desktop, Bottom on mobile) -->
         <div
-          class="vdb-c-mt-[18px] vdb-c-flex vdb-c-flex-col vdb-c-gap-[2px] vdb-c-rounded-[40px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-p-[4px]"
+          class="vdb-c-order-last vdb-c-mt-0 vdb-c-flex vdb-c-flex-row vdb-c-gap-[2px] vdb-c-rounded-[40px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-[#f7f7f7] vdb-c-p-[4px] md:vdb-c-order-none md:vdb-c-mt-[18px] md:vdb-c-flex-col"
         >
           <!-- Copy Link -->
           <div class="vdb-c-relative">
             <Tooltip
               :class="[
-                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                'vdb-c-absolute vdb-c-bottom-full vdb-c-left-1/2 vdb-c-z-[10000] vdb-c-mb-[8px] vdb-c-hidden vdb-c-translate-x-[-50%] sm:vdb-c-block md:vdb-c-bottom-auto md:vdb-c-left-full md:vdb-c-top-1/2 md:vdb-c-mb-0 md:vdb-c-ml-[8px] md:vdb-c-translate-x-0 md:vdb-c-translate-y-[-50%]',
                 hoveredButton === 'copy' ? 'vdb-c-block' : 'vdb-c-hidden',
               ]"
               :text="showCheckIcon ? 'Copied!' : 'Copy Link'"
@@ -250,30 +264,11 @@
             </button>
           </div>
 
-          <!-- Convert to Reel -->
-          <div class="vdb-c-relative">
-            <Tooltip
-              :class="[
-                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
-                hoveredButton === 'reel' ? 'vdb-c-block' : 'vdb-c-hidden',
-              ]"
-              text="Convert to Reel"
-            />
-            <button
-              @click="convertToReel"
-              @mouseenter="hoveredButton = 'reel'"
-              @mouseleave="hoveredButton = null"
-              class="toolbar-btn vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
-            >
-              <RotateIcon fill="#1e1e1e" />
-            </button>
-          </div>
-
           <!-- Download -->
           <div class="vdb-c-relative">
             <Tooltip
               :class="[
-                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                'vdb-c-absolute vdb-c-bottom-full vdb-c-left-1/2 vdb-c-z-[10000] vdb-c-mb-[8px] vdb-c-hidden vdb-c-translate-x-[-50%] sm:vdb-c-block md:vdb-c-bottom-auto md:vdb-c-left-full md:vdb-c-top-1/2 md:vdb-c-mb-0 md:vdb-c-ml-[8px] md:vdb-c-translate-x-0 md:vdb-c-translate-y-[-50%]',
                 hoveredButton === 'download' ? 'vdb-c-block' : 'vdb-c-hidden',
               ]"
               text="Download"
@@ -288,30 +283,11 @@
             </button>
           </div>
 
-          <!-- Save to Collection -->
-          <div class="vdb-c-relative">
-            <Tooltip
-              :class="[
-                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
-                hoveredButton === 'save' ? 'vdb-c-block' : 'vdb-c-hidden',
-              ]"
-              text="Save to Collection"
-            />
-            <button
-              @click="saveToCollection"
-              @mouseenter="hoveredButton = 'save'"
-              @mouseleave="hoveredButton = null"
-              class="toolbar-btn vdb-c-flex vdb-c-aspect-square vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[37.5px] vdb-c-border vdb-c-border-[#f7f7f7] vdb-c-bg-[#f7f7f7] vdb-c-p-[6px] vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#e6e6e6] hover:vdb-c-bg-white"
-            >
-              <AddToFolderIcon fill="#1e1e1e" />
-            </button>
-          </div>
-
           <!-- Meta Info -->
           <div class="vdb-c-relative">
             <Tooltip
               :class="[
-                'vdb-c-absolute vdb-c-left-full vdb-c-top-1/2 vdb-c-z-[10000] vdb-c-ml-[8px] vdb-c-translate-y-[-50%]',
+                'vdb-c-absolute vdb-c-bottom-full vdb-c-left-1/2 vdb-c-z-[10000] vdb-c-mb-[8px] vdb-c-hidden vdb-c-translate-x-[-50%] sm:vdb-c-block md:vdb-c-bottom-auto md:vdb-c-left-full md:vdb-c-top-1/2 md:vdb-c-mb-0 md:vdb-c-ml-[8px] md:vdb-c-translate-x-0 md:vdb-c-translate-y-[-50%]',
                 hoveredButton === 'meta' ? 'vdb-c-block' : 'vdb-c-hidden',
               ]"
               text="Meta Info"

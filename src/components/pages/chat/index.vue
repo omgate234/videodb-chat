@@ -6,7 +6,7 @@
       v-if="showHeader"
       class="vdb-c-flex vdb-c-h-60 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-between vdb-c-gap-12 vdb-c-border-b vdb-c-border-[#EFEFEF] vdb-c-bg-white vdb-c-px-24"
     >
-      <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
+      <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-4 md:vdb-c-gap-8">
         <button
           v-if="!onSharePage"
           type="button"
@@ -20,18 +20,6 @@
           <folder-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]" />
           <span class="vdb-c-truncate">{{ breadcrumbCollectionName || 'Collection' }}</span>
         </button>
-        <span
-          v-if="breadcrumbSessionName && !onSharePage"
-          class="vdb-c-text-[15px] vdb-c-text-[#1E1E1E]"
-          ><chevron-right-icon class="vdb-c-h-18 vdb-c-w-18 vdb-c-text-[#1E1E1E]"
-        /></span>
-        <span
-          v-if="breadcrumbSessionName"
-          class="vdb-c-truncate vdb-c-text-[15px] vdb-c-font-medium vdb-c-leading-6 vdb-c-text-[#1E1E1E]"
-          :title="breadcrumbSessionName"
-        >
-          {{ breadcrumbSessionName }}
-        </span>
       </div>
     </header>
     <!-- Main content area - Scrollable messages -->
