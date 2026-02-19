@@ -308,18 +308,7 @@
               />
             </button>
             <button
-              v-if="chatLoading"
-              @click="handleStopMessage"
-              :class="[
-                'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[#EC5B16] vdb-c-bg-white vdb-c-text-[#EC5B16] vdb-c-transition hover:vdb-c-bg-[#FFF5EC]',
-              ]"
-              type="button"
-              title="Stop generating"
-            >
-              <StopIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="'#EC5B16'" />
-            </button>
-            <button
-              v-else
+              v-if="!chatLoading"
               @click="handleSend"
               :disabled="!canSend"
               :class="[
@@ -333,6 +322,18 @@
               />
             </button>
           </template>
+
+          <button
+            v-if="chatLoading"
+            @click="handleStopMessage"
+            :class="[
+              'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[#EC5B16] vdb-c-bg-white vdb-c-text-[#EC5B16] vdb-c-transition hover:vdb-c-bg-[#FFF5EC]',
+            ]"
+            type="button"
+            title="Stop generating"
+          >
+            <StopIcon class-name="vdb-c-w-20 vdb-c-h-20" :fill="'#EC5B16'" />
+          </button>
         </div>
       </div>
     </div>
