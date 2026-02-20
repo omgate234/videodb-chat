@@ -30,6 +30,8 @@ export function useAssets(context) {
         sort_order: params.sort_order,
         min_duration: params.min_duration,
         max_duration: params.max_duration,
+        min_size: params.min_size,
+        max_size: params.max_size,
         page: params.page || 1,
         page_size: params.page_size || 50,
       });
