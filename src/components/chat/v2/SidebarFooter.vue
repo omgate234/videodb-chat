@@ -1,40 +1,55 @@
 <template>
-  <button
-    v-if="user"
-    ref="footerRef"
-    @click="$emit('profile-click')"
-    :class="[
-      'vdb-c-flex vdb-c-h-[73px] vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-gap-8 vdb-c-border-t vdb-c-border-t-[#E5E7EB] vdb-c-bg-vdb-lightgrey vdb-c-px-14 vdb-c-py-12 vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]',
-      { '!vdb-c-bg-[#FFE9D3]': active },
-    ]"
-  >
-    <div
-      v-if="user.photoUrl"
-      class="vdb-c-h-30 vdb-c-w-30 vdb-c-flex-shrink-0 vdb-c-overflow-hidden vdb-c-rounded-full"
+  <div class="vdb-c-relative">
+    <a
+      v-if="hasFloatingButton"
+      :href="floatingButtonConfig.url"
+      :target="floatingButtonConfig.target || '_self'"
+      rel="noopener noreferrer"
+      class="vdb-c-absolute vdb-c-bottom-full vdb-c-left-[50%] vdb-c-z-20 vdb-c-mx-auto vdb-c-mb-12 vdb-c-flex vdb-c-translate-x-[-50%] vdb-c-items-center vdb-c-justify-center vdb-c-gap-[4px] vdb-c-whitespace-nowrap vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-[#EFEFEF] vdb-c-py-[7px] vdb-c-pl-[9px] vdb-c-pr-[13px] vdb-c-no-underline vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFF5EC]"
     >
-      <img
-        :src="user.photoUrl"
-        :alt="user.name"
-        class="vdb-c-h-full vdb-c-w-full vdb-c-object-cover"
-      />
-    </div>
-    <div
-      v-else
-      class="vdb-c-flex vdb-c-h-30 vdb-c-w-30 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#ff7e32] vdb-c-text-[11px] vdb-c-font-semibold vdb-c-leading-[15.62px] vdb-c-text-white"
-    >
-      {{ userInitials }}
-    </div>
-
-    <div class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-overflow-hidden">
-      <span
-        class="vdb-c-truncate vdb-c-text-sm vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-      >
-        {{ user.name }}
+      <BackArrowIcon fill="#1E1E1E" class="vdb-c-flex-shrink-0" />
+      <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#1E1E1E]">
+        {{ floatingButtonConfig.text }}
       </span>
-    </div>
+    </a>
 
-    <ChevronRightIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
-  </button>
+    <button
+      v-if="user"
+      ref="footerRef"
+      @click="$emit('profile-click')"
+      :class="[
+        'vdb-c-flex vdb-c-h-[73px] vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-gap-8 vdb-c-border-t vdb-c-border-t-[#E5E7EB] vdb-c-bg-vdb-lightgrey vdb-c-px-14 vdb-c-py-12 vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-[#EFEFEF]',
+        { '!vdb-c-bg-[#FFE9D3]': active },
+      ]"
+    >
+      <div
+        v-if="user.photoUrl"
+        class="vdb-c-h-30 vdb-c-w-30 vdb-c-flex-shrink-0 vdb-c-overflow-hidden vdb-c-rounded-full"
+      >
+        <img
+          :src="user.photoUrl"
+          :alt="user.name"
+          class="vdb-c-h-full vdb-c-w-full vdb-c-object-cover"
+        />
+      </div>
+      <div
+        v-else
+        class="vdb-c-flex vdb-c-h-30 vdb-c-w-30 vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#ff7e32] vdb-c-text-[11px] vdb-c-font-semibold vdb-c-leading-[15.62px] vdb-c-text-white"
+      >
+        {{ userInitials }}
+      </div>
+
+      <div class="vdb-c-flex vdb-c-flex-1 vdb-c-items-center vdb-c-overflow-hidden">
+        <span
+          class="vdb-c-truncate vdb-c-text-sm vdb-c-font-medium vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
+        >
+          {{ user.name }}
+        </span>
+      </div>
+
+      <ChevronRightIcon stroke-color="#1E1E1E" class="vdb-c-flex-shrink-0" />
+    </button>
+  </div>
 
   <Teleport to="body">
     <div
@@ -233,7 +248,8 @@
 </template>
 
 <script setup>
-import { computed, nextTick, watch, ref, onUnmounted, inject } from 'vue';
+import { computed, watch, ref, onUnmounted, inject } from 'vue';
+import BackArrowIcon from './icons/BackArrowIcon.vue';
 import ChevronRightIcon from './icons/ChevronRightIcon.vue';
 import CustomizeAgentsIcon from './icons/CustomizeAgentsIcon.vue';
 
@@ -253,6 +269,10 @@ const props = defineProps({
   active: {
     type: Boolean,
     default: false,
+  },
+  floatingButtonConfig: {
+    type: Object,
+    default: null,
   },
 });
 
@@ -281,6 +301,10 @@ const section2Buttons = computed(() => {
   return props.buttons.filter((button) => button.section === 2);
 });
 
+const hasFloatingButton = computed(() => {
+  return Boolean(props.floatingButtonConfig?.text && props.floatingButtonConfig?.url);
+});
+
 const isValidComponent = (component) => {
   if (!component) return false;
   return typeof component === 'object' || typeof component === 'function';
@@ -299,7 +323,6 @@ const handleCustomizeAgentsClick = () => {
   }
   emit('profile-click');
 };
-
 
 const updatePosition = () => {
   if (footerRef.value) {

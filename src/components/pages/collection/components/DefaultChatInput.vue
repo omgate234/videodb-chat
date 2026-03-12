@@ -1,279 +1,290 @@
 <template>
-  <div
-    class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-gap-10 vdb-c-rounded-20 vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-vdb-lightgrey vdb-c-px-10 vdb-c-pb-10 vdb-c-pt-10 vdb-c-shadow-[0px_0px_4px_0px_rgba(0,0,0,0.04),0px_0px_1px_0px_rgba(0,0,0,0.6)]"
-  >
-    <!-- Files Container -->
+  <div class="vdb-c-relative vdb-c-z-20 vdb-c-w-full">
     <div
-      v-if="displayFiles.length > 0"
-      class="vdb-c-flex vdb-c-w-full vdb-c-gap-12 vdb-c-overflow-x-auto vdb-c-px-4 vdb-c-pt-4"
+      class="vdb-c-relative vdb-c-z-10 vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-overflow-hidden vdb-c-border vdb-c-border-[#EFEFEF] vdb-c-bg-vdb-lightgrey vdb-c-shadow-[0px_0px_4px_0px_rgba(0,0,0,0.04),0px_0px_1px_0px_rgba(0,0,0,0.6)]"
+      :class="showSuggestions && suggestions.length > 0 ? 'vdb-c-rounded-t-20' : 'vdb-c-rounded-20'"
     >
-      <template v-for="(file, index) in displayFiles" :key="file.id">
-        <ImageFileDisplay
-          v-if="file.type === 'image'"
-          :file="file"
-          :context="context"
-          @remove="removeFile(index)"
-        />
-        <VideoFileDisplay
-          v-else-if="file.type === 'video'"
-          :file="file"
-          @remove="removeFile(index)"
-        />
-        <AudioFileDisplay
-          v-else-if="file.type === 'audio' || file.type === 'voices'"
-          :file="file"
-          @remove="removeFile(index)"
-        />
-        <div v-else>
-          <p>Invalid file type : {{ JSON.stringify(file) }}</p>
-        </div>
-      </template>
-    </div>
-
-    <!-- Input Area -->
-    <div
-      class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-gap-px vdb-c-pl-[4px]"
-      :class="
-        voiceState !== 'idle'
-          ? 'vdb-c-h-[48px]'
-          : 'vdb-c-min-h-[48px] vdb-c-max-h-[150px]'
-      "
-    >
-      <!-- Normal textarea (when idle) -->
-      <textarea
-        v-if="voiceState === 'idle'"
-        ref="textareaRef"
-        name="chat-input"
-        v-model="inputText"
-        :placeholder="placeholder"
-        class="vdb-c-leading-24 vdb-c-min-h-[24px] vdb-c-max-h-[140px] vdb-c-flex-1 vdb-c-resize-none vdb-c-overflow-y-auto vdb-c-border-0 vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none"
-        rows="1"
-        @input="handleInput"
-        @keydown="handleTextareaKeyDown"
-        @blur="handleTextareaBlur"
-      ></textarea>
-      <!-- Waveform visualizer (when recording/processing) -->
-      <AudioWaveformVisualizer
-        v-else
-        :analyser-node="analyserNode"
-        :is-recording="voiceState === 'recording'"
-        class="vdb-c-flex-1"
-      />
-
-      <!-- Agent Mention Dropdown (teleported to body) -->
-      <AgentMentionDropdown
-        :is-open="showAgentMentionDropdown"
-        :position="mentionDropdownPosition"
-        :agents="displayAgentsButtons"
-        :selected-agents="selectedAgents"
-        :query="agentMentionQuery"
-        :highlighted-index="agentMentionHighlightedIndex"
-        @select="selectAgentFromMention"
-        @close="closeMentionDropdown"
-      />
-    </div>
-
-    <!-- Actions Row -->
-    <div class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6">
-      <!-- Left Actions -->
-      <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-6">
-        <!-- Attach Button -->
-        <div class="vdb-c-relative">
-          <button
-            ref="attachButtonRef"
-            @click="toggleAttachDropdown"
-            class="vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]"
-          >
-            <AttachIcon class="vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-text-vdb-darkishgrey" />
-            <span
-              class="vdb-c-whitespace-nowrap vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-vdb-darkishgrey"
-            >
-              Attach
-            </span>
-          </button>
-          <AttachDropdown
-            :is-open="showAttachDropdown"
-            :trigger-element="attachButtonRef"
-            @close="showAttachDropdown = false"
-            @upload-from-device="handleUploadFromDevice"
-            @upload-from-collection="handleUploadFromCollection"
-            @files-selected="handleFilesSelected"
-          />
-        </div>
-
-        <!-- Model Button -->
-        <div class="vdb-c-relative">
-          <button
-            ref="modelButtonRef"
-            @click="toggleModelDropdown"
-            :class="[
-              'vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
-              selectedModel?.value?.id || selectedModel?.id
-                ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3]'
-                : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]',
-            ]"
-          >
-            <ModelIcon
-              :class="[
-                'vdb-c-h-[16.667px] vdb-c-w-[16.667px]',
-                selectedModel?.value?.id || selectedModel?.id
-                  ? 'vdb-c-text-[#821F0C]'
-                  : 'vdb-c-text-vdb-darkishgrey',
-              ]"
+      <!-- Main Input Section -->
+      <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-10 vdb-c-px-10 vdb-c-pb-10 vdb-c-pt-20">
+        <!-- Files Container -->
+        <div
+          v-if="displayFiles.length > 0"
+          class="vdb-c-flex vdb-c-w-full vdb-c-gap-12 vdb-c-overflow-x-auto vdb-c-px-4"
+        >
+          <template v-for="(file, index) in displayFiles" :key="file.id">
+            <ImageFileDisplay
+              v-if="file.type === 'image'"
+              :file="file"
+              :context="context"
+              @remove="removeFile(index)"
             />
-            <span
-              :class="[
-                'vdb-c-whitespace-nowrap vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px]',
-                selectedModel?.value?.id || selectedModel?.id
-                  ? 'vdb-c-text-[#821F0C]'
-                  : 'vdb-c-text-vdb-darkishgrey',
-              ]"
-            >
-              Model
-            </span>
-          </button>
-          <LLMDropdown
-            :is-open="showModelDropdown"
-            :trigger-element="modelButtonRef"
-            :providers="llmProviders"
-            :selected-model-id="selectedModel?.value?.id || selectedModel?.id"
-            @close="showModelDropdown = false"
-            @model-select="handleModelSelect"
+            <VideoFileDisplay
+              v-else-if="file.type === 'video'"
+              :file="file"
+              @remove="removeFile(index)"
+            />
+            <AudioFileDisplay
+              v-else-if="file.type === 'audio' || file.type === 'voices'"
+              :file="file"
+              @remove="removeFile(index)"
+            />
+            <div v-else>
+              <p>Invalid file type : {{ JSON.stringify(file) }}</p>
+            </div>
+          </template>
+        </div>
+
+        <!-- Input Area -->
+        <div
+          class="vdb-c-flex vdb-c-w-full vdb-c-items-start vdb-c-gap-px vdb-c-pl-[4px]"
+          :class="
+            voiceState !== 'idle' ? 'vdb-c-h-[48px]' : 'vdb-c-max-h-[150px] vdb-c-min-h-[48px]'
+          "
+        >
+          <!-- Normal textarea (when idle) -->
+          <textarea
+            v-if="voiceState === 'idle'"
+            ref="textareaRef"
+            name="chat-input"
+            v-model="inputText"
+            :placeholder="placeholder"
+            class="vdb-c-leading-24 vdb-c-max-h-[140px] vdb-c-min-h-[24px] vdb-c-flex-1 vdb-c-resize-none vdb-c-overflow-y-auto vdb-c-border-0 vdb-c-bg-transparent vdb-c-text-[14px] vdb-c-font-medium vdb-c-text-vdb-darkishgrey vdb-c-placeholder-[#969696] vdb-c-outline-none"
+            rows="1"
+            @input="handleInput"
+            @keydown="handleTextareaKeyDown"
+            @blur="handleTextareaBlur"
+            @focus="handleTextareaFocus"
+          ></textarea>
+          <!-- Waveform visualizer (when recording/processing) -->
+          <AudioWaveformVisualizer
+            v-else
+            :analyser-node="analyserNode"
+            :is-recording="voiceState === 'recording'"
+            class="vdb-c-flex-1"
+          />
+
+          <!-- Agent Mention Dropdown (teleported to body) -->
+          <AgentMentionDropdown
+            :is-open="showAgentMentionDropdown"
+            :position="mentionDropdownPosition"
+            :agents="displayAgentsButtons"
+            :selected-agents="selectedAgents"
+            :query="agentMentionQuery"
+            :highlighted-index="agentMentionHighlightedIndex"
+            @select="selectAgentFromMention"
+            @close="closeMentionDropdown"
           />
         </div>
 
-        <!-- Agent Pills (always 2: selected agents + placeholders) -->
-        <button
-          v-for="agent in visibleAgentPills"
-          :key="'pill-' + agent.name"
-          :disabled="agent.disabled"
-          @click="isAgentSelected(agent) ? removeSelectedAgent(agent) : handleAgentClick(agent)"
-          :class="[
-            'group vdb-c-group vdb-c-relative vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
-            getAgentButtonClasses(agent, isAgentSelected(agent)),
-          ]"
-        >
-          <Tooltip
-            v-if="agent.disabled && !collectionHasVideos"
-            text="Add or generate videos in your collection to enable this"
-            class="vdb-c-absolute vdb-c-left-1/2 vdb-c-top-[calc(100%+15px)] vdb-c-hidden vdb-c-translate-x-[-50%] group-hover:vdb-c-block"
-          />
-          <component
-            :is="agent.icon"
-            :class="[
-              'vdb-c-h-[16.667px] vdb-c-w-[16.667px] vdb-c-flex-shrink-0',
-              getAgentIconClasses(agent, isAgentSelected(agent)),
-            ]"
-          />
-          <span :class="getAgentTextClasses(agent, isAgentSelected(agent))">
-            {{ agent.name }}
-          </span>
-          <CrossIcon
-            v-if="isAgentSelected(agent)"
-            :fill="'#821F0C'"
-            class="vdb-c-ml-4 vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-flex-shrink-0"
-          />
-        </button>
+        <!-- Actions Row -->
+        <div class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6">
+          <!-- Left Actions -->
+          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-6">
+            <!-- Attach Button -->
+            <div class="vdb-c-relative">
+              <button
+                ref="attachButtonRef"
+                @click="toggleAttachDropdown"
+                class="vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]"
+              >
+                <AttachIcon class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-text-vdb-darkishgrey" />
+                <span
+                  class="vdb-c-whitespace-nowrap vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-vdb-darkishgrey"
+                >
+                  Attach
+                </span>
+              </button>
+              <AttachDropdown
+                :is-open="showAttachDropdown"
+                :trigger-element="attachButtonRef"
+                @close="showAttachDropdown = false"
+                @upload-from-device="handleUploadFromDevice"
+                @upload-from-collection="handleUploadFromCollection"
+                @files-selected="handleFilesSelected"
+              />
+            </div>
 
-        <!-- Additional selected count badge -->
-        <span
-          v-if="additionalSelectedCount > 0"
-          class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-bg-[#FFE9D3] vdb-c-px-8 vdb-c-py-4 vdb-c-text-[12px] vdb-c-font-medium vdb-c-text-[#821F0C]"
-        >
-          +{{ additionalSelectedCount }}
-        </span>
+            <!-- Agent Pill Button (dynamic based on selection) -->
+            <button
+              v-if="displayedPillAgent"
+              @click="handlePillAgentClick"
+              :disabled="displayedPillAgent.disabled"
+              :class="[
+                'vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
+                isPillAgentSelected
+                  ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3]'
+                  : displayedPillAgent.disabled
+                    ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-white'
+                    : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]',
+              ]"
+            >
+              <component
+                :is="displayedPillAgent.icon"
+                :class="[
+                  'vdb-c-h-[20px] vdb-c-w-[20px]',
+                  isPillAgentSelected
+                    ? 'vdb-c-text-[#821F0C]'
+                    : displayedPillAgent.disabled
+                      ? 'vdb-c-text-[#969696]'
+                      : 'vdb-c-text-vdb-darkishgrey',
+                ]"
+              />
+              <span
+                :class="[
+                  'vdb-c-whitespace-nowrap vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px]',
+                  isPillAgentSelected
+                    ? 'vdb-c-text-[#821F0C]'
+                    : displayedPillAgent.disabled
+                      ? 'vdb-c-text-[#969696]'
+                      : 'vdb-c-text-vdb-darkishgrey',
+                ]"
+              >
+                {{ displayedPillAgent.name }}
+              </span>
+            </button>
 
-        <!-- Three Dots Button (Agent Selector) -->
-        <div class="vdb-c-relative">
-          <button
-            ref="threeDotsButtonRef"
-            @click="toggleAgentsDropdown"
-            class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[33554400px] vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-p-8 vdb-c-transition-all hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]"
-          >
-            <ThreeDotsIcon class="vdb-c-h-[16.667px] vdb-c-w-[16.667px]" />
-          </button>
-          <AgentDropdown
-            :is-open="showAgentsDropdown"
-            :trigger-element="threeDotsButtonRef"
-            :agents="agentsForDropdown"
-            :selected-agents="selectedAgents"
-            @close="showAgentsDropdown = false"
-            @agent-select="handleAgentSelect"
-          />
+            <!-- Three Dots Button (Agent Selector) -->
+            <div class="vdb-c-relative">
+              <button
+                ref="threeDotsButtonRef"
+                @click="toggleAgentsDropdown"
+                class="vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-p-8 vdb-c-transition-all hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]"
+              >
+                <ThreeDotsIcon class="vdb-c-h-[20px] vdb-c-w-[20px]" />
+              </button>
+              <AgentDropdown
+                :is-open="showAgentsDropdown"
+                :trigger-element="threeDotsButtonRef"
+                :agents="displayAgentsButtons"
+                :selected-agents="selectedAgents"
+                @close="showAgentsDropdown = false"
+                @agent-select="handleAgentSelect"
+              />
+            </div>
+          </div>
+
+          <!-- Spacer -->
+          <div class="vdb-c-flex-1"></div>
+
+          <!-- Right Actions -->
+          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-6">
+            <!-- Model Button -->
+            <div class="vdb-c-relative">
+              <button
+                ref="modelButtonRef"
+                @click="toggleModelDropdown"
+                :class="[
+                  'vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-px-[9px] vdb-c-py-8 vdb-c-transition-all',
+                  selectedModelId
+                    ? 'vdb-c-border-[#FFCFA5] vdb-c-bg-[#FFE9D3]'
+                    : 'vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white hover:vdb-c-border-[#FFCFA5] hover:vdb-c-bg-[#FFE9D3]',
+                ]"
+              >
+                <ModelIcon
+                  :class="[
+                    'vdb-c-h-[20px] vdb-c-w-[20px]',
+                    selectedModelId ? 'vdb-c-text-[#821F0C]' : 'vdb-c-text-vdb-darkishgrey',
+                  ]"
+                />
+                <span
+                  :class="[
+                    'vdb-c-max-w-[180px] vdb-c-truncate vdb-c-whitespace-nowrap vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px]',
+                    selectedModelId ? 'vdb-c-text-[#821F0C]' : 'vdb-c-text-vdb-darkishgrey',
+                  ]"
+                  :title="selectedModelLabel"
+                >
+                  {{ selectedModelLabel }}
+                </span>
+              </button>
+              <LLMDropdown
+                :is-open="showModelDropdown"
+                :trigger-element="modelButtonRef"
+                :providers="llmProviders"
+                :selected-model-id="selectedModelId"
+                @close="showModelDropdown = false"
+                @model-select="handleModelSelect"
+              />
+            </div>
+
+            <!-- Voice recording controls (when recording/processing) -->
+            <template v-if="voiceState !== 'idle'">
+              <!-- Cancel button (disabled during transcribing) -->
+              <button
+                @click="cancelRecording"
+                :disabled="voiceState === 'transcribing'"
+                :class="[
+                  'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all',
+                  voiceState === 'transcribing'
+                    ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
+                    : 'vdb-c-text-[#969696] hover:vdb-c-text-[#1E1E1E]',
+                ]"
+                title="Cancel recording"
+              >
+                <CrossIcon fill="#969696" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
+              </button>
+
+              <!-- Confirm button (checkmark during recording, spinner during transcribing) -->
+              <button
+                @click="confirmRecording"
+                :disabled="voiceState === 'transcribing'"
+                :class="[
+                  'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
+                  voiceState === 'transcribing'
+                    ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-[#F7F7F7]'
+                    : 'vdb-c-border-[#EC5B16] vdb-c-bg-white hover:vdb-c-bg-[#FFF5EC]',
+                ]"
+                :title="voiceState === 'recording' ? 'Send to transcribe' : 'Processing...'"
+              >
+                <!-- Spinner during transcribing -->
+                <SpinnerIcon
+                  v-if="voiceState === 'transcribing'"
+                  class="vdb-c-h-[20px] vdb-c-w-[20px]"
+                />
+                <!-- Checkmark during recording -->
+                <CheckIcon v-else class="vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-text-[#EC5B16]" />
+              </button>
+            </template>
+
+            <!-- Normal controls (when idle) -->
+            <template v-else>
+              <!-- Send Button -->
+              <button
+                @click="handleSend"
+                :disabled="!canSend"
+                :class="[
+                  'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[50px] vdb-c-transition-all',
+                  getSendButtonClasses(),
+                ]"
+              >
+                <SendButtonIcon :fill="getSendButtonFill()" />
+              </button>
+            </template>
+          </div>
         </div>
       </div>
-
-      <!-- Spacer -->
-      <div class="vdb-c-flex-1"></div>
-
-      <!-- Voice recording controls (when recording/processing) -->
-      <template v-if="voiceState !== 'idle'">
-        <!-- Cancel button (disabled during transcribing) -->
-        <button
-          @click="cancelRecording"
-          :disabled="voiceState === 'transcribing'"
-          :class="[
-            'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-transition-all',
-            voiceState === 'transcribing'
-              ? 'vdb-c-cursor-not-allowed vdb-c-opacity-50'
-              : 'vdb-c-text-[#969696] hover:vdb-c-text-[#1E1E1E]',
-          ]"
-          title="Cancel recording"
-        >
-          <CrossIcon fill="#969696" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
-        </button>
-
-        <!-- Confirm button (checkmark during recording, spinner during transcribing) -->
-        <button
-          @click="confirmRecording"
-          :disabled="voiceState === 'transcribing'"
-          :class="[
-            'vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-transition-all',
-            voiceState === 'transcribing'
-              ? 'vdb-c-cursor-not-allowed vdb-c-border-[#DBDBDB] vdb-c-bg-[#F7F7F7]'
-              : 'vdb-c-border-[#EC5B16] vdb-c-bg-white hover:vdb-c-bg-[#FFF5EC]',
-          ]"
-          :title="voiceState === 'recording' ? 'Send to transcribe' : 'Processing...'"
-        >
-          <!-- Spinner during transcribing -->
-          <SpinnerIcon v-if="voiceState === 'transcribing'" class="vdb-c-h-[20px] vdb-c-w-[20px]" />
-          <!-- Checkmark during recording -->
-          <CheckIcon v-else class="vdb-c-h-[18px] vdb-c-w-[18px] vdb-c-text-[#EC5B16]" />
-        </button>
-      </template>
-
-      <!-- Normal controls (when idle) -->
-      <template v-else>
-        <!-- Mic Button -->
-        <button
-          @click="handleMicClick"
-          class="vdb-c-flex vdb-c-size-[36px] vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-border vdb-c-border-[rgba(13,13,13,0.1)] vdb-c-bg-white vdb-c-transition-all hover:vdb-c-border-[#B9B9B9] hover:vdb-c-bg-[#F7F7F7]"
-          title="Voice input"
-        >
-          <MicrophoneIcon fill="#1E1E1E" class="vdb-c-h-[18px] vdb-c-w-[18px]" />
-        </button>
-
-        <!-- Send Button -->
-        <button
-          @click="handleSend"
-          :disabled="!canSend"
-          :class="[
-            'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-rounded-[50px] vdb-c-transition-all',
-            getSendButtonClasses(),
-          ]"
-        >
-          <SendButtonIcon :fill="getSendButtonFill()" />
-        </button>
-      </template>
     </div>
 
-    <SearchOptions
-      v-if="hasSearchAgentSelected"
-      :precision="additionalData.precision"
-      :search-for="additionalData.searchFor"
-      @update:precision="additionalData.precision = $event"
-      @update:search-for="additionalData.searchFor = $event"
-    />
+    <!-- Suggestions Drawer -->
+    <div
+      v-if="showSuggestions && suggestions.length > 0"
+      class="vdb-c-absolute vdb-c-left-0 vdb-c-right-0 vdb-c-top-[calc(100%-1px)] vdb-c-z-0 vdb-c-flex vdb-c-flex-col vdb-c-gap-2 vdb-c-overflow-hidden vdb-c-rounded-b-20 vdb-c-border vdb-c-border-t-0 vdb-c-border-[#EFEFEF] vdb-c-bg-vdb-lightgrey vdb-c-px-10 vdb-c-py-20 vdb-c-shadow-[0px_0px_4px_0px_rgba(0,0,0,0.04),0px_0px_1px_0px_rgba(0,0,0,0.6)]"
+    >
+      <button
+        v-for="(suggestion, index) in suggestions"
+        :key="index"
+        @click="handleSuggestionClick(suggestion)"
+        class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-8 vdb-c-rounded vdb-c-p-8 vdb-c-text-left vdb-c-transition-colors hover:vdb-c-bg-[#F0F0F0]"
+      >
+        <SuggestionIcon
+          class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-flex-shrink-0 vdb-c-text-vdb-darkishgrey"
+        />
+        <span
+          class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-[24px] vdb-c-tracking-[0.08px] vdb-c-text-vdb-darkishgrey"
+        >
+          {{ suggestion.text }}
+        </span>
+      </button>
+    </div>
 
     <UploadFromCollectionModal
       :is-open="showUploadFromCollectionModal"
@@ -289,7 +300,6 @@ import { ref, computed, inject, onUnmounted, onMounted, watch, nextTick } from '
 import AttachIcon from '../../../chat/v2/icons/AttachIcon.vue';
 import ModelIcon from '../../../chat/v2/icons/ModelIcon.vue';
 import SearchIcon from '../../../chat/v2/icons/agents/SearchIcon.vue';
-import VoiceIcon from '../../../chat/v2/icons/agents/VoiceIcon.vue';
 import CensorIcon from '../../../chat/v2/icons/agents/CensorIcon.vue';
 import ClipIcon from '../../../chat/v2/icons/agents/ClipIcon.vue';
 import SubtitleIcon from '../../../chat/v2/icons/agents/SubtitleIcon.vue';
@@ -299,20 +309,21 @@ import EditIcon from '../../../chat/v2/icons/agents/EditIcon.vue';
 import ThreeDotsIcon from '../../../chat/v2/icons/ThreeDotsIcon.vue';
 import SendButtonIcon from '../../../chat/v2/icons/agents/SendButtonIcon.vue';
 import CrossIcon from '../../../chat/v2/icons/CrossIcon.vue';
+import SuggestionIcon from '../../../chat/v2/icons/SuggestionIcon.vue';
 import AgentDropdown from './AgentDropdown.vue';
 import AttachDropdown from './AttachDropdown.vue';
 import LLMDropdown from './LLMDropdown.vue';
 import ImageFileDisplay from './ImageFileDisplay.vue';
 import VideoFileDisplay from './VideoFileDisplay.vue';
 import AudioFileDisplay from './AudioFileDisplay.vue';
-import SearchOptions from './SearchOptions.vue';
-import Tooltip from '../../../chat/v2/elements/Tooltip.vue';
 import UploadFromCollectionModal from './UploadFromCollectionModal.vue';
-import MicrophoneIcon from '../../../chat/v2/icons/MicrophoneIcon.vue';
 import AudioWaveformVisualizer from './AudioWaveformVisualizer.vue';
 import SpinnerIcon from '../../../chat/v2/icons/SpinnerIcon.vue';
 import CheckIcon from '../../../chat/v2/icons/CheckIcon.vue';
 import AgentMentionDropdown from './AgentMentionDropdown.vue';
+
+// Note: Voice recording state and functions are kept for future use
+// but mic button is not currently displayed in the UI
 
 const props = defineProps({
   context: {
@@ -335,11 +346,13 @@ const chatLoading = computed(() => {
 });
 
 const inputText = ref('');
+const showSuggestions = ref(false);
+const suggestions = ref([]);
+const suggestionsLoading = ref(false);
 const showAgentsDropdown = ref(false);
 const showAttachDropdown = ref(false);
 const showModelDropdown = ref(false);
 const showUploadFromCollectionModal = ref(false);
-const showCursor = ref(true);
 const selectedAgents = ref([]); // Changed to array for multiple selection
 const llmProviders = ref([]);
 const threeDotsButtonRef = ref(null);
@@ -352,7 +365,6 @@ const showAgentMentionDropdown = ref(false);
 const agentMentionQuery = ref('');
 const agentMentionStartIndex = ref(-1);
 const agentMentionHighlightedIndex = ref(0);
-const agentMentionDropdownRef = ref(null);
 const mentionDropdownPosition = ref({ top: 0, left: 0 });
 
 // Voice recording state
@@ -365,6 +377,18 @@ const analyserNode = ref(null);
 let recordedMimeType = 'audio/webm';
 
 const selectedModel = computed(() => context?.selectedModel?.value || context?.selectedModel);
+const selectedModelId = computed(
+  () => selectedModel.value?.id || selectedModel.value?.value?.id || null
+);
+const selectedModelLabel = computed(() => {
+  return (
+    selectedModel.value?.name ||
+    selectedModel.value?.display_name ||
+    selectedModel.value?.label ||
+    selectedModel.value?.id ||
+    'Model'
+  );
+});
 
 const placeholder = computed(() => {
   if (context?.activeCollectionData?.value?.name) {
@@ -373,13 +397,40 @@ const placeholder = computed(() => {
   return 'Chat with Collection';
 });
 
+// Determine which agent to show as the inline pill button
+// Priority: Deep Search if selected or no selection, otherwise first selected agent
+const displayedPillAgent = computed(() => {
+  const deepSearchAgent = displayAgentsButtons.value.find((a) => a.name === 'Deep Search');
+
+  if (selectedAgents.value.length === 0) {
+    // No agents selected -> show Deep Search (unselected)
+    return deepSearchAgent;
+  }
+
+  // Check if Deep Search is among selected agents
+  const deepSearchSelected = selectedAgents.value.find((a) => a.name === 'Deep Search');
+  if (deepSearchSelected) {
+    return deepSearchAgent;
+  }
+
+  // Otherwise show the first selected agent
+  const firstSelected = selectedAgents.value[0];
+  return displayAgentsButtons.value.find((a) => a.name === firstSelected.name) || deepSearchAgent;
+});
+
+// Check if the displayed pill agent is selected
+const isPillAgentSelected = computed(() => {
+  if (!displayedPillAgent.value) return false;
+  return selectedAgents.value.some((a) => a.name === displayedPillAgent.value.name);
+});
+
 const agentsList = [
   {
     name: 'Generate',
     icon: GenerateIcon,
   },
   {
-    name: 'Search',
+    name: 'Deep Search',
     icon: SearchIcon,
   },
   {
@@ -430,47 +481,6 @@ const displayAgentsButtons = computed(() => {
   });
 });
 
-// Visible agent pills (always 2: selected agents first, then Search/Edit as placeholders)
-const visibleAgentPills = computed(() => {
-  const pills = [];
-  const maxPills = 2;
-
-  // First, add all selected agents (up to max)
-  for (const agent of selectedAgents.value) {
-    if (pills.length >= maxPills) break;
-    const fullAgent = displayAgentsButtons.value.find((a) => a.name === agent.name);
-    pills.push(fullAgent || agent);
-  }
-
-  // Fill remaining slots with unselected Search, then Edit
-  const placeholders = ['Search', 'Edit'];
-  for (const name of placeholders) {
-    if (pills.length >= maxPills) break;
-    // Only add if not already in pills (i.e., not selected)
-    if (!pills.some((p) => p.name === name)) {
-      const agent = displayAgentsButtons.value.find((a) => a.name === name);
-      if (agent) {
-        pills.push(agent);
-      }
-    }
-  }
-
-  return pills;
-});
-
-// Count of additional selected agents (beyond the 2 visible)
-const additionalSelectedCount = computed(() => {
-  return Math.max(0, selectedAgents.value.length - 2);
-});
-
-// For the AgentDropdown - exclude agents visible as pills
-const agentsForDropdown = computed(() => {
-  const visiblePillNames = visibleAgentPills.value.map((a) => a.name);
-  return displayAgentsButtons.value.filter(
-    (agent) => !visiblePillNames.includes(agent.name)
-  );
-});
-
 // Agents available for @ mention (not yet selected)
 const availableAgentsForMention = computed(() => {
   const selectedNames = selectedAgents.value.map((a) => a.name);
@@ -496,40 +506,6 @@ watch(filteredMentionAgents, () => {
 const canSend = computed(() => {
   return inputText.value.trim().length > 0;
 });
-
-const isAgentSelected = (agent) => {
-  return selectedAgents.value.some((a) => a.name === agent.name);
-};
-
-const getAgentButtonClasses = (agent, isPill = false) => {
-  if (isPill || isAgentSelected(agent)) {
-    return 'vdb-c-bg-[#FFE9D3] vdb-c-border-[#FFCFA5]';
-  }
-  if (agent.disabled) {
-    return 'vdb-c-bg-roy vdb-c-border-[#DBDBDB] vdb-c-cursor-not-allowed';
-  }
-  return 'vdb-c-bg-white vdb-c-border-[rgba(13,13,13,0.1)] hover:vdb-c-bg-[#FFE9D3] hover:vdb-c-border-[#FFCFA5]';
-};
-
-const getAgentIconClasses = (agent, isPill = false) => {
-  if (isPill || isAgentSelected(agent)) {
-    return 'vdb-c-text-[#821F0C]';
-  }
-  if (agent.disabled) {
-    return 'vdb-c-text-[#969696]';
-  }
-  return 'vdb-c-text-vdb-darkishgrey';
-};
-
-const getAgentTextClasses = (agent, isPill = false) => {
-  if (isPill || isAgentSelected(agent)) {
-    return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#821F0C] vdb-c-whitespace-nowrap';
-  }
-  if (agent.disabled) {
-    return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-[#969696] vdb-c-whitespace-nowrap';
-  }
-  return 'vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[19.5px] vdb-c-text-vdb-darkishgrey vdb-c-whitespace-nowrap';
-};
 
 const getSendButtonClasses = () => {
   if (!canSend.value) {
@@ -564,13 +540,6 @@ const handleAgentSelect = (agent) => {
     handleAgentClick(fullAgent);
   } else {
     handleAgentClick(agent);
-  }
-};
-
-const removeSelectedAgent = (agent) => {
-  const index = selectedAgents.value.findIndex((a) => a.name === agent.name);
-  if (index !== -1) {
-    selectedAgents.value.splice(index, 1);
   }
 };
 
@@ -686,7 +655,69 @@ const removeFile = (index) => {
   }
 };
 
-// Fetch LLM models on mount
+// Fetch suggestions from the API
+const fetchSuggestions = async () => {
+  const collectionId = context?.activeCollectionData?.value?.id || context?.collectionId?.value;
+  if (!collectionId || suggestionsLoading.value) return;
+
+  suggestionsLoading.value = true;
+  try {
+    const result = await context?.callApi(`/videodb/collection/${collectionId}/suggestions`);
+    if (result?.status === 'success' && result?.data?.suggestions) {
+      suggestions.value = result.data.suggestions;
+    }
+  } catch (error) {
+    console.error('Failed to fetch suggestions:', error);
+    suggestions.value = [];
+  } finally {
+    suggestionsLoading.value = false;
+  }
+};
+
+// Handle textarea focus - show suggestions
+const handleTextareaFocus = () => {
+  if (inputText.value.trim() === '' && suggestions.value.length > 0) {
+    showSuggestions.value = true;
+  }
+};
+
+// Handle suggestion click
+const handleSuggestionClick = (suggestion) => {
+  inputText.value = suggestion.text;
+  showSuggestions.value = false;
+
+  // Auto-select the agents from the suggestion
+  if (suggestion.agents && suggestion.agents.length > 0) {
+    suggestion.agents.forEach((agentName) => {
+      const agent = displayAgentsButtons.value.find((a) => a.name === agentName);
+      if (agent && !selectedAgents.value.some((a) => a.name === agentName)) {
+        selectedAgents.value.push({ ...agent, source: 'suggestion' });
+      }
+    });
+  }
+
+  // Focus the textarea
+  nextTick(() => {
+    textareaRef.value?.focus();
+  });
+};
+
+// Handle pill agent button click (toggles the displayed agent)
+const handlePillAgentClick = () => {
+  const agent = displayedPillAgent.value;
+  if (!agent || agent.disabled) return;
+
+  const index = selectedAgents.value.findIndex((a) => a.name === agent.name);
+  if (index !== -1) {
+    // Deselect
+    selectedAgents.value.splice(index, 1);
+  } else {
+    // Select
+    selectedAgents.value.push({ ...agent, source: 'clicked' });
+  }
+};
+
+// Fetch LLM models and suggestions on mount
 onMounted(async () => {
   if (context?.fetchLLMModels) {
     try {
@@ -698,7 +729,21 @@ onMounted(async () => {
       console.error('Failed to fetch LLM models:', error);
     }
   }
+
+  // Fetch suggestions
+  fetchSuggestions();
 });
+
+// Refetch suggestions when collection changes
+watch(
+  () => context?.activeCollectionData?.value?.id,
+  (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      suggestions.value = [];
+      fetchSuggestions();
+    }
+  }
+);
 
 // Cleanup on unmount
 onUnmounted(() => {
@@ -835,10 +880,6 @@ const confirmRecording = async () => {
   }
 };
 
-const handleMicClick = () => {
-  startRecording();
-};
-
 // Auto-resize textarea when inputText changes programmatically (e.g., after transcription)
 watch(inputText, () => {
   nextTick(() => {
@@ -855,6 +896,13 @@ const handleInput = (event) => {
   textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
 
   const value = textarea.value;
+
+  // Show/hide suggestions based on input
+  if (value.trim() === '' && suggestions.value.length > 0) {
+    showSuggestions.value = true;
+  } else {
+    showSuggestions.value = false;
+  }
 
   // Check if any selected agent's @AgentName was removed from text
   // Only remove agents that were added via @ mention (source: 'mention'), not clicked ones
@@ -907,14 +955,27 @@ const getCaretCoordinates = (element, position) => {
 
   // Copy relevant styles
   const properties = [
-    'fontFamily', 'fontSize', 'fontWeight', 'fontStyle',
-    'letterSpacing', 'textTransform', 'wordSpacing', 'textIndent',
-    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
-    'boxSizing', 'lineHeight'
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'fontStyle',
+    'letterSpacing',
+    'textTransform',
+    'wordSpacing',
+    'textIndent',
+    'paddingTop',
+    'paddingRight',
+    'paddingBottom',
+    'paddingLeft',
+    'borderTopWidth',
+    'borderRightWidth',
+    'borderBottomWidth',
+    'borderLeftWidth',
+    'boxSizing',
+    'lineHeight',
   ];
 
-  properties.forEach(prop => {
+  properties.forEach((prop) => {
     style[prop] = computed[prop];
   });
 
@@ -933,7 +994,7 @@ const getCaretCoordinates = (element, position) => {
   const coordinates = {
     top: span.offsetTop,
     left: span.offsetLeft,
-    height: parseInt(computed.lineHeight) || parseInt(computed.fontSize) * 1.2
+    height: parseInt(computed.lineHeight) || parseInt(computed.fontSize) * 1.2,
   };
 
   document.body.removeChild(div);
@@ -1044,9 +1105,10 @@ const handleTextareaKeyDown = (event) => {
 };
 
 const handleTextareaBlur = () => {
-  // Delay closing to allow click on dropdown items
+  // Delay closing to allow click on dropdown items and suggestions
   setTimeout(() => {
     closeMentionDropdown();
+    showSuggestions.value = false;
   }, 200);
 };
 
@@ -1089,9 +1151,8 @@ const handleCollectionAssetsSelected = async (selectedAssets) => {
   }
 };
 
-// Check if Search agent is selected (for showing SearchOptions)
 const hasSearchAgentSelected = computed(() => {
-  return selectedAgents.value.some((a) => a.name === 'Search');
+  return selectedAgents.value.some((a) => a.name === 'Deep Search');
 });
 
 const handleSend = () => {
@@ -1144,7 +1205,7 @@ const handleSend = () => {
     if (voices.length > 0) {
       messageData.voices = voices;
     }
-    const modelId = selectedModel?.value?.id || selectedModel?.id;
+    const modelId = selectedModelId.value;
     if (modelId) {
       messageData.model_name = modelId;
     }

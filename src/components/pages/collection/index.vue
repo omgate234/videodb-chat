@@ -25,22 +25,6 @@
         @update:query="handleSearchQueryUpdate"
         :placeholder="collectionName ? `Search files in '${collectionName}'` : 'Search files'"
       />
-      <button
-        :disabled="uploadDisabled"
-        @click="handleRecordAudioClick"
-        :class="[
-          'vdb-c-flex vdb-c-items-center vdb-c-justify-center vdb-c-gap-4 vdb-c-rounded-8 vdb-c-border vdb-c-p-8 vdb-c-pr-12 vdb-c-text-sm vdb-c-font-medium vdb-c-transition-colors vdb-c-duration-200',
-          uploadDisabled
-            ? 'vdb-c-cursor-not-allowed vdb-c-border-[#D9D9D9] vdb-c-bg-[#F7F7F7] vdb-c-text-[#969696]'
-            : 'vdb-c-border-[#D9D9D9] vdb-c-bg-white vdb-c-text-[#1E1E1E] hover:vdb-c-border-vdb-orange hover:vdb-c-bg-[#FFF5F0]',
-        ]"
-      >
-        <MicrophoneIcon
-          :fill="uploadDisabled ? '#969696' : '#1E1E1E'"
-          class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0"
-        />
-        <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">Record Audio</span>
-      </button>
       <PrimaryButton :disabled="uploadDisabled" @click="handleUploadClick">
         <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
         <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[20px]">Upload file</span>

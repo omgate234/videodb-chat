@@ -49,7 +49,7 @@
 
             <!-- Copy Icon - Top Right -->
             <div
-              class="copy-button vdb-c-h-26 vdb-c-w-26 vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-20 vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-p-4 vdb-c-transition-all vdb-c-duration-200"
+              class="copy-button vdb-c-h-26 vdb-c-w-26 vdb-c-absolute vdb-c-right-8 vdb-c-top-8 vdb-c-z-[1] vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-justify-center vdb-c-rounded-full vdb-c-p-4 vdb-c-transition-all vdb-c-duration-200"
               :class="
                 isCopied || copyButtonHovered
                   ? 'vdb-c-bg-[rgba(30,30,30,0.8)]'

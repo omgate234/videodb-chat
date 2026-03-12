@@ -574,7 +574,7 @@ const hasVideoId = computed(() => {
 
 const agentsList = [
   {
-    name: 'Search',
+    name: 'Deep Search',
     icon: SearchIcon,
   },
   {
@@ -632,7 +632,7 @@ const displayAgentsButtons = computed(() => {
     let display = false;
 
     if (hasVideos) {
-      if (agent.name === 'Search') {
+      if (agent.name === 'Deep Search') {
         display = true;
       } else if (selectedAgentNames.length > 0) {
         display = selectedAgentNames.includes(agent.name);
@@ -640,7 +640,7 @@ const displayAgentsButtons = computed(() => {
         display = agent.name === 'Edit';
       }
     } else {
-      display = agent.name === 'Generate' || agent.name === 'Search';
+      display = agent.name === 'Generate' || agent.name === 'Deep Search';
     }
 
     let disabled = false;
@@ -663,8 +663,8 @@ const displayAgentsButtons = computed(() => {
 const visibleAgents = computed(() => {
   const agents = displayAgentsButtons.value.filter((agent) => agent.display);
 
-  const searchAgent = agents.find((agent) => agent.name === 'Search');
-  const otherAgents = agents.filter((agent) => agent.name !== 'Search');
+  const searchAgent = agents.find((agent) => agent.name === 'Deep Search');
+  const otherAgents = agents.filter((agent) => agent.name !== 'Deep Search');
 
   if (searchAgent) {
     return [searchAgent, ...otherAgents];
@@ -764,7 +764,8 @@ const updateMentionDropdownPosition = () => {
   const dropdownHeight = 220; // Approximate dropdown height
 
   // Position dropdown above the @ character
-  const bottomFromViewport = viewportHeight - (textareaRect.top + caretCoords.top - textarea.scrollTop);
+  const bottomFromViewport =
+    viewportHeight - (textareaRect.top + caretCoords.top - textarea.scrollTop);
   const leftFromViewport = textareaRect.left + caretCoords.left;
 
   mentionDropdownPosition.value = {

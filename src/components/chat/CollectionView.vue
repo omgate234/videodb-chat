@@ -20,16 +20,14 @@
           @blur="isFocused = false"
           class="p-4 h-full vdb-c-block vdb-c-w-[100%] vdb-c-bg-gray-50 vdb-c-px-8 vdb-c-text-sm vdb-c-text-black vdb-c-placeholder-gray-700 vdb-c-outline-none"
           type="text"
-          placeholder="Search"
+          placeholder="Deep Search"
         />
         <button
           class="vdb-c-flex vdb-c-size-[20px] vdb-c-items-center vdb-c-justify-center vdb-c-opacity-20 hover:vdb-c-opacity-100"
           v-if="searchQuery"
           @click="clearSearch"
         >
-          <div
-            class="vdb-c-flex vdb-c-size-[20px] vdb-c-items-center vdb-c-justify-center"
-          >
+          <div class="vdb-c-flex vdb-c-size-[20px] vdb-c-items-center vdb-c-justify-center">
             <SearchCrossIcon class="vdb-c-size-20" />
           </div>
         </button>
@@ -47,13 +45,8 @@
         >
           <SearchIcon class="vdb-c-size-[15px] vdb-c-text-black" />
           <div class="vdb-c-w-4/5 md:vdb-c-w-11/12">
-            <span
-              v-for="(part, idx) in getHighlightedParts(item.name)"
-              :key="idx"
-            >
-              <span class="vdb-c-font-semibold" v-if="part.bold">{{
-                part.text
-              }}</span>
+            <span v-for="(part, idx) in getHighlightedParts(item.name)" :key="idx">
+              <span class="vdb-c-font-semibold" v-if="part.bold">{{ part.text }}</span>
               <span v-else>{{ part.text }}</span>
             </span>
           </div>
@@ -81,7 +74,7 @@
           @click="selectMedia(item)"
         >
           <div>
-            {{ item.name === "All files" ? "All" : item.name }}
+            {{ item.name === 'All files' ? 'All' : item.name }}
           </div>
           <RedCheck v-if="item.id === currentMediaType.id" />
         </li>
@@ -104,16 +97,12 @@
         v-else
         class="vdb-c-flex vdb-c-flex-col vdb-c-items-center vdb-c-justify-center vdb-c-gap-32 vdb-c-py-32 vdb-c-text-center vdb-c-text-black"
       >
-        <div class="vdb-c-text-2xl vdb-c-font-bold">
-          Your Collection is empty
-        </div>
+        <div class="vdb-c-text-2xl vdb-c-font-bold">Your Collection is empty</div>
         <Button
           @click="
             loadSession();
             addMessage({
-              content: [
-                { type: 'text', text: 'Upload a video to this collection' },
-              ],
+              content: [{ type: 'text', text: 'Upload a video to this collection' }],
             });
             chatInput = '';
           "
@@ -133,16 +122,16 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { useVideoDBChat } from "../../context";
-import Button from "../buttons/Button.vue";
-import VideoList from "../collection/VideoList.vue";
-import VideoListLoader from "../collection/VideoListLoader.vue";
-import ChevronDown from "../icons/ChevronDown.vue";
-import UploadIcon from "../icons/FileUpload.vue";
-import RedCheck from "../icons/RedCheck.vue";
-import SearchCrossIcon from "../icons/SearchCross.vue";
-import SearchIcon from "../icons/SearchIcon.vue";
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useVideoDBChat } from '../../context';
+import Button from '../buttons/Button.vue';
+import VideoList from '../collection/VideoList.vue';
+import VideoListLoader from '../collection/VideoListLoader.vue';
+import ChevronDown from '../icons/ChevronDown.vue';
+import UploadIcon from '../icons/FileUpload.vue';
+import RedCheck from '../icons/RedCheck.vue';
+import SearchCrossIcon from '../icons/SearchCross.vue';
+import SearchIcon from '../icons/SearchIcon.vue';
 
 const { chatInput, loadSession, addMessage } = useVideoDBChat();
 
@@ -177,26 +166,26 @@ const props = defineProps({
 
 const mediaTypes = [
   {
-    id: "all_files",
-    name: "All files",
+    id: 'all_files',
+    name: 'All files',
   },
   {
-    id: "videos",
-    name: "Video",
+    id: 'videos',
+    name: 'Video',
   },
   {
-    id: "audios",
-    name: "Audio",
+    id: 'audios',
+    name: 'Audio',
   },
   {
-    id: "images",
-    name: "Image",
+    id: 'images',
+    name: 'Image',
   },
 ];
 
 const hover = ref(false);
 const isFocused = ref(false);
-const searchQuery = ref("");
+const searchQuery = ref('');
 const showAutocomplete = ref(false);
 const showMediaDropdown = ref(false);
 const currentMediaType = ref(mediaTypes[0]);
@@ -206,10 +195,7 @@ const autocompleteContainer = ref(null);
 const mediaTypeContainer = ref(null);
 
 const handleClickOutside = (event) => {
-  if (
-    autocompleteContainer.value &&
-    !autocompleteContainer.value.contains(event.target)
-  ) {
+  if (autocompleteContainer.value && !autocompleteContainer.value.contains(event.target)) {
     showAutocomplete.value = false;
   }
 
@@ -217,24 +203,21 @@ const handleClickOutside = (event) => {
     showAutocomplete.value = false;
   }
 
-  if (
-    mediaTypeContainer.value &&
-    !mediaTypeContainer.value.contains(event.target)
-  ) {
+  if (mediaTypeContainer.value && !mediaTypeContainer.value.contains(event.target)) {
     showMediaDropdown.value = false;
   }
 };
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
+  document.addEventListener('click', handleClickOutside);
 });
 
 onBeforeUnmount(() => {
-  document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener('click', handleClickOutside);
 });
 
 const clearSearch = () => {
-  searchQuery.value = "";
+  searchQuery.value = '';
 };
 
 function toggleMediaDropdown() {
@@ -247,7 +230,7 @@ function selectMedia(item) {
 }
 
 const handleInput = () => {
-  showAutocomplete.value = searchQuery.value.trim() !== "";
+  showAutocomplete.value = searchQuery.value.trim() !== '';
 };
 
 const selectItem = (item) => {
@@ -256,12 +239,12 @@ const selectItem = (item) => {
 };
 
 const emit = defineEmits([
-  "video-click",
-  "delete-video",
-  "delete-audio",
-  "delete-image",
-  "get-image-url",
-  "get-audio-url",
+  'video-click',
+  'delete-video',
+  'delete-audio',
+  'delete-image',
+  'get-image-url',
+  'get-audio-url',
 ]);
 
 const videos = computed(() => {
@@ -288,13 +271,13 @@ const images = computed(() => {
 const filteredAssets = computed(() => {
   const query = searchQuery.value.toLowerCase().trim();
   let assets = [];
-  if (currentMediaType.value.id === "all_files") {
+  if (currentMediaType.value.id === 'all_files') {
     assets = [...videos.value, ...audios.value, ...images.value];
-  } else if (currentMediaType.value.id === "videos") {
+  } else if (currentMediaType.value.id === 'videos') {
     assets = [...videos.value];
-  } else if (currentMediaType.value.id === "audios") {
+  } else if (currentMediaType.value.id === 'audios') {
     assets = [...audios.value];
-  } else if (currentMediaType.value.id === "images") {
+  } else if (currentMediaType.value.id === 'images') {
     assets = [...images.value];
   }
   if (!query) return assets;
@@ -331,7 +314,7 @@ const getHighlightedParts = (text) => {
 };
 
 const handleVideoClick = (video) => {
-  emit("video-click", video);
+  emit('video-click', video);
 };
 </script>
 <style>

@@ -104,11 +104,60 @@
           </div>
         </div>
 
+        <div v-if="showIndexingOption" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[16px]">
+          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[4px]">
+            <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-black">
+              Do you want to index your video uploads
+            </span>
+            <div
+              class="vdb-c-relative vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-cursor-help"
+              @mouseenter="showIndexTooltip = true"
+              @mouseleave="showIndexTooltip = false"
+            >
+              <HelpIcon class="vdb-c-h-full vdb-c-w-full" />
+              <div
+                v-if="showIndexTooltip"
+                class="vdb-c-absolute vdb-c-bottom-full vdb-c-left-1/2 vdb-c-z-50 vdb-c-mb-2 vdb-c-w-[200px] vdb-c--translate-x-1/2 vdb-c-rounded-[8px] vdb-c-bg-[#333333] vdb-c-px-[12px] vdb-c-py-[8px] vdb-c-text-[12px] vdb-c-font-normal vdb-c-leading-[16px] vdb-c-text-white"
+              >
+                Indexing enables semantic search and AI-powered features for your videos.
+              </div>
+            </div>
+          </div>
+          <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[60px]">
+            <button
+              @click="indexVideo = true"
+              class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-[8px]"
+            >
+              <RadioSelectedIcon v-if="indexVideo === true" class="vdb-c-h-[20px] vdb-c-w-[20px]" />
+              <RadioUnselectedIcon v-else class="vdb-c-h-[20px] vdb-c-w-[20px]" />
+              <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-black">
+                Yes
+              </span>
+            </button>
+            <button
+              @click="indexVideo = false"
+              class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-[8px]"
+            >
+              <RadioSelectedIcon v-if="indexVideo === false" class="vdb-c-h-[20px] vdb-c-w-[20px]" />
+              <RadioUnselectedIcon v-else class="vdb-c-h-[20px] vdb-c-w-[20px]" />
+              <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-black">
+                No
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Divider (only show when video files are present) -->
+        <div
+          v-if="showIndexingOption"
+          class="vdb-c-h-0 vdb-c-w-full vdb-c-border-t vdb-c-border-[#E5E7EB]"
+        ></div>
+
         <!-- URL Input -->
         <BigInput
           v-model="url"
-          label="Or upload from URL"
-          placeholder="Add file URL"
+          label="Or upload via URL"
+          placeholder="Paste file URL"
           type="text"
           :allow-clear="true"
         />
@@ -255,6 +304,9 @@ import UploadFileIcon from './icons/UploadFileIcon.vue';
 import FolderIcon from './icons/FolderIcon.vue';
 import ChevronDownIcon from './icons/ChevronDownIcon.vue';
 import CheckIcon from './icons/CheckIcon.vue';
+import HelpIcon from './icons/HelpIcon.vue';
+import RadioSelectedIcon from './icons/RadioSelectedIcon.vue';
+import RadioUnselectedIcon from './icons/RadioUnselectedIcon.vue';
 import VideoFileDisplay from '../../pages/collection/components/VideoFileDisplay.vue';
 import AudioFileDisplay from '../../pages/collection/components/AudioFileDisplay.vue';
 import ImageFileDisplay from './UploadImageFileDisplay.vue';
@@ -291,8 +343,15 @@ const fileInputEl = ref(null);
 const selectedCollection = ref(null);
 const isDropdownOpen = ref(false);
 const isUploading = ref(false);
+const indexVideo = ref(true);
+const showIndexTooltip = ref(false);
 
 const hasUploadedFiles = computed(() => fileInput.value.length > 0);
+const hasVideoFiles = computed(() =>
+  fileInput.value.some((file) => file.type.startsWith('video/'))
+);
+const hasUrlInput = computed(() => url.value.trim().length > 0);
+const showIndexingOption = computed(() => hasVideoFiles.value || hasUrlInput.value);
 const canUpload = computed(() => {
   return (
     (hasUploadedFiles.value || url.value.trim()) && selectedCollection.value && !isUploading.value
@@ -336,10 +395,8 @@ const clearState = () => {
   selectedCollection.value = props.defaultSelectedCollectionId || null;
   isDropdownOpen.value = false;
   isUploading.value = false;
-};
-
-const handleUrlInput = (e) => {
-  // URL input doesn't clear files in new design
+  indexVideo.value = true;
+  showIndexTooltip.value = false;
 };
 
 const removeFile = (index) => {
@@ -418,15 +475,18 @@ const handleUpload = () => {
       source: { url: url.value },
       sourceType: 'url',
       collectionId: selectedCollection.value,
+      indexVideo: indexVideo.value,
     });
   }
 
   if (hasUploadedFiles.value) {
     fileInput.value.forEach((file) => {
+      const isVideo = file.type.startsWith('video/');
       emit('upload', {
         source: file,
         sourceType: 'file',
         collectionId: selectedCollection.value,
+        indexVideo: isVideo ? indexVideo.value : undefined,
       });
     });
   }

@@ -91,7 +91,7 @@
     >
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-8">
         <LibraryIcon class="vdb-c-h-24 vdb-c-w-24" />
-        <p class="vdb-c-text-subheader2 vdb-c-font-semibold">Asset Library</p>
+        <p class="vdb-c-text-subheader2 vdb-c-font-semibold">Media Library</p>
       </div>
 
       <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-16">
@@ -120,8 +120,18 @@
       <div
         class="vdb-c-flex vdb-c-w-full vdb-c-flex-wrap vdb-c-items-center vdb-c-justify-between vdb-c-gap-16"
       >
-        <!-- Type Tabs -->
-        <AssetTabs :tabs="['Video', 'Audio', 'Images']" v-model="activeTab" />
+        <!-- Collection Dropdown & Type Tabs -->
+        <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-10">
+          <div ref="collectionRef">
+            <CollectionDropdown
+              :is-open="activeDropdown === 'collection'"
+              :collections="collections"
+              v-model="selectedCollection"
+              @toggle="toggleDropdown('collection')"
+            />
+          </div>
+          <AssetTabs :tabs="['Video', 'Audio', 'Images']" v-model="activeTab" />
+        </div>
 
         <!-- Filters & Sorts -->
         <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-12">
@@ -140,15 +150,6 @@
               :model-value="filterState"
               @update:model-value="handleFilterUpdate"
               @toggle="toggleDropdown('filter')"
-            />
-          </div>
-
-          <div ref="collectionRef">
-            <CollectionDropdown
-              :is-open="activeDropdown === 'collection'"
-              :collections="collections"
-              v-model="selectedCollection"
-              @toggle="toggleDropdown('collection')"
             />
           </div>
         </div>

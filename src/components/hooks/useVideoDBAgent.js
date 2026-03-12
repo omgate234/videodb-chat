@@ -158,6 +158,9 @@ export function useVideoDBAgent(config) {
   const fetchCollectionImages = async (collectionId) =>
     fetchData(httpUrl, `/videodb/collection/${collectionId}/image`);
 
+  const fetchCollectionSuggestions = async (collectionId) =>
+    fetchData(httpUrl, `/videodb/collection/${collectionId}/suggestions`);
+
   const fetchAssets = async (params = {}) => {
     const {
       collection_id,
@@ -227,7 +230,13 @@ export function useVideoDBAgent(config) {
 
 
 const uploadMedia = async (uploadData) => {
-  const { source, sourceType, collectionId, mediaType: providedMediaType } = uploadData;
+  const {
+    source,
+    sourceType,
+    collectionId,
+    mediaType: providedMediaType,
+    indexVideo: toAutoIndex = true,
+  } = uploadData;
   if (sourceType === "file") {
     const formData = new FormData();
     formData.append("file", source);
@@ -253,7 +262,7 @@ const uploadMedia = async (uploadData) => {
       body: formData,
     });
 
-    if (mediaType === "video") {
+    if (mediaType === "video" && toAutoIndex) {
       return uploadVideo(presignedUrl);
     }
 
@@ -272,7 +281,7 @@ const uploadMedia = async (uploadData) => {
     });
   } else if (sourceType === "url") {
     const mediaType = providedMediaType || await getMediaTypeFromUrl(source.url);
-    if (mediaType === "video") {
+    if (mediaType === "video" && toAutoIndex) {
       return uploadVideo(source.url);
     }
 
@@ -1146,5 +1155,6 @@ const uploadMedia = async (uploadData) => {
     callApi,
     generateVideoStream,
     updateMessageReaction,
+    fetchCollectionSuggestions,
   };
 }

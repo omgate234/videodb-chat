@@ -79,6 +79,7 @@ const props = defineProps({
     type: Object,
     default: () => ({
       enabled: true,
+      floatingButtonConfig: null,
       links: [
         {
           href: 'https://www.youtube.com/playlist?list=PLhxAMFLSSK039xl1UgcZmoFLnb-qNRYQw',

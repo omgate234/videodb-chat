@@ -20,7 +20,7 @@
 
     <!-- Main Content -->
     <div
-      class="vdb-c-flex vdb-c-w-full vdb-c-flex-shrink-0 vdb-c-flex-col vdb-c-items-center vdb-c-gap-40 vdb-c-px-[200px] vdb-c-py-40"
+      class="vdb-c-flex vdb-c-w-full vdb-c-flex-1 vdb-c-flex-col vdb-c-items-center vdb-c-overflow-y-auto vdb-c-px-[200px] vdb-c-py-40"
     >
       <!-- Page Header -->
       <div
@@ -42,17 +42,54 @@
         </div>
       </div>
 
-      <!-- Agents Grid -->
-      <div
-        class="vdb-c-flex vdb-c-w-[736px] vdb-c-flex-shrink-0 vdb-c-flex-wrap vdb-c-content-center vdb-c-items-center vdb-c-justify-center vdb-c-gap-16"
-      >
-        <AgentCard
-          v-for="agent in agents"
-          :key="agent.name"
-          :name="agent.name"
-          :icon="agent.icon"
-          :description="agent.description"
-        />
+      <!-- Configurable Agents Section -->
+      <div class="vdb-c-mt-40 vdb-c-flex vdb-c-w-[780px] vdb-c-flex-col">
+        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-8">
+          <h3
+            class="vdb-c-text-[22px] vdb-c-font-semibold vdb-c-leading-[27px] vdb-c-text-[#0D0D0D]"
+          >
+            Configurable Agents
+          </h3>
+          <p class="vdb-c-text-[14px] vdb-c-font-normal vdb-c-leading-[17px] vdb-c-text-[#464646]">
+            Customize prompts, models, and behavior to match your workflow.
+          </p>
+        </div>
+        <div
+          class="vdb-c-mt-30 vdb-c-grid vdb-c-w-[736px] vdb-c-grid-cols-2 vdb-c-gap-16 vdb-c-pl-22"
+        >
+          <AgentCard
+            v-for="agent in configurableAgents"
+            :key="agent.name"
+            :name="agent.name"
+            :icon="agent.icon"
+            :description="agent.description"
+          />
+        </div>
+      </div>
+
+      <!-- System Agents Section -->
+      <div class="vdb-c-mt-40 vdb-c-flex vdb-c-w-[780px] vdb-c-flex-col">
+        <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-8">
+          <h3
+            class="vdb-c-text-[22px] vdb-c-font-semibold vdb-c-leading-[27px] vdb-c-text-[#0D0D0D]"
+          >
+            System Agents
+          </h3>
+          <p class="vdb-c-text-[14px] vdb-c-font-normal vdb-c-leading-[17px] vdb-c-text-[#464646]">
+            Pre-configured agents managed and optimized by the system.
+          </p>
+        </div>
+        <div
+          class="vdb-c-mt-30 vdb-c-grid vdb-c-w-[736px] vdb-c-grid-cols-2 vdb-c-gap-16 vdb-c-pl-22"
+        >
+          <AgentCard
+            v-for="agent in systemAgents"
+            :key="agent.name"
+            :name="agent.name"
+            :icon="agent.icon"
+            :description="agent.description"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -61,12 +98,13 @@
 <script setup>
 import { inject } from 'vue';
 import AgentsIcon from '../../chat/v2/icons/AgentsIcon.vue';
-import SearchIcon from '../../chat/v2/icons/agents/SearchIcon.vue';
+import OrchestrationIcon from '../../chat/v2/icons/agents/OrchestrationIcon.vue';
 import EditIcon from '../../chat/v2/icons/agents/EditIcon.vue';
-import DubbingIcon from '../../chat/v2/icons/agents/DubbingIcon.vue';
-import SubtitleIcon from '../../chat/v2/icons/agents/SubtitleIcon.vue';
 import ClipIcon from '../../chat/v2/icons/agents/ClipIcon.vue';
 import CensorIcon from '../../chat/v2/icons/agents/CensorIcon.vue';
+import SearchIcon from '../../chat/v2/icons/agents/SearchIcon.vue';
+import DubbingIcon from '../../chat/v2/icons/agents/DubbingIcon.vue';
+import SubtitleIcon from '../../chat/v2/icons/agents/SubtitleIcon.vue';
 import GenerateIcon from '../../chat/v2/icons/agents/GenerateIcon.vue';
 import VoiceIcon from '../../chat/v2/icons/agents/VoiceIcon.vue';
 import AgentCard from './AgentCard.vue';
@@ -80,9 +118,9 @@ const props = defineProps({
 
 const context = props.context || inject('videodb-chat-context');
 
-const agents = [
+const configurableAgents = [
   {
-    name: 'Search',
+    name: 'Deep Search',
     icon: SearchIcon,
     description:
       'Find precise moments, scenes, or videos using natural language across dialogue, visuals, and actions',
@@ -93,6 +131,21 @@ const agents = [
     description:
       'Cut, trim, merge, and reformat videos with timeline-based editing and aspect ratio control.',
   },
+  {
+    name: 'Clip',
+    icon: ClipIcon,
+    description:
+      'Extract and assemble moments into clips using prompts or timestamps, optimized for any platform.',
+  },
+  {
+    name: 'Generate',
+    icon: GenerateIcon,
+    description:
+      'Create new AI-generated videos, images, music, or sound effects as standalone assets.',
+  },
+];
+
+const systemAgents = [
   {
     name: 'Dubbing',
     icon: DubbingIcon,
@@ -105,22 +158,10 @@ const agents = [
     description: 'Add same-language or translated subtitles for accessibility and global reach.',
   },
   {
-    name: 'Clip',
-    icon: ClipIcon,
-    description:
-      'Extract and assemble moments into clips using prompts or timestamps, optimized for any platform.',
-  },
-  {
     name: 'Censor',
     icon: CensorIcon,
     description:
       'Automatically detect and mask sensitive audio or visuals using context-aware analysis.',
-  },
-  {
-    name: 'Generate',
-    icon: GenerateIcon,
-    description:
-      'Create new AI-generated videos, images, music, or sound effects as standalone assets.',
   },
   {
     name: 'Voice',

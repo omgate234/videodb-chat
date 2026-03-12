@@ -13,36 +13,6 @@
 
         <!-- Action Panel -->
         <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-1">
-          <div class="vdb-c-relative">
-            <button
-              ref="newChatButtonRef"
-              class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-bg-black vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200 hover:vdb-c-bg-pam disabled:vdb-c-bg-[#B9B9B9]"
-              :disabled="newSessionButtonDisabled"
-              @click="context.handleCreateNewSession()"
-              @mouseenter="
-                showNewChatTooltip = newSessionButtonDisabled && currentPage !== 'collection'
-              "
-              @mouseleave="showNewChatTooltip = false"
-            >
-              <ComposeAltIcon :stroke-color="'white'" />
-              <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5 vdb-c-text-white"
-                >New chat</span
-              >
-            </button>
-            <Teleport to="body">
-              <div
-                v-if="showNewChatTooltip && newChatButtonRef"
-                class="vdb-c-fixed"
-                :style="{
-                  top: `${newChatButtonRef.getBoundingClientRect().top + newChatButtonRef.getBoundingClientRect().height / 2 - 16}px`,
-                  left: `${newChatButtonRef.getBoundingClientRect().right + 8}px`,
-                }"
-              >
-                <Tooltip :text="newChatTooltipText" />
-              </div>
-            </Teleport>
-          </div>
-
           <button
             @click="context.handleNavigateToDefault()"
             class="vdb-c-mt-8 vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-10 vdb-c-px-10 vdb-c-py-8 vdb-c-text-left vdb-c-transition-all vdb-c-duration-200"
@@ -73,7 +43,7 @@
               @mouseleave="showAssetLibraryTooltip = false"
             >
               <LibraryIcon :stroke-color="assetLibraryButtonDisabled ? '#B9B9B9' : undefined" />
-              <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Asset Library</span>
+              <span class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-5">Media Library</span>
             </button>
             <Teleport to="body">
               <div
@@ -143,7 +113,7 @@
               >
                 <span
                   class="vdb-c-text-sm vdb-c-font-semibold vdb-c-leading-5 vdb-c-text-vdb-darkishgrey"
-                  >Collections</span
+                  >Chat with Collections</span
                 >
                 <button
                   v-if="collections.length > 0"
@@ -231,7 +201,7 @@
             <!-- Sessions -->
             <div
               v-if="section === 'sessions'"
-              class="sidebar-section vdb-c-flex vdb-c-flex-col vdb-c-gap-0"
+              class="sidebar-section vdb-c-mb-24 vdb-c-flex vdb-c-flex-col vdb-c-gap-0"
             >
               <div
                 class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-justify-start vdb-c-px-10 vdb-c-py-6"
@@ -271,6 +241,9 @@
       :active="footerActive"
       :user="config.footerConfig?.user"
       :buttons="config.footerConfig?.buttons || []"
+      :floating-button-config="
+        config.floatingButtonConfig || config.footerConfig?.floatingButtonConfig
+      "
       @profile-click="handleProfileClick"
     />
 
@@ -309,7 +282,6 @@ import {
 
 import SidebarFooter from './SidebarFooter.vue';
 
-import ComposeAltIcon from './icons/ComposeAltIcon.vue';
 import HomeIcon from './icons/HomeIcon.vue';
 import LibraryIcon from './icons/LibraryIcon.vue';
 import AgentsIcon from './icons/AgentsIcon.vue';
@@ -358,15 +330,6 @@ const isLoadingCollections = computed(() => {
 
 const hasNoCollections = computed(() => {
   return !isLoadingCollections.value && collections.value.length === 0;
-});
-
-const newSessionButtonDisabled = computed(() => {
-  if (currentPage.value === 'collection') return true;
-  if (currentPage.value === 'default') return true;
-  if (currentPage.value === 'assets') return true;
-  if (currentPage.value === 'agents') return true;
-  if (isLoadingCollections.value || hasNoCollections.value) return true;
-  return false;
 });
 
 const assetLibraryButtonDisabled = computed(() => {
@@ -418,22 +381,11 @@ const showDeleteCollectionModal = ref(false);
 const collectionToDelete = ref(null);
 const collectionAssetsCache = ref({});
 const notificationCenterRef = ref(null);
-const newChatButtonRef = ref(null);
 const assetLibraryButtonRef = ref(null);
 const agentsButtonRef = ref(null);
-const showNewChatTooltip = ref(false);
 const showAssetLibraryTooltip = ref(false);
 const showAgentsTooltip = ref(false);
 
-const newChatTooltipText = computed(() => {
-  if (hasNoCollections.value) {
-    return 'Please create collection and upload content to chat';
-  }
-  if (['default', 'assets', 'agents'].includes(currentPage.value)) {
-    return 'Navigate to a collection to start a new chat';
-  }
-  return '';
-});
 let resizeObserver = null;
 
 const visibleSections = computed(() => sidebarSections);
