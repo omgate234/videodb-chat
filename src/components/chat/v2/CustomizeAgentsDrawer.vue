@@ -212,11 +212,10 @@ import CrossIcon from './icons/CrossIcon.vue';
 import BackArrowIcon from './icons/BackArrowIcon.vue';
 import ChevronRightIcon from './icons/ChevronRightIcon.vue';
 import ChevronDownIcon from './icons/ChevronDownIcon.vue';
-import MixerHorizontalIcon from '../../icons/MixerHorizontalIcon.vue';
+import OrchestrationEngineIcon from './icons/agents/OrchestrationEngineIcon.vue';
 import CensorIcon from './icons/agents/CensorIcon.vue';
 import ClipIcon from './icons/agents/ClipIcon.vue';
 import EditIcon from './icons/agents/EditIcon.vue';
-import GenerateIcon from './icons/agents/GenerateIcon.vue';
 import ResetIcon from '../../icons/Reset.vue';
 import TextArea from './elements/TextArea.vue';
 import NotificationCenter from '../elements/NotificationCenter.vue';
@@ -227,6 +226,10 @@ const props = defineProps({
   isOpen: {
     type: Boolean,
     default: false,
+  },
+  initialAgentId: {
+    type: String,
+    default: null,
   },
 });
 
@@ -258,9 +261,9 @@ const availableModels = computed(() => {
 const AGENT_CONFIGS = {
   reasoning: {
     id: 'reasoning',
-    title: 'Reasoning Engine',
+    title: 'Orchestration Engine',
     description: 'Core orchestration and decision-making',
-    icon: MixerHorizontalIcon,
+    icon: OrchestrationEngineIcon,
     showBorder: true,
     chevronColor: '#1E1E1E',
     showModelSelector: true,
@@ -306,24 +309,6 @@ const AGENT_CONFIGS = {
     showModelSelector: true,
     useAllProviders: false,
     prompts: [{ promptName: 'editing_prompt', label: 'Editing Prompt' }],
-  },
-  promo_agent: {
-    id: 'promo_agent',
-    title: 'Promo Agent',
-    description: 'Promotional video generation',
-    icon: GenerateIcon,
-    showBorder: false,
-    chevronColor: '#969696',
-    showModelSelector: true,
-    useAllProviders: false,
-    prompts: [
-      {
-        promptName: 'generate_director_instructions_prompt',
-        label: 'Director Instructions Prompt',
-      },
-      { promptName: 'generate_video_summary_prompt', label: 'Video Summary Prompt' },
-      { promptName: 'pick_promo_scenes_prompt', label: 'Pick Promo Scenes Prompt' },
-    ],
   },
 };
 
@@ -482,11 +467,14 @@ const handleSave = async () => {
 };
 
 watch(
-  () => props.isOpen,
-  (newVal) => {
-    if (newVal) {
+  () => [props.isOpen, props.initialAgentId],
+  ([isOpen, initialAgentId]) => {
+    if (isOpen) {
       if (allProviders.value.length === 0) {
         fetchModels();
+      }
+      if (initialAgentId && AGENT_CONFIGS[initialAgentId]) {
+        handleAgentSelect(AGENT_CONFIGS[initialAgentId]);
       }
     } else {
       selectedAgent.value = null;

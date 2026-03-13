@@ -6,4 +6,12 @@
     />
   </svg>
 </template>
-<script setup></script>
+
+<script setup>
+defineProps({
+  color: {
+    type: String,
+    default: undefined,
+  },
+});
+</script>

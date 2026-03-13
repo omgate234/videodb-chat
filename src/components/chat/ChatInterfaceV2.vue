@@ -5,6 +5,7 @@
     <UploadNotifications ref="uploadNotificationsRef" />
     <CustomizeAgentsDrawer
       :is-open="isCustomizeAgentsDrawerOpen"
+      :initial-agent-id="customizeAgentsInitialAgentId"
       @close="handleCloseCustomizeAgentsDrawer"
     />
   </div>
@@ -172,6 +173,7 @@ const showCollectionView = ref(false);
 const taggedAgent = ref([]);
 const selectedModel = ref(null);
 const isCustomizeAgentsDrawerOpen = ref(false);
+const customizeAgentsInitialAgentId = ref(null);
 
 const useChatHook = props.customChatHook || useVideoDBAgent;
 const agentHook = useChatHook(props.chatHookConfig);
@@ -925,12 +927,14 @@ const handleModelSelect = (model) => {
   selectedModel.value = model;
 };
 
-const handleOpenCustomizeAgentsDrawer = () => {
+const handleOpenCustomizeAgentsDrawer = (agentId = null) => {
+  customizeAgentsInitialAgentId.value = agentId;
   isCustomizeAgentsDrawerOpen.value = true;
 };
 
 const handleCloseCustomizeAgentsDrawer = () => {
   isCustomizeAgentsDrawerOpen.value = false;
+  customizeAgentsInitialAgentId.value = null;
 };
 
 const chatContext = {

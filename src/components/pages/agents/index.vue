@@ -8,7 +8,7 @@
         class="vdb-c-min-w-0 vdb-c-flex vdb-c-min-h-0 vdb-c-grow vdb-c-basis-0 vdb-c-items-center vdb-c-gap-6 vdb-c-pl-10"
       >
         <div class="vdb-c-relative vdb-c-h-24 vdb-c-w-24 vdb-c-flex-shrink-0">
-          <AgentsIcon class="vdb-c-h-full vdb-c-w-full" />
+          <AgentsIcon :strokeColor="'#1E1E1E'" class="vdb-c-h-full vdb-c-w-full" />
         </div>
         <h1
           class="vdb-c-text-[16px] vdb-c-font-semibold vdb-c-leading-[24px] vdb-c-text-vdb-darkishgrey"
@@ -63,6 +63,8 @@
             :name="agent.name"
             :icon="agent.icon"
             :description="agent.description"
+            :clickable="true"
+            @click="handleConfigurableAgentClick(agent)"
           />
         </div>
       </div>
@@ -98,7 +100,6 @@
 <script setup>
 import { inject } from 'vue';
 import AgentsIcon from '../../chat/v2/icons/AgentsIcon.vue';
-import OrchestrationIcon from '../../chat/v2/icons/agents/OrchestrationIcon.vue';
 import EditIcon from '../../chat/v2/icons/agents/EditIcon.vue';
 import ClipIcon from '../../chat/v2/icons/agents/ClipIcon.vue';
 import CensorIcon from '../../chat/v2/icons/agents/CensorIcon.vue';
@@ -118,34 +119,52 @@ const props = defineProps({
 
 const context = props.context || inject('videodb-chat-context');
 
+// Configurable Agents - order matches Figma: Orchestration, Edit, Clip, Censor
+// Orchestration agent (Reasoning) and Edit share the same icon
+// drawerAgentId maps to CustomizeAgentsDrawer AGENT_CONFIGS keys
 const configurableAgents = [
   {
-    name: 'Deep Search',
-    icon: SearchIcon,
+    name: 'Orchestration agent',
+    icon: EditIcon,
     description:
-      'Find precise moments, scenes, or videos using natural language across dialogue, visuals, and actions',
+      'Intelligently coordinates video workflow agents for search, editing, summarization and automation.',
+    drawerAgentId: 'reasoning',
   },
   {
     name: 'Edit',
     icon: EditIcon,
     description:
       'Cut, trim, merge, and reformat videos with timeline-based editing and aspect ratio control.',
+    drawerAgentId: 'editing',
   },
   {
     name: 'Clip',
     icon: ClipIcon,
     description:
       'Extract and assemble moments into clips using prompts or timestamps, optimized for any platform.',
+    drawerAgentId: 'prompt_clip',
   },
   {
-    name: 'Generate',
-    icon: GenerateIcon,
+    name: 'Censor',
+    icon: CensorIcon,
     description:
-      'Create new AI-generated videos, images, music, or sound effects as standalone assets.',
+      'Automatically detect and mask sensitive audio or visuals using context-aware analysis.',
+    drawerAgentId: 'censor',
   },
 ];
 
+const handleConfigurableAgentClick = (agent) => {
+  context?.handleOpenCustomizeAgentsDrawer?.(agent.drawerAgentId);
+};
+
+// System Agents - order matches Figma: Search, Dubbing, Subtitle, Generate, Voice
 const systemAgents = [
+  {
+    name: 'Search',
+    icon: SearchIcon,
+    description:
+      'Find precise moments, scenes, or videos using natural language across dialogue, visuals, and actions',
+  },
   {
     name: 'Dubbing',
     icon: DubbingIcon,
@@ -158,10 +177,10 @@ const systemAgents = [
     description: 'Add same-language or translated subtitles for accessibility and global reach.',
   },
   {
-    name: 'Censor',
-    icon: CensorIcon,
+    name: 'Generate',
+    icon: GenerateIcon,
     description:
-      'Automatically detect and mask sensitive audio or visuals using context-aware analysis.',
+      'Create new AI-generated videos, images, music, or sound effects as standalone assets.',
   },
   {
     name: 'Voice',

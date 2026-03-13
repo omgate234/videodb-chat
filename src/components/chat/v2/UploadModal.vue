@@ -103,6 +103,20 @@
             </div>
           </div>
         </div>
+        <!-- URL Input -->
+        <BigInput
+          v-model="url"
+          label="Or upload via URL"
+          placeholder="Paste file URL"
+          type="text"
+          :allow-clear="true"
+        />
+
+        <!-- Divider (only show when video files are present) -->
+        <div
+          v-if="showIndexingOption"
+          class="vdb-c-h-0 vdb-c-w-full vdb-c-border-t vdb-c-border-[#E5E7EB]"
+        ></div>
 
         <div v-if="showIndexingOption" class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[16px]">
           <div class="vdb-c-flex vdb-c-items-center vdb-c-gap-[4px]">
@@ -130,7 +144,9 @@
             >
               <RadioSelectedIcon v-if="indexVideo === true" class="vdb-c-h-[20px] vdb-c-w-[20px]" />
               <RadioUnselectedIcon v-else class="vdb-c-h-[20px] vdb-c-w-[20px]" />
-              <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-black">
+              <span
+                class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-black"
+              >
                 Yes
               </span>
             </button>
@@ -138,29 +154,19 @@
               @click="indexVideo = false"
               class="vdb-c-flex vdb-c-cursor-pointer vdb-c-items-center vdb-c-gap-[8px]"
             >
-              <RadioSelectedIcon v-if="indexVideo === false" class="vdb-c-h-[20px] vdb-c-w-[20px]" />
+              <RadioSelectedIcon
+                v-if="indexVideo === false"
+                class="vdb-c-h-[20px] vdb-c-w-[20px]"
+              />
               <RadioUnselectedIcon v-else class="vdb-c-h-[20px] vdb-c-w-[20px]" />
-              <span class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-black">
+              <span
+                class="vdb-c-text-[14px] vdb-c-font-medium vdb-c-leading-[1.5] vdb-c-text-black"
+              >
                 No
               </span>
             </button>
           </div>
         </div>
-
-        <!-- Divider (only show when video files are present) -->
-        <div
-          v-if="showIndexingOption"
-          class="vdb-c-h-0 vdb-c-w-full vdb-c-border-t vdb-c-border-[#E5E7EB]"
-        ></div>
-
-        <!-- URL Input -->
-        <BigInput
-          v-model="url"
-          label="Or upload via URL"
-          placeholder="Paste file URL"
-          type="text"
-          :allow-clear="true"
-        />
 
         <!-- Collection Selection -->
         <div class="vdb-c-flex vdb-c-flex-col vdb-c-gap-[8px]">
