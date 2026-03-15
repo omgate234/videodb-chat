@@ -61,10 +61,10 @@
             </template>
             <template v-else>
               <template v-if="upload.status === 'loading'">
-                Uploading video<span class="loading-dots"></span>
+                Uploading file<span class="loading-dots"></span>
               </template>
               <template v-else-if="upload.status === 'success'">
-                Video uploaded successfully!
+                File uploaded successfully!
               </template>
               <template v-else> Error in uploading video. Try again. </template>
             </template>
