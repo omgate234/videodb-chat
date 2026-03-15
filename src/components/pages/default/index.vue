@@ -255,7 +255,14 @@
               <div
                 class="vdb-c-flex vdb-c-h-[42px] vdb-c-w-[54px] vdb-c-flex-shrink-0 vdb-c-items-center vdb-c-justify-center"
               >
-                <EmptyFolderImage :width="54" :height="42" />
+                <img
+                  :src="emptyFolderSrc"
+                  width="54"
+                  height="42"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Collection folder"
+                />
               </div>
 
               <!-- Collection Content -->
@@ -354,7 +361,6 @@ import HomeIcon from '../../chat/v2/icons/header/HomeIcon.vue';
 import PrimaryButton from '../../chat/v2/elements/PrimaryButton.vue';
 import SearchInput from '../assets/SearchInput.vue';
 import ThreeDotsIcon from '../../chat/v2/icons/ThreeDotsIcon.vue';
-import EmptyFolderImage from '../../chat/v2/icons/EmptyFolderImage.vue';
 import CollectionOptionsMenu from './CollectionOptionsMenu.vue';
 import DeleteCollectionModal from './DeleteCollectionModal.vue';
 import UploadModal from '../../chat/v2/UploadModal.vue';
@@ -368,6 +374,8 @@ const props = defineProps({
     default: undefined,
   },
 });
+
+const emptyFolderSrc = '/empty-folder.png';
 
 const context = props.context || inject('videodb-chat-context');
 
