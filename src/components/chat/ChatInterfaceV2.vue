@@ -899,7 +899,11 @@ const handleUpload = async (uploadData) => {
     const response = await uploadMedia(uploadData, onProgress);
 
     if (response?.ok || response?.status === 'READY') {
-      uploadNotificationsRef.value.updateUploadStatus(uploadId, 'success');
+      uploadNotificationsRef.value.updateUploadStatus(
+        uploadId,
+        'success',
+        'File uploaded successfully!'
+      );
       if (refetchCollectionVideos) {
         await refetchCollectionVideos();
       }
