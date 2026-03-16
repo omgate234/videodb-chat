@@ -38,6 +38,30 @@
             No metadata available for this video.
           </p>
         </div>
+
+        <!-- Summaries Section (from text field) -->
+        <div
+          v-for="(summary, index) in summaries"
+          :key="'summary-' + index"
+          class="vdb-c-flex vdb-c-w-full vdb-c-flex-col vdb-c-overflow-hidden vdb-c-rounded-[10px] vdb-c-border vdb-c-border-[#efefef] vdb-c-bg-white"
+        >
+          <div
+            class="vdb-c-flex vdb-c-w-full vdb-c-items-center vdb-c-rounded-tl-[10px] vdb-c-rounded-tr-[10px] vdb-c-bg-[#f7f7f7] vdb-c-py-[8px] vdb-c-pl-[12px] vdb-c-pr-[16px]"
+          >
+            <p class="vdb-c-text-[13px] vdb-c-font-medium vdb-c-leading-normal vdb-c-text-black">
+              {{ formatSummaryTitle(summary.type) }}
+            </p>
+          </div>
+          <div class="vdb-c-h-[1px] vdb-c-w-full vdb-c-bg-[#e5e7eb]"></div>
+          <div class="vdb-c-w-full vdb-c-px-[16px] vdb-c-py-[12px]">
+            <p
+              class="vdb-c-text-[13px] vdb-c-font-normal vdb-c-leading-[1.6] vdb-c-text-[#2d2d2d]"
+            >
+              {{ summary.description }}
+            </p>
+          </div>
+        </div>
+
         <!-- Cast Section -->
         <div
           v-if="actors && actors.length > 0"
@@ -227,12 +251,30 @@ const shotTypes = computed(() => {
   return Array.isArray(shotType) ? shotType : [shotType];
 });
 
+const summaries = computed(() => {
+  const text = props.video?.text;
+  if (!text) return [];
+  try {
+    const parsed = typeof text === 'string' ? JSON.parse(text) : text;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => Array.isArray(item) && item.length >= 2)
+      .map((item) => ({
+        type: item[0],
+        description: item[1],
+      }));
+  } catch {
+    return [];
+  }
+});
+
 const hasAnyMetadata = computed(() => {
   return (
     (actors.value && actors.value.length > 0) ||
     (objects.value && objects.value.length > 0) ||
     (emotions.value && emotions.value.length > 0) ||
-    (shotTypes.value && shotTypes.value.length > 0)
+    (shotTypes.value && shotTypes.value.length > 0) ||
+    (summaries.value && summaries.value.length > 0)
   );
 });
 
@@ -244,6 +286,14 @@ const capitalizeFirst = (str) => {
 const formatShotType = (shotType) => {
   if (!shotType) return '';
   return shotType
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const formatSummaryTitle = (type) => {
+  if (!type) return '';
+  return type
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
