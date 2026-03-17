@@ -159,26 +159,8 @@
       v-if="showChatInput"
       :context="injectedContext"
       :show-loading-state="true"
-      :edited-context="editedContext"
     />
 
-    <!-- Floating Edit Chat Context Button -->
-    <div class="vdb-c-fixed vdb-c-bottom-[90px] vdb-c-right-[20px] vdb-c-z-40">
-      <EditChatContextButton
-        :chat-loading="chatLoading"
-        @click="showChatContextModal = !showChatContextModal"
-      />
-    </div>
-
-    <!-- Chat Context Modal -->
-    <ChatContextModal
-      :is-open="showChatContextModal"
-      :session-id="sessionIdRef"
-      :fetch-session-context="fetchSessionContext"
-      :chat-loading="chatLoading"
-      :on-context-change="handleContextChange"
-      @close="showChatContextModal = false"
-    />
 
     <ShareSessionModal
       :is-open="showShareModal"
@@ -211,8 +193,6 @@ import FolderIcon from '../../chat/v2/icons/FolderIcon.vue';
 import ChevronRightIcon from '../../chat/v2/icons/ChevronRightIcon.vue';
 import UploadIcon from '../../chat/v2/icons/UploadIcon.vue';
 import SpinnerIcon from '../../chat/v2/icons/SpinnerIcon.vue';
-import EditChatContextButton from '../../chat/v2/EditChatContextButton.vue';
-import ChatContextModal from '../../chat/v2/ChatContextModal.vue';
 
 const props = defineProps({
   context: {
@@ -256,15 +236,12 @@ const {
   handleUpload,
   collections,
   onSharePage = false,
-  fetchSessionContext,
 } = injectedContext || {};
 
 const chatWindowRef = ref(null);
 const isScrolled = injectedContext?.isScrolled || ref(false);
 const showShareModal = ref(false);
 const showUploadModal = ref(false);
-const showChatContextModal = ref(false);
-const editedContext = ref(null);
 
 const collectionsList = computed(() => collections?.value || []);
 
@@ -395,9 +372,6 @@ const handleUploadWrapper = async (uploadData) => {
   }
 };
 
-const handleContextChange = (contextInfo) => {
-  editedContext.value = contextInfo.editedContext;
-};
 </script>
 
 <style scoped>
