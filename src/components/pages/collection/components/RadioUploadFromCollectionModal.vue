@@ -26,7 +26,7 @@
             :items="assets"
             @select-item="handleSelectItem"
             @update:query="handleSearchQueryUpdate"
-            :placeholder="`Search files in '${collectionName}'`"
+            placeholder="Search files by title"
           />
           <button
             @click="$emit('close')"

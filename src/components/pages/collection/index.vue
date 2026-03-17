@@ -23,7 +23,7 @@
         :items="assets"
         @select-item="handleSelectItem"
         @update:query="handleSearchQueryUpdate"
-        :placeholder="collectionName ? `Search files in '${collectionName}'` : 'Search files'"
+        placeholder="Search files by title"
       />
       <PrimaryButton :disabled="uploadDisabled" @click="handleUploadClick">
         <AddIcon stroke-color="white" class="vdb-c-h-[20px] vdb-c-w-[20px] vdb-c-shrink-0" />
@@ -105,7 +105,7 @@
             :items="assets"
             @select-item="handleSelectItem"
             @update:query="handleSearchQueryUpdate"
-            :placeholder="`Search files in &quot;${collectionName}&quot;`"
+            placeholder="Search files by title"
             :disabled="isLoadingAssets"
           />
         </div>
