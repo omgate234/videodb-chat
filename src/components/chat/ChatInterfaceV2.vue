@@ -394,6 +394,7 @@ watch(
         handleAddMessage({
           text: newVideoId,
           video_id: newVideoId,
+          from_event: true,
         });
       });
     }
