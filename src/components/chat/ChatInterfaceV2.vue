@@ -243,6 +243,9 @@ const {
 const uploadSimulator = useUploadChatSimulator();
 
 const getInitialParams = () => {
+  if (props.videoId) {
+    return { id: props.collectionId || 'default' };
+  }
   if (props.currentPage === 'chat') {
     if (!props.sessionId) {
       return null;
