@@ -154,6 +154,10 @@ const props = defineProps({
     type: String,
     default: 'default',
   },
+  videoId: {
+    type: String,
+    default: undefined,
+  },
   onNavConfigChange: {
     type: Function,
     default: undefined,
@@ -255,6 +259,9 @@ const getInitialParams = () => {
 };
 
 const getInitialPage = () => {
+  if (props.videoId) {
+    return 'collection';
+  }
   if (props.currentPage === 'chat' && !props.sessionId) {
     return 'default';
   }
@@ -361,6 +368,29 @@ watch(
       }
     }
   }
+);
+
+const videoIdMessageSent = ref(false);
+watch(
+  () => [props.videoId, configStatus.value],
+  ([newVideoId, newConfigStatus]) => {
+    if (
+      newVideoId &&
+      !videoIdMessageSent.value &&
+      typeof newConfigStatus === 'object' &&
+      newConfigStatus !== null &&
+      Object.values(newConfigStatus).every((value) => value === true)
+    ) {
+      videoIdMessageSent.value = true;
+      nextTick(() => {
+        handleAddMessage({
+          text: newVideoId,
+          video_id: newVideoId,
+        });
+      });
+    }
+  },
+  { immediate: true }
 );
 
 watch(
