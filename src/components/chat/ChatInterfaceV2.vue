@@ -374,17 +374,22 @@ watch(
 );
 
 const videoIdMessageSent = ref(false);
+const videoIdNavigationPending = ref(false);
+
 watch(
-  () => [props.videoId, configStatus.value],
-  ([newVideoId, newConfigStatus]) => {
+  () => [props.videoId, configStatus.value, collections.value],
+  ([newVideoId, newConfigStatus, newCollections]) => {
     if (
       newVideoId &&
       !videoIdMessageSent.value &&
       typeof newConfigStatus === 'object' &&
       newConfigStatus !== null &&
-      Object.values(newConfigStatus).every((value) => value === true)
+      Object.values(newConfigStatus).every((value) => value === true) &&
+      newCollections &&
+      newCollections.length > 0
     ) {
       videoIdMessageSent.value = true;
+      videoIdNavigationPending.value = true;
       nextTick(() => {
         handleAddMessage({
           text: newVideoId,
@@ -394,6 +399,21 @@ watch(
     }
   },
   { immediate: true }
+);
+
+// Watch for sessionId to navigate to chat after video_id message is sent
+watch(
+  () => sessionId.value,
+  (newSessionId) => {
+    if (newSessionId && videoIdNavigationPending.value) {
+      videoIdNavigationPending.value = false;
+      nextTick(() => {
+        if (actions?.goToChat) {
+          actions.goToChat(newSessionId);
+        }
+      });
+    }
+  }
 );
 
 watch(
