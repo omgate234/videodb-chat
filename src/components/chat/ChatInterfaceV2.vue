@@ -398,6 +398,7 @@ watch(
         handleAddMessage({
           text: newPrompt || newVideoId,
           video_id: newVideoId,
+          collection_id: props.collectionId,
           from_event: true,
         });
       });
@@ -791,6 +792,7 @@ const handleAddMessage = async ({
   audios = [],
   voices = [],
   video_id = null,
+  collection_id = null,
   files = [],
   agents = [],
   additionalInfo = null,
@@ -839,15 +841,20 @@ const handleAddMessage = async ({
 
   const isCollectionPage = navState.currentPage === 'collection';
   const activeCollectionId =
-    selectedCollectionId?.value || navState.activeParams?.id || collectionId.value || null;
+    collection_id || selectedCollectionId?.value || navState.activeParams?.id || collectionId.value || null;
+
+  // Only update collectionId.value if:
+  // 1. An explicit collection_id was passed (e.g., from video_id prop flow), OR
+  // 2. We're on the collection page
+  const shouldUpdateCollectionId = collection_id || isCollectionPage;
 
   if (!sessionId.value) {
-    if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
+    if (shouldUpdateCollectionId && activeCollectionId && collectionId.value !== activeCollectionId) {
       collectionId.value = activeCollectionId;
     }
     loadSession();
   } else {
-    if (isCollectionPage && activeCollectionId && collectionId.value !== activeCollectionId) {
+    if (shouldUpdateCollectionId && activeCollectionId && collectionId.value !== activeCollectionId) {
       collectionId.value = activeCollectionId;
     }
   }
@@ -872,6 +879,7 @@ const handleAddMessage = async ({
     content: content,
     agents: agents,
     video_id: video_id,
+    collection_id: collection_id || collectionId.value,
     videos: videos,
     audios: audios,
     voices: voices,

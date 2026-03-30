@@ -499,7 +499,9 @@ const uploadMedia = async (uploadData) => {
         if (Array.isArray(res.data) && res.data.length > 0) {
           const defaultCollection = res.data[0];
           activeCollectionData.value = defaultCollection;
-          session.collectionId = defaultCollection.id;
+          if (!session.collectionId || session.collectionId === "default") {
+            session.collectionId = defaultCollection.id;
+          }
           collections.value = [defaultCollection, ...res.data.slice(1)];
         } else {
           collections.value = [];
