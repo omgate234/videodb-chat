@@ -158,6 +158,10 @@ const props = defineProps({
     type: String,
     default: undefined,
   },
+  prompt: {
+    type: String,
+    default: null
+  },
   onNavConfigChange: {
     type: Function,
     default: undefined,
@@ -377,8 +381,8 @@ const videoIdMessageSent = ref(false);
 const videoIdNavigationPending = ref(false);
 
 watch(
-  () => [props.videoId, configStatus.value, collections.value],
-  ([newVideoId, newConfigStatus, newCollections]) => {
+  () => [props.videoId, configStatus.value, collections.value, props.prompt],
+  ([newVideoId, newConfigStatus, newCollections, newPrompt]) => {
     if (
       newVideoId &&
       !videoIdMessageSent.value &&
@@ -392,7 +396,7 @@ watch(
       videoIdNavigationPending.value = true;
       nextTick(() => {
         handleAddMessage({
-          text: newVideoId,
+          text: newPrompt || newVideoId,
           video_id: newVideoId,
           from_event: true,
         });
