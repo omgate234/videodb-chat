@@ -60,6 +60,44 @@
           </label>
         </div>
 
+        <!-- Model Selector -->
+        <div
+          v-if="models.length > 0"
+          class="vdb-c-relative"
+          :class="[isExpanded ? 'vdb-c-self-end' : '']"
+        >
+          <button
+            type="button"
+            class="vdb-c-flex vdb-c-items-center vdb-c-gap-4 vdb-c-rounded-full vdb-c-border vdb-c-border-kilvish-400 vdb-c-bg-white vdb-c-px-10 vdb-c-py-6 vdb-c-text-sm vdb-c-font-medium vdb-c-text-kilvish-700 vdb-c-transition-all hover:vdb-c-border-kilvish-600 hover:vdb-c-bg-kilvish-100"
+            @click="toggleModelDropdown"
+            @blur="handleModelDropdownBlur"
+          >
+            <span class="vdb-c-max-w-[100px] vdb-c-truncate">
+              {{ selectedModel?.name || selectedModel?.id || 'Model' }}
+            </span>
+            <ChevronDownIcon
+              :class-name="'vdb-c-transition-transform ' + (showModelDropdown ? 'vdb-c-rotate-180' : '')"
+              :stroke-color="'#475160'"
+            />
+          </button>
+          <div
+            v-if="showModelDropdown"
+            class="vdb-c-absolute vdb-c-bottom-full vdb-c-left-0 vdb-c-z-50 vdb-c-mb-8 vdb-c-max-h-[200px] vdb-c-min-w-[180px] vdb-c-overflow-y-auto vdb-c-rounded-lg vdb-c-border vdb-c-border-kilvish-400 vdb-c-bg-white vdb-c-py-4 vdb-c-shadow-lg"
+          >
+            <div
+              v-for="model in models"
+              :key="model.id"
+              :class="[
+                'vdb-c-cursor-pointer vdb-c-truncate vdb-c-px-12 vdb-c-py-8 vdb-c-text-sm vdb-c-font-normal vdb-c-text-kilvish-800 vdb-c-transition-all hover:vdb-c-bg-kilvish-100',
+                { 'vdb-c-bg-kilvish-200': selectedModel?.id === model.id },
+              ]"
+              @mousedown.prevent="selectModel(model)"
+            >
+              {{ model.name || model.id }}
+            </div>
+          </div>
+        </div>
+
         <!-- Textarea -->
         <textarea
           ref="inputRef"
@@ -123,6 +161,7 @@ import { v4 as uuidv4 } from "uuid";
 import { computed, nextTick, ref, watch } from "vue";
 import { useVideoDBChat } from "../../context";
 import ChatEnterIcon from "../icons/ChatEnter.vue";
+import ChevronDownIcon from "../icons/ChevronDown.vue";
 import PaperClipIcon from "../icons/PaperClip.vue";
 import SendIcon from "../icons/Send.vue";
 import ChatInputImagePreview from "./elements/ChatInputImagePreview.vue";
@@ -134,6 +173,10 @@ const props = defineProps({
     default: "Ask a question",
   },
   agents: {
+    type: Array,
+    default: () => [],
+  },
+  models: {
     type: Array,
     default: () => [],
   },
@@ -155,6 +198,8 @@ const agentStartIndex = ref(-1);
 const agentQuery = ref("");
 const selectedAgentIndex = ref(0);
 const isTextBoxExpanded = ref(false);
+const showModelDropdown = ref(false);
+const selectedModel = ref(null);
 
 const focus = () => {
   inputRef.value.focus();
@@ -170,6 +215,16 @@ const filteredAgents = computed(() => {
 watch(filteredAgents, () => {
   selectedAgentIndex.value = 0;
 });
+
+watch(
+  () => props.models,
+  (newModels) => {
+    if (newModels?.length > 0 && !selectedModel.value) {
+      selectedModel.value = newModels[0];
+    }
+  },
+  { immediate: true },
+);
 
 const imageAttachments = computed(() =>
   chatAttachments.filter((attachment) => attachment.type === "image"),
@@ -309,6 +364,21 @@ const handleFileUpload = (event) => {
   }
 };
 
+const toggleModelDropdown = () => {
+  showModelDropdown.value = !showModelDropdown.value;
+};
+
+const selectModel = (model) => {
+  selectedModel.value = model;
+  showModelDropdown.value = false;
+};
+
+const handleModelDropdownBlur = () => {
+  setTimeout(() => {
+    showModelDropdown.value = false;
+  }, 150);
+};
+
 const handleSubmit = async (e) => {
   if (isInputDisabled.value) return;
   e.preventDefault();
@@ -316,6 +386,7 @@ const handleSubmit = async (e) => {
     emit("on-submit", {
       text: chatInput.value,
       images: imageAttachments.value,
+      model: selectedModel.value,
     });
     chatInput.value = "";
     clearAllAttachments();

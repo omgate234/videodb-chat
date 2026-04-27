@@ -190,6 +190,7 @@
             <chat-input
               ref="chatInputRef"
               :agents="agents"
+              :models="models"
               :input-disabled="chatLoading"
               :placeholder="chatInputPlaceholder"
               :context-data="activeVideoData || activeCollectionData"
@@ -444,6 +445,7 @@ const {
   collections,
   sessions,
   agents,
+  models,
   activeCollectionData,
   activeCollectionVideos,
   activeVideoData,
@@ -940,7 +942,7 @@ const promptDeleteCollection = async (collection) => {
   }
 };
 
-const handleAddMessage = async ({ text = "", images = [] }) => {
+const handleAddMessage = async ({ text = "", images = [], model = null }) => {
   if (!sessionId.value) {
     loadSession();
   }
@@ -964,6 +966,7 @@ const handleAddMessage = async ({ text = "", images = [] }) => {
   addMessage({
     content: content,
     agents: taggedAgent.value,
+    model: model?.id || null,
   });
   taggedAgent.value = [];
 };

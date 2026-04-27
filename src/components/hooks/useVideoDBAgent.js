@@ -38,6 +38,7 @@ export function useVideoDBAgent(config) {
     return [...sessions.value].sort((a, b) => b.created_at - a.created_at);
   });
   const agents = ref([]);
+  const models = ref([]);
 
   const conversations = reactive({});
   const activeCollectionData = ref(null);
@@ -76,6 +77,7 @@ export function useVideoDBAgent(config) {
 
   const fetchAllAgents = async () => fetchData(httpUrl, "/agent");
   const fetchConfigStatus = async () => fetchData(httpUrl, "/config/check");
+  const fetchModels = async () => fetchData(httpUrl, "/llm/models");
 
   const uploadMedia = async (uploadData) => {
     const { source, sourceType, collectionId } = uploadData;
@@ -191,6 +193,11 @@ export function useVideoDBAgent(config) {
       });
       fetchAllAgents().then((res) => {
         agents.value = res.data;
+      });
+      fetchModels().then((res) => {
+        if (res.status === "success") {
+          models.value = res.data;
+        }
       });
     }
   });
@@ -615,6 +622,7 @@ export function useVideoDBAgent(config) {
     collections,
     sessions: sessionsSorted,
     agents,
+    models,
     activeCollectionData,
     activeCollectionVideos,
     activeVideoData,
