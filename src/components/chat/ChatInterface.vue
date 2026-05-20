@@ -456,6 +456,10 @@ const {
   generateImageUrl,
   generateAudioUrl,
   uploadMedia,
+  uploadChatVideo,
+  fetchVideoTranscript,
+  fetchCollectionVideo,
+  applyTimelineEdit,
   createCollection,
   deleteCollection,
   refetchCollectionVideos,
@@ -1011,6 +1015,12 @@ provide("videodb-chat", {
   setChatInput,
   registerMessageHandler,
   uploadMedia,
+  uploadChatVideo,
+  fetchVideoTranscript,
+  fetchCollectionVideo,
+  applyTimelineEdit,
+  sessionId,
+  collectionId,
 });
 </script>
 

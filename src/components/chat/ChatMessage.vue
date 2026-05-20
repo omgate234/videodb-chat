@@ -38,12 +38,13 @@
             />
           </div>
 
-          <div v-for="content in message.content">
+          <div v-for="(content, idx) in message.content" :key="idx">
             <component
               v-if="Object.keys(messageHandlers).includes(content.type)"
               :is="messageHandlers[content.type]"
               :is-last-conv="isLastConv"
               :content="content"
+              :content-index="idx"
               :is-user="isUser"
               :search-term="searchTerm"
               :conv-id="message.conv_id"

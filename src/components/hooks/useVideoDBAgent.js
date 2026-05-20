@@ -101,6 +101,89 @@ export function useVideoDBAgent(config) {
     }
   };
 
+  const fetchVideoTranscript = async ({ collectionId, videoId }) => {
+    const response = await fetch(
+      `${httpUrl}/videodb/collection/${collectionId}/video/${videoId}/transcript`,
+    );
+    if (!response.ok) {
+      let message = "Could not load transcript";
+      try {
+        const err = await response.json();
+        if (err && err.message) message = err.message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    return response.json();
+  };
+
+  const uploadChatVideo = async ({
+    collectionId,
+    sessionId,
+    convId,
+    msgId,
+    contentIndex,
+    streamUrl,
+    name,
+  }) => {
+    const response = await fetch(
+      `${httpUrl}/videodb/collection/${collectionId}/chat_video_upload`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          conv_id: convId,
+          msg_id: msgId,
+          content_index: contentIndex,
+          stream_url: streamUrl,
+          name,
+        }),
+      },
+    );
+    if (!response.ok) {
+      let message = "Upload failed";
+      try {
+        const err = await response.json();
+        if (err && err.message) message = err.message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    const media = await response.json();
+
+    const target = conversations[convId]?.[msgId]?.content?.[contentIndex];
+    if (target?.video) {
+      target.video = { ...target.video, ...media };
+    }
+    if (collectionId === session.collectionId) refetchCollectionVideos();
+    return media;
+  };
+
+  const applyTimelineEdit = async ({
+    collectionId,
+    videoId,
+    timeline,
+    signal,
+  }) => {
+    const response = await fetch(
+      `${httpUrl}/videodb/collection/${collectionId}/video/${videoId}/timeline-edit`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timeline }),
+        signal,
+      },
+    );
+    if (!response.ok) {
+      let message = "Failed to apply timeline edit";
+      try {
+        const err = await response.json();
+        if (err && err.message) message = err.message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    return response.json();
+  };
+
   const generateAudioUrl = async (collectionId, audioId) => {
     const res = {};
     try {
@@ -644,6 +727,10 @@ export function useVideoDBAgent(config) {
     deleteAudio,
     deleteImage,
     uploadMedia,
+    uploadChatVideo,
+    fetchVideoTranscript,
+    fetchCollectionVideo,
+    applyTimelineEdit,
     generateImageUrl,
     generateAudioUrl,
   };
