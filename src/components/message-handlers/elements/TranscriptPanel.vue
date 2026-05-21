@@ -124,6 +124,23 @@
           </div>
 
           <div v-else-if="editable && segments && segments.length" key="editor">
+            <SmartEditPanel
+              :filler-instances="fillerInstances"
+              :silence-instances="silenceInstances"
+              :filler-active-count="fillerActiveCount"
+              :silence-active-count="silenceActiveCount"
+              :filler-words="fillerWords"
+              :silence-threshold="silenceThreshold"
+              :applying="applyStatus === 'regenerating'"
+              @apply-fillers="$emit('apply-fillers')"
+              @restore-fillers="$emit('restore-fillers')"
+              @apply-silences="$emit('apply-silences')"
+              @restore-silences="$emit('restore-silences')"
+              @toggle-instance="(e) => $emit('toggle-instance', e)"
+              @goto-instance="(e) => $emit('goto-instance', e)"
+              @update:filler-words="(v) => $emit('update:fillerWords', v)"
+              @update:silence-threshold="(v) => $emit('update:silenceThreshold', v)"
+            />
             <div
               v-if="applyStatus === 'error' && applyStatusMessage"
               class="vdb-c-mb-8 vdb-c-flex vdb-c-items-center vdb-c-gap-6 vdb-c-rounded-8 vdb-c-bg-red-100 vdb-c-px-12 vdb-c-py-6 vdb-c-text-caption2 vdb-c-text-primary"
@@ -313,6 +330,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import TranscriptEditor from "./TranscriptEditor.vue";
+import SmartEditPanel from "./SmartEditPanel.vue";
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -332,6 +350,12 @@ const props = defineProps({
   clips: { type: Array, default: () => [] },
   activeClipId: { type: String, default: null },
   canAddClip: { type: Boolean, default: false },
+  fillerInstances: { type: Array, default: () => [] },
+  silenceInstances: { type: Array, default: () => [] },
+  fillerActiveCount: { type: Number, default: 0 },
+  silenceActiveCount: { type: Number, default: 0 },
+  fillerWords: { type: String, default: "" },
+  silenceThreshold: { type: Number, default: 1.0 },
 });
 
 defineEmits([
@@ -351,6 +375,14 @@ defineEmits([
   "clip-exit-preview",
   "clip-hover",
   "clip-hover-end",
+  "apply-fillers",
+  "restore-fillers",
+  "apply-silences",
+  "restore-silences",
+  "toggle-instance",
+  "goto-instance",
+  "update:fillerWords",
+  "update:silenceThreshold",
 ]);
 
 const editorRef = ref(null);

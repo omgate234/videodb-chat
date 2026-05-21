@@ -92,6 +92,12 @@
             :clips="clips"
             :active-clip-id="activeClipId"
             :can-add-clip="canAddClip"
+            :filler-instances="fillerInstances"
+            :silence-instances="silenceInstances"
+            :filler-active-count="fillerActiveCount"
+            :silence-active-count="silenceActiveCount"
+            :filler-words="fillerWords"
+            :silence-threshold="silenceThreshold"
             @close="onCloseTranscript"
             @revert="onRevert"
             @retry="onRetry"
@@ -108,6 +114,14 @@
             @clip-exit-preview="onClipExitPreview"
             @clip-hover="onClipHover"
             @clip-hover-end="onClipHoverEnd"
+            @apply-fillers="onApplyFillers"
+            @restore-fillers="onRestoreFillers"
+            @apply-silences="onApplySilences"
+            @restore-silences="onRestoreSilences"
+            @toggle-instance="onToggleInstance"
+            @goto-instance="onGotoInstance"
+            @update:fillerWords="(v) => (fillerWords = v)"
+            @update:silenceThreshold="(v) => (silenceThreshold = v)"
           />
         </div>
       </div>
@@ -163,8 +177,10 @@ import {
   keptSegmentCount,
   rangesEqual,
   isFullVideo,
+  sanitizeTimeline,
 } from "../transcript-editor/keptRanges.js";
 import { makeTimeMap } from "../transcript-editor/timeMap.js";
+import { defaultFillerWords } from "../transcript-editor/util/smartEdit.js";
 
 const props = defineProps({
   content: {
@@ -261,6 +277,18 @@ const canAddClip = ref(false);
 let clipAbortController = null;
 let latestClipRequestId = 0;
 
+const fillerWords = ref(defaultFillerWords().join(", "));
+const silenceThreshold = ref(1.0);
+const fillerInstances = ref([]);
+const silenceInstances = ref([]);
+const fillerActiveCount = computed(
+  () => fillerInstances.value.filter((i) => i.isDeleted).length,
+);
+const silenceActiveCount = computed(
+  () =>
+    silenceInstances.value.filter((i) => i.from != null && i.isDeleted).length,
+);
+
 let abortController = null;
 let latestRequestId = 0;
 let debounceTimer = null;
@@ -272,7 +300,7 @@ const previewTimeMap = computed(() =>
   activePreviewTimeline.value ? makeTimeMap(activePreviewTimeline.value) : null,
 );
 const effectiveTimeMap = computed(
-  () => previewTimeMap.value || effectiveTimeMap.value,
+  () => previewTimeMap.value || appliedTimeMap.value,
 );
 
 function onEditorReady(api) {
@@ -306,7 +334,27 @@ function recomputeFromDoc(doc) {
   if (!doc) return;
   currentRanges.value = computeKeptRanges(doc);
   counts.value = keptSegmentCount(doc);
+  rescanSmartEdit();
 }
+
+function rescanSmartEdit() {
+  const api = editorApi.value;
+  if (!api) {
+    fillerInstances.value = [];
+    silenceInstances.value = [];
+    return;
+  }
+  fillerInstances.value = api.scanFillers
+    ? api.scanFillers(fillerWords.value)
+    : [];
+  silenceInstances.value = api.scanSilences
+    ? api.scanSilences(silenceThreshold.value)
+    : [];
+}
+
+watch([fillerWords, silenceThreshold], () => {
+  rescanSmartEdit();
+});
 
 function onDocChange(payload) {
   const state = payload?.state;
@@ -330,7 +378,12 @@ function scheduleApply() {
 async function runApply() {
   debounceTimer = null;
   if (activeClipId.value) return;
-  const ranges = currentRanges.value;
+
+  const video = props.content.video;
+  const safeLength = videoLength.value > 0 ? videoLength.value : null;
+  const ranges = sanitizeTimeline(currentRanges.value, {
+    videoLength: safeLength,
+  });
 
   if (!ranges.length) {
     cancelInFlight();
@@ -358,7 +411,6 @@ async function runApply() {
     return;
   }
 
-  const video = props.content.video;
   if (!video?.id) return;
 
   cancelInFlight();
@@ -376,7 +428,7 @@ async function runApply() {
     });
     if (requestId !== latestRequestId) return;
     const url = data?.stream_url;
-    if (!url) throw new Error("No stream URL in response");
+    if (!url) throw new Error("Backend did not return a stream URL");
     currentStreamUrl.value = url;
     lastAppliedRanges.value = ranges.slice();
     applyStatus.value = "idle_edited";
@@ -385,10 +437,25 @@ async function runApply() {
     if (e?.name === "AbortError") return;
     if (requestId !== latestRequestId) return;
     applyStatus.value = "error";
-    applyStatusMessage.value = e?.message || "Failed to update preview";
+    applyStatusMessage.value = describeApplyError(e);
   } finally {
     if (requestId === latestRequestId) abortController = null;
   }
+}
+
+function describeApplyError(e) {
+  const msg = e?.message || "";
+  if (!msg) return "Failed to update preview";
+  if (/HTTP\s*4\d\d/i.test(msg) || /400|404|422/.test(msg)) {
+    return "Backend rejected the timeline. Try Revert or simplify the edit.";
+  }
+  if (/HTTP\s*5\d\d/i.test(msg) || /500|502|503|504/.test(msg)) {
+    return "Backend error while regenerating. Click Retry.";
+  }
+  if (/network|fetch|failed to fetch/i.test(msg)) {
+    return "Network error. Check connection and Retry.";
+  }
+  return msg;
 }
 
 // Reset the player to t=0 and clear the transcript highlight. Robust to the
@@ -510,6 +577,42 @@ function onClipsCleared() {
   if (activeClipId.value) clearActiveClip();
 }
 
+function onApplyFillers() {
+  const api = editorApi.value;
+  if (!api?.applyFillers) return;
+  api.applyFillers(fillerWords.value);
+}
+
+function onRestoreFillers() {
+  const api = editorApi.value;
+  if (!api?.restoreFillers) return;
+  api.restoreFillers();
+}
+
+function onApplySilences() {
+  const api = editorApi.value;
+  if (!api?.applySilences) return;
+  api.applySilences(silenceThreshold.value);
+}
+
+function onRestoreSilences() {
+  const api = editorApi.value;
+  if (!api?.restoreSilences) return;
+  api.restoreSilences();
+}
+
+function onToggleInstance({ from, to, source }) {
+  const api = editorApi.value;
+  if (!api?.toggleInstance) return;
+  api.toggleInstance(from, to, source);
+}
+
+function onGotoInstance({ from, to }) {
+  const api = editorApi.value;
+  if (!api?.gotoInstance) return;
+  api.gotoInstance(from, to);
+}
+
 function onClipHover(id) {
   editorApi.value?.setHoverClip?.(id);
 }
@@ -533,10 +636,9 @@ function cancelClipInFlight() {
 async function runPreview(timeline, activeId, errorLabel) {
   const video = props.content.video;
   if (!video?.id) return;
-  if (!timeline.length) return;
-  for (const [s, e] of timeline) {
-    if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
-  }
+  const safeLength = videoLength.value > 0 ? videoLength.value : null;
+  const safe = sanitizeTimeline(timeline, { videoLength: safeLength });
+  if (!safe.length) return;
 
   cancelInFlight();
   cancelClipInFlight();
@@ -550,13 +652,13 @@ async function runPreview(timeline, activeId, errorLabel) {
     const data = await applyTimelineEdit({
       collectionId: video.collection_id || collectionId.value,
       videoId: video.id,
-      timeline,
+      timeline: safe,
       signal: clipAbortController.signal,
     });
     if (requestId !== latestClipRequestId) return;
     const url = data?.stream_url;
-    if (!url) throw new Error("No stream URL in response");
-    activePreviewTimeline.value = timeline.map(([s, e]) => [s, e]);
+    if (!url) throw new Error("Backend did not return a stream URL");
+    activePreviewTimeline.value = safe.map(([s, e]) => [s, e]);
     currentStreamUrl.value = url;
     applyStatus.value = "idle_edited";
     applyStatusMessage.value = "";
@@ -564,7 +666,9 @@ async function runPreview(timeline, activeId, errorLabel) {
     if (e?.name === "AbortError") return;
     if (requestId !== latestClipRequestId) return;
     applyStatus.value = "error";
-    applyStatusMessage.value = e?.message || errorLabel;
+    applyStatusMessage.value = e?.message
+      ? describeApplyError(e)
+      : errorLabel || "Failed to update preview";
   } finally {
     if (requestId === latestClipRequestId) clipAbortController = null;
   }

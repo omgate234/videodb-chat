@@ -40,6 +40,22 @@ import {
   removeAllClipStuff,
   listClipsInDoc,
 } from "../../transcript-editor/commands/clip.js";
+import {
+  findFillerWords,
+  findSilences,
+  bulkApplyFillers,
+  bulkApplySilences,
+  bulkRestoreBySource,
+  toggleInstance,
+  normalizeFillerList,
+} from "../../transcript-editor/util/smartEdit.js";
+import { handleCopy } from "../../transcript-editor/plugins/handleCopy.js";
+import { handleCut } from "../../transcript-editor/plugins/handleCut.js";
+import {
+  handlePaste,
+  transformPasted,
+} from "../../transcript-editor/plugins/handlePaste.js";
+import { TextSelection } from "prosemirror-state";
 
 const props = defineProps({
   segments: { type: Array, required: true },
@@ -82,6 +98,10 @@ function buildState(segments) {
       history(),
       keymap(editKeymap),
       keymap(baseKeymap),
+      handleCopy(),
+      handleCut(),
+      handlePaste(),
+      transformPasted(),
       playingHighlightPlugin,
       hoverClipPlugin,
     ],
@@ -220,6 +240,73 @@ function api() {
       if (!view) return false;
       return removeAllClipStuff(view.state, view.dispatch.bind(view));
     },
+    scanFillers(fillerList) {
+      if (!view) return [];
+      return findFillerWords(view.state.doc, normalizeFillerList(fillerList));
+    },
+    scanSilences(minDuration) {
+      if (!view) return [];
+      return findSilences(view.state.doc, minDuration);
+    },
+    applyFillers(fillerList) {
+      if (!view) return 0;
+      return bulkApplyFillers(
+        view.state,
+        view.dispatch.bind(view),
+        normalizeFillerList(fillerList),
+      );
+    },
+    restoreFillers() {
+      if (!view) return 0;
+      return bulkRestoreBySource(
+        view.state,
+        view.dispatch.bind(view),
+        "filler",
+      );
+    },
+    applySilences(minDuration) {
+      if (!view) return 0;
+      return bulkApplySilences(
+        view.state,
+        view.dispatch.bind(view),
+        minDuration,
+      );
+    },
+    restoreSilences() {
+      if (!view) return 0;
+      return bulkRestoreBySource(
+        view.state,
+        view.dispatch.bind(view),
+        "silence",
+      );
+    },
+    toggleInstance(from, to, source) {
+      if (!view) return false;
+      return toggleInstance(
+        view.state,
+        view.dispatch.bind(view),
+        from,
+        to,
+        source,
+      );
+    },
+    gotoInstance(from, to) {
+      if (!view) return;
+      try {
+        const doc = view.state.doc;
+        const safeFrom = Math.max(0, Math.min(from, doc.content.size));
+        const safeTo = Math.max(safeFrom, Math.min(to, doc.content.size));
+        const $from = doc.resolve(safeFrom);
+        const $to = doc.resolve(safeTo);
+        const tr = view.state.tr
+          .setSelection(new TextSelection($from, $to))
+          .scrollIntoView();
+        view.dispatch(tr);
+        view.focus();
+      } catch (_) {
+        /* boundary errors are non-fatal */
+      }
+    },
     setHoverClip(id) {
       if (!view) return;
       const clips = listClipsInDoc(view.state.doc, schema);
@@ -263,7 +350,6 @@ onMounted(() => {
     editable: () => !!props.editable,
     handleClickOn: handleClick,
     handleTextInput: () => true,
-    handlePaste: () => true,
     nodeViews: {
       clipPill: (node, editorView, getPos) =>
         new ClipPillView(node, editorView, getPos),
@@ -366,5 +452,18 @@ onBeforeUnmount(() => {
 .vdb-c-transcript-editor span.clipPill--dragging {
   background: rgba(40, 130, 240, 1);
   box-shadow: 0 0 0 2px rgba(40, 130, 240, 0.25);
+}
+.vdb-c-transcript-editor span.pasted {
+  background-color: rgba(40, 130, 240, 0.25);
+  border-radius: 2px;
+  animation: vdbPastedFade 800ms ease-out forwards;
+}
+@keyframes vdbPastedFade {
+  from {
+    background-color: rgba(40, 130, 240, 0.25);
+  }
+  to {
+    background-color: rgba(40, 130, 240, 0);
+  }
 }
 </style>

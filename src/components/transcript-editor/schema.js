@@ -2,6 +2,7 @@ import { Schema } from "prosemirror-model";
 import { info } from "./marks/info.js";
 import { deleted } from "./marks/deleted.js";
 import { clipHighlight } from "./marks/clipHighlight.js";
+import { pasted } from "./marks/pasted.js";
 import { clipPill } from "./nodes/clipPill.js";
 
 const doc = { content: "block+" };
@@ -19,5 +20,5 @@ const text = { group: "inline" };
 
 export const schema = new Schema({
   nodes: { doc, paragraph, text, clipPill },
-  marks: { info, deleted, clipHighlight },
+  marks: { info, deleted, clipHighlight, pasted },
 });
