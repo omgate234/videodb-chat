@@ -85,8 +85,12 @@ export function sanitizeTimeline(
     if (!Number.isFinite(s) || !Number.isFinite(e)) continue;
     if (s < 0) s = 0;
     if (videoLength != null && Number.isFinite(videoLength) && videoLength > 0) {
-      if (s >= videoLength) continue;
-      if (e > videoLength) e = videoLength;
+      // Clamp to floor(videoLength). The Timeline API rejects ranges that
+      // run past the integer-second mark even when source `end` is e.g.
+      // 280.003 — the backend treats fractional overshoots as out-of-bounds.
+      const cap = Math.floor(videoLength);
+      if (s >= cap) continue;
+      if (e > cap) e = cap;
     }
     if (e <= s) continue;
     cleaned.push([s, e]);
