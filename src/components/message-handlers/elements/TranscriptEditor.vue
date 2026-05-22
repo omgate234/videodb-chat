@@ -454,16 +454,6 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 2px rgba(40, 130, 240, 0.25);
 }
 .vdb-c-transcript-editor span.pasted {
-  background-color: rgba(40, 130, 240, 0.25);
-  border-radius: 2px;
-  animation: vdbPastedFade 800ms ease-out forwards;
-}
-@keyframes vdbPastedFade {
-  from {
-    background-color: rgba(40, 130, 240, 0.25);
-  }
-  to {
-    background-color: rgba(40, 130, 240, 0);
-  }
+  color: #20557d;
 }
 </style>
