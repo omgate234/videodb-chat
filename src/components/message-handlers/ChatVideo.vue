@@ -570,6 +570,7 @@ function onClipEdit(edited) {
 function onClipRemoveRequest(id) {
   if (activeClipId.value === id) clearActiveClip();
   editorApi.value?.removeClip?.(id);
+  refreshClipsFromEditor();
 }
 
 function onClipsCleared() {
@@ -674,8 +675,24 @@ async function runPreview(timeline, activeId, errorLabel) {
   }
 }
 
+function rangesForClip(clip) {
+  // Derive kept source-time ranges from the doc inside this clip's bookends
+  // instead of trusting [clip.start, clip.end] as one continuous range.
+  // This excludes user-deleted words inside the clip and splits the timeline
+  // across paragraph gaps, fixing both #1 (cross-paragraph clips played
+  // unselected content) and #2 (clips replayed deleted spans).
+  const doc = editorApi.value?.state?.doc;
+  if (!doc || !clip?.location) return [[clip.start, clip.end]];
+  return computeKeptRanges(doc, {
+    from: clip.location.start,
+    to: clip.location.end,
+  });
+}
+
 function previewClip(clip) {
-  runPreview([[clip.start, clip.end]], clip.id, "Failed to preview clip");
+  const ranges = rangesForClip(clip);
+  if (!ranges.length) return;
+  runPreview(ranges, clip.id, "Failed to preview clip");
 }
 
 function onClipPreview(clip) {
@@ -684,7 +701,8 @@ function onClipPreview(clip) {
 
 function onClipPlayAll() {
   if (!clips.value.length) return;
-  const timeline = clips.value.map((c) => [c.start, c.end]);
+  const timeline = clips.value.flatMap((c) => rangesForClip(c));
+  if (!timeline.length) return;
   runPreview(timeline, ALL_CLIPS_ID, "Failed to preview clips");
 }
 

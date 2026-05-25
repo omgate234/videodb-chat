@@ -14,7 +14,7 @@
  */
 export function computeKeptRanges(
   doc,
-  { joinThreshold = 0.5, minDuration = 0.1 } = {},
+  { joinThreshold = 0.5, minDuration = 0.1, from = null, to = null } = {},
 ) {
   // Walk the doc producing kept-word entries plus explicit "break" markers
   // wherever a deleted word sits between two kept words. The break prevents
@@ -22,10 +22,20 @@ export function computeKeptRanges(
   // the source-time gap happens to fall under joinThreshold (e.g. cutting a
   // 0.5s word leaves a ~0.5s hole that would otherwise be re-joined and
   // masked).
+  //
+  // When `from`/`to` are supplied, the walk is restricted to text nodes that
+  // intersect that doc-position range. Used by clip preview to derive the
+  // kept ranges inside a clip's bookends — this skips deleted words inside
+  // the clip and breaks across paragraph gaps wider than joinThreshold.
+  const hasRange = from != null && to != null;
   const entries = [];
   let pendingBreak = false;
-  doc.descendants((node) => {
+  doc.descendants((node, pos) => {
     if (!node.isText) return;
+    if (hasRange) {
+      const nodeEnd = pos + node.nodeSize;
+      if (nodeEnd <= from || pos >= to) return;
+    }
     let info = null;
     let isDeleted = false;
     for (const m of node.marks) {
